@@ -1,6 +1,11 @@
 > 用途：给定一个套牌主题（如"纯绿种地"），按固定流程完成环境调研、候选牌枚举、构筑、验证与交付。
 默认参数：娱乐向但保证强度、MTGA 牌池、无预算上限。如当次需求不同，在阶段 1 覆盖。
 
+适用模式（开工时先判定）：
+
+- A. 从零构筑：给定主题，走全流程（阶段 0–5）。
+- B. 牌表优化：输入既有牌表，先执行阶段 0b 体检，再走阶段 1–5；阶段 2 的枚举以"同角色更优候选"为目标，阶段 5 交付必须含"改动对照 diff"（见阶段 5）。
+
 ---
 
 阶段 0：主题澄清（开工前必须完成）
@@ -14,10 +19,18 @@
 
 ---
 
+阶段 0b：牌表体检（仅模式 B）
+
+1. 解析主/备牌表，数量逐张加总复核（60/15）。
+2. 每张牌的三重核对前置执行：先驱合法 / 平台有售 / 中文名（方法同阶段 4），不合法或平台不可用的牌直接标红。
+3. 给每张牌标注功能角色（核心回报 / 引擎 / 终结 / 互动 / 地），产出曲线与地当量，找出结构缺口（缺引擎、缺卡差、回报错位等），作为后续优化的靶子。
+
+---
+
 阶段 1：环境基线确认
 
-1. 赛制时间范围：确认当前日期，通过 Scryfall `/sets` 列出已发售系列，确定赛制覆盖的最新系列（先驱 = RTR 重返拉尼卡起至今）。
-2. 禁牌表：Scryfall 查询 `banned:{format}`（如 `banned:pioneer`）+ 网络检索最近一次禁牌公告交叉验证。标注与主题相关的禁牌。
+1. 赛制时间范围：确认当前日期，通过 Scryfall `/sets` 列出已发售系列，确定赛制覆盖的最新系列（先驱 = RTR 重返拉尼卡起至今）。注意：`/sets` 会列出未发售系列，`f:pioneer` 也可能提前包含未发售牌——牌池以"已发售"为准，检索时必要时用 `-e:{系列码}` 排除未发售系列。
+2. 禁牌表：Scryfall 查询 `banned:{format}`（如 `banned:pioneer`）+ 网络检索最近一次禁牌公告交叉验证。按三档标注：主题相关 / 同色系常用（影响备牌与引擎选择，如 Once Upon a Time、Veil of Summer 之于纯绿）/ 环境通用。
 3. 环境粗扫：搜索官方公告 / 环境文章，确认主题思路在当前环境的强度定位（娱乐 / 可行 / 主流），只需大方向。
 
 ---
@@ -40,21 +53,26 @@ M6 备牌	基于主牌弱点的备牌方向	坟场针对、控制针对
 
 - 工具：Scryfall API（`/cards/search`），统一过滤条件：
   - 牌池：`f:pioneer game:arena`（先驱合法 ∩ MTGA 有售；实体牌池则去掉 `game:arena`）
+  - 颜色约束翻译：阶段 0 的颜色约束直接转为过滤器（纯绿 = `ci:g`；允许混色 = `ci<=wg` 之类），不要让枚举结果混入违规色牌再靠人工剔除
   - 结果按 `oracle_id` 去重，保留有 Arena 版本的印刷
-- 检索方式：按异能关键词构造 oracle 文本查询（如 `o:"number of lands you control"`、`o:"put a land card" o:"battlefield"`），覆盖赛制内全部系列后按系列分组呈现，等价于逐系列遍历
-- 补充检索：对记忆中有印象但未被关键词命中的牌，逐张 `/cards/named` 复核合法性与平台可用性（本次教训：Explore 不合法、Rampant Growth 不合法、Dictate of Karametra 不在 Arena——记忆必须验证）
+- 检索方式：按异能关键词构造 oracle 文本查询（如 `o:"number of lands you control"`、`o:"put a land card" o:"battlefield"`），覆盖赛制内全部系列后按系列分组呈现，等价于逐系列遍历。每个模块至少用 2 种措辞检索（短语查询会假性 404，见坑位清单），避免漏牌。
+- 补充检索：对记忆中有印象但未被关键词命中的牌，逐张 `/cards/named` 复核合法性与平台可用性（本次教训：Explore 不合法、Rampant Growth 不合法、Dictate of Karametra 不在 Arena——记忆必须验证）。无关键字但主题相关的牌（如 Tatyova、Multani 之于种地）只能靠这一步兜底。
 
 2c. 双源二次核对（sbwsz.com / mtgch.com API）
 
 每张候选牌执行：
 
-1. 中文名：`GET https://mtgch.com/api/v1/card-names/?q={英文名}` → `translated_name`
+1. 中文名：`GET https://mtgch.com/api/v1/card-names/?q={英文名}` → 响应字段为 `items[]`，取 `translated_name`（注意：不是 `results`/`data`）
 2. 平台可用性：`GET /api/v1/result?q={牌名}&view=0&unique=scryfall_id`（分页），任一版本 `arena_id` 非空即在 Arena 有售
 3. 判定口径："先驱合法"以 oracle 级 legalities 为准；"MTGA 有售"以任一版本在 Arena 为准（新印版本可能不在 Arena，旧版在即可，例：云游者梓纱 FCA 版）
 
 已知坑位清单：
-- PIO（先驱大师赛）2024-12 已登陆 Arena，其独有牌可用
+- PIO（先驱大师赛）2024-12 已登陆 Arena，其独有牌可用（例：云游者梓纱在先驱合法且 Arena 可用）
 - Scryfall `/cards/named` 返回最新印刷，`games` 字段可能误导（需查全部印刷）
+- MDFC / 历险 / 双面牌：Scryfall 顶层 `oracle_text`、`mana_cost`、`power/toughness` 为空，正背面完整文本在 `card_faces[]` 里——核对牌面异能时必须读 `card_faces`，否则会"看不到第二面"（实测踩坑：Beanstalk Giant // Fertile Footsteps、Studious First-Year // Rampant Growth 顶层文本为空）
+- `o:` 短语查询可能假性 404：实测 `o:"whenever a land enters"` 零结果，换 `o:"landfall"` 命中 43 张；同一概念务必准备多种措辞
+- 脚本直连 Scryfall 必须带 User-Agent（Python urllib 无 UA 会 400；curl 默认 UA 正常）
+- Windows 环境：Python 默认 GBK——`json.load` 需 `encoding='utf-8'`，控制台输出需 `PYTHONIOENCODING=utf-8`，否则中文与破折号乱码/报错
 - SBWSZ `/result` 的 `!""` 精确语法不可用；`page_size` 过大需分页；含撇号牌名用片段模糊查
 - 大造物者卡恩为先驱禁牌，用户提到"卡恩"时默认引导至可用替代
 
@@ -66,7 +84,7 @@ M6 备牌	基于主牌弱点的备牌方向	坟场针对、控制针对
 
 阶段 3：构筑
 
-1. 多方向提议：基于候选池给出 3–5 个构筑方向（思路 / 主轴 / 风格对比表），用户选定 1–2 个（可组合）
+1. 多方向提议：基于候选池给出 3–5 个构筑方向（思路 / 主轴 / 风格对比表），用户选定 1–2 个（可组合）。模式 B 则改为：针对体检发现的结构缺口给出 2–3 个优化方案（激进换血 / 微调 / 混合）。
 2. 初稿：主牌 60 + 备牌 15
    - 逐牌附入选理由；列出"落选候选"及取舍逻辑，便于迭代
    - 地牌数量需给"地当量"计算（真地 + MDFC×0.75 + 引擎找地牌）
@@ -106,6 +124,7 @@ M6 备牌	基于主牌弱点的备牌方向	坟场针对、控制针对
 完整交付文档包含
 
 - 最终牌表（上述格式 + 分功能表格版含中文名对照）
+- 改动对照 diff（模式 B 必含）：砍 / 加 / 数量调整逐张列出，各附一句理由；同时列出"考虑过但排除"的候选及原因（含违反颜色约束等硬性排除项）
 - 留牌指引、打法要点、核心配合、对局注意事项
 - 备牌换入换出简表
 - 可调仓位清单（后续自行微调的备选池）
@@ -123,4 +142,4 @@ f:pioneer game:arena layout:modal_dfc (ci:g or t:land)   # 双面地
 f:pioneer game:arena banned:pioneer                      # 禁牌表
 ```
 
-SBWSZ API 端点备忘：`/api/v1/card-names/`（中英名）、`/api/v1/result`（搜索）、`/api/v1/card/{set}/{num}/`（单卡详情）、`/api/v1/sets/`（系列列表）、`/api/v1/docs`（完整文档）
+SBWSZ API 端点备忘：`/api/v1/card-names/`（中英名，响应字段 `items[]`）、`/api/v1/result`（搜索）、`/api/v1/card/{set}/{num}/`（单卡详情）、`/api/v1/sets/`（系列列表）、`/api/v1/docs`（完整文档）
