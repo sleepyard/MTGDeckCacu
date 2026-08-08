@@ -1,1 +1,5 @@
 tools/cache/
+tools/downloads/
+tools/forge/
+tools/jdk/
+tools/__pycache__/

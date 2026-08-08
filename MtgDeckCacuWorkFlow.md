@@ -98,6 +98,7 @@ M9 指挥官	Commander-style 赛制的合法指挥官、颜色身份与指挥区
 - `o:` 措辞检索要覆盖人称 / 单复数变体：实测 `o:"as though it had flash"` 漏掉荒野斗士薇薇安（牌面为 "as though **they** had flash"）；同一概念的多种措辞除了动词说法外，还要考虑 it/they、单复数主语差异
 - 主轴自冲突过滤：候选牌异能与套牌主轴矛盾时直接剔除并注明（实测：Lier, Disciple of the Drowned 的"你的咒语不能被反击"与反制主轴自冲突），不要只看单卡强度
 - Windows Git Bash 的 `/tmp`（MSYS 临时目录）与 Read/Write 工具解析的 `/tmp`（`D:/tmp`）不一致：脚本中间产物一律写仓库内相对路径，不要用 `/tmp`
+- Forge 无头模拟：Windows 下 `forge.exe sim ...` 只写日志文件、控制台无输出，必须 `java -jar forge-gui-desktop-*-jar-with-dependencies.jar sim ...`（`tools/forge_tool.py sim` 已封装）；GitHub 直连慢时用 ghfast.top 代理下载并校验 sha256；Windows Defender 可能启发式拦截批量下载行为，需在防护历史里放行后重试
 
 2d. 候选清单产出格式
 
@@ -135,7 +136,9 @@ M9 指挥官	Commander-style 赛制的合法指挥官、颜色身份与指挥区
 2. 典型对局推演：对快攻 / 对中速 / 对控制的起手、节奏、换备思路
 3. 按用户反馈从"可调仓位"迭代，直至锁定
 4. 机器门禁：先加载目标赛制构筑档案，再校验各分区数量、同名上限与基本地 / 牌面例外、目标队列禁限牌、颜色身份、发售日期、目标平台任一可用印刷和导入格式——普通构筑可直接执行 `tools/mtg_tool.py validate 牌表 --format {赛制} --bo3 --colors {色组}`（当前仅覆盖普通构筑与 MTGA 平台，Brawl / 行侣 / 实体牌池的扩展校验仍需按本条手工补齐）。普通构筑档案检查主牌不少于 60、备牌不多于 15；Brawl 档案检查指挥官恰为 1、牌库恰为 99、无备牌、单卡规则、指挥官类型合法及牌库颜色身份为指挥官颜色身份子集。Arena 任一印刷只在平台为 MTGA 时检查。另校验受限色源不得计作关键咒语的无条件色源，以及“选择生物类别”等效应只能使用对应 card type 的 subtype。声明行侣时还须校验：至多一个、行侣本身合法、计入备牌 15 张上限、starting deck 满足其条件、所有换备方案后仍满足条件，且抽牌概率不含行侣。优化器默认让换入数等于换出数以维持目标主牌张数；若不等量必须在方案中显式标注并重新执行行侣条件。
-5. 将定性推演与实测分开标注。没有对局日志或模拟样本时只能写"推演"，不得输出未经数据支持的胜率结论。
+5. Forge 实测（工具就绪后优先执行）：用 `tools/forge_tool.py sim 牌表A 牌表B --games N` 跑 AI vs AI 无头模拟（报告存 `SimResult/`，含样本量与原始日志），人工试玩用 `tools/forge_tool.py play`。口径限制：Forge AI 快攻 / 中速尚可、控制一般、组合技严重失真，胜率仅是 AI 对局样本；未实现的牌无法导入 .dck（报告会标记疑似加载失败，必须核对原始日志）；companion 无对应结构会跳过。sim 不做赛制合法性门禁，合法性仍以上一条 validate 为准。对手牌表选取应代表阶段 1 环境粗扫的主流思路。
+6. MTGA 真人实测（可信度最高的样本来源）：用 `tools/mtga_log_tool.py scan` 把对局结果记入 `MatchRecord/matches.json`、`report` 聚合胜率（前置：MTGA 开启 Detailed Logs，见 `tools/README.md`）。配套分析三件套：`opponent` 识别对手已见牌（非完整牌表）、`replay` 逐回合复盘、`risk` 归纳我方缺地 / 调度 / 卡手事实——产出存 `MatchRecord/`，作为换备与可调仓位迭代的事实依据。样本可信度排序：真人对局 > Forge AI 模拟 > 定性推演，交付文档须分别标注样本来源与样本量。
+7. 将定性推演与实测分开标注。没有对局日志或模拟样本时只能写"推演"，不得输出未经数据支持的胜率结论。
 
 ---
 
