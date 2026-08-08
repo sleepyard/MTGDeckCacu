@@ -1,0 +1,1164 @@
+[
+ {
+  "english": "Brineborn Cutthroat",
+  "chinese": "海生割喉客",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FDN#152",
+   "M20#50",
+   "PIO#48",
+   "J25#291"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Merfolk Pirate",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Brineborn Cutthroat"
+ },
+ {
+  "english": "Nightpack Ambusher",
+  "chinese": "夜群袭狼",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "M20#185"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Wolf",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Nightpack Ambusher"
+ },
+ {
+  "english": "Wavebreak Hippocamp",
+  "chinese": "裂波鱼驹",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "THB#80",
+   "J25#387"
+  ],
+  "layout": "normal",
+  "type_line": "Enchantment Creature — Horse Fish",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Wavebreak Hippocamp"
+ },
+ {
+  "english": "Vivien, Champion of the Wilds",
+  "chinese": "荒野斗士薇薇安",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "WAR#180",
+   "WAR#180★"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Planeswalker — Vivien",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Vivien, Champion of the Wilds"
+ },
+ {
+  "english": "High Fae Trickster",
+  "chinese": "至高仙诈术师",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FDN#40"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Faerie Wizard",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "High Fae Trickster"
+ },
+ {
+  "english": "Spectral Sailor",
+  "chinese": "魂魅船员",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FDN#746",
+   "FDN#164",
+   "JMP#178",
+   "M20#76",
+   "J25#363"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Spirit Pirate",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Spectral Sailor"
+ },
+ {
+  "english": "Pteramander",
+  "chinese": "翼蜥",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "RNA#47"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Salamander Drake",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Pteramander"
+ },
+ {
+  "english": "Wildborn Preserver",
+  "chinese": "幻境保卫者",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FDN#650",
+   "ELD#182"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Elf Archer",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Wildborn Preserver"
+ },
+ {
+  "english": "Brazen Borrower",
+  "chinese": "厚颜借物灵",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ELD#39",
+   "SPG#30"
+  ],
+  "layout": "adventure",
+  "type_line": "Creature — Faerie Rogue // Instant — Adventure",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Brazen Borrower // Petty Theft"
+ },
+ {
+  "english": "Frilled Mystic",
+  "chinese": "褶领秘教徒",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "RNA#174"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Elf Lizard Wizard",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Frilled Mystic"
+ },
+ {
+  "english": "Faerie Mastermind",
+  "chinese": "仙灵才俊",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MOM#58"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Faerie Rogue",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Faerie Mastermind"
+ },
+ {
+  "english": "Merfolk Trickster",
+  "chinese": "人鱼诈术师",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DOM#56"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Merfolk Wizard",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Merfolk Trickster"
+ },
+ {
+  "english": "Tishana's Tidebinder",
+  "chinese": "提莎娜的缚潮师",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "LCI#81"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Merfolk Wizard",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Tishana's Tidebinder"
+ },
+ {
+  "english": "Hypnotic Sprite",
+  "chinese": "催眠仙子",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ELD#49"
+  ],
+  "layout": "adventure",
+  "type_line": "Creature — Faerie // Instant — Adventure",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Hypnotic Sprite // Mesmeric Glare"
+ },
+ {
+  "english": "Fear of Impostors",
+  "chinese": "冒名惧影",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DSK#57"
+  ],
+  "layout": "normal",
+  "type_line": "Enchantment Creature — Nightmare",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Fear of Impostors"
+ },
+ {
+  "english": "Skylasher",
+  "chinese": "空击虫",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "PIO#195"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Insect",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Skylasher"
+ },
+ {
+  "english": "Spell Pierce",
+  "chinese": "点破咒语",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DFT#64",
+   "NEO#80",
+   "XLN#81",
+   "SOA#23"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Spell Pierce"
+ },
+ {
+  "english": "Censor",
+  "chinese": "禁言",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "AKR#52"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Censor"
+ },
+ {
+  "english": "Quench",
+  "chinese": "熄咒",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "RNA#48"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Quench"
+ },
+ {
+  "english": "Negate",
+  "chinese": "失效",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "TMT#47",
+   "FDN#710",
+   "MOM#68",
+   "DMU#58",
+   "ZNR#71",
+   "M20#69",
+   "RIX#44",
+   "MOR#43",
+   "STA#18",
+   "STA#81"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Negate"
+ },
+ {
+  "english": "Essence Scatter",
+  "chinese": "菁华离散",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "SOS#47",
+   "FDN#153",
+   "DMU#49",
+   "IKO#49",
+   "M19#54",
+   "PIO#54",
+   "AKR#60"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Essence Scatter"
+ },
+ {
+  "english": "Disdainful Stroke",
+  "chinese": "倨傲击",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "WOE#47",
+   "SNC#39",
+   "KHM#54",
+   "GRN#37",
+   "KTK#37",
+   "SOA#17"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Disdainful Stroke"
+ },
+ {
+  "english": "Mystical Dispute",
+  "chinese": "神秘干扰",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ELD#58"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Mystical Dispute"
+ },
+ {
+  "english": "Swan Song",
+  "chinese": "天鹅绝唱",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "HA3#9"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Swan Song"
+ },
+ {
+  "english": "Sinister Sabotage",
+  "chinese": "恶意破坏",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "GRN#54"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Sinister Sabotage"
+ },
+ {
+  "english": "Jwari Disruption",
+  "chinese": "爪尔干扰",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ZNR#64",
+   "PIO#62"
+  ],
+  "layout": "modal_dfc",
+  "type_line": "Instant // Land",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Jwari Disruption // Jwari Ruins"
+ },
+ {
+  "english": "Stubborn Denial",
+  "chinese": "顽固拒斥",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "KTK#56"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Stubborn Denial"
+ },
+ {
+  "english": "Three Steps Ahead",
+  "chinese": "早想三步",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "OTJ#75",
+   "MAR#62"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Three Steps Ahead"
+ },
+ {
+  "english": "Rapid Hybridization",
+  "chinese": "顿成杂种",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "PIO#70"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Rapid Hybridization"
+ },
+ {
+  "english": "Fading Hope",
+  "chinese": "渐失希望",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MID#51",
+   "J25#310"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Fading Hope"
+ },
+ {
+  "english": "Unsubstantiate",
+  "chinese": "消解",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "M21#82"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Unsubstantiate"
+ },
+ {
+  "english": "Aether Gust",
+  "chinese": "乙太劲风",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "M20#42"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Aether Gust"
+ },
+ {
+  "english": "Decisive Denial",
+  "chinese": "定念拒斥",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "STX#177",
+   "OTP#42"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Decisive Denial"
+ },
+ {
+  "english": "Simic Charm",
+  "chinese": "析米克护符",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "EA3#10"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Simic Charm"
+ },
+ {
+  "english": "Return to Nature",
+  "chinese": "回返自然",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MID#195",
+   "M21#200",
+   "THB#197",
+   "ELD#173",
+   "WAR#175"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Return to Nature"
+ },
+ {
+  "english": "Opt",
+  "chinese": "抉择",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FDN#512",
+   "M21#59",
+   "ELD#59",
+   "DOM#60",
+   "XLN#65",
+   "J25#339",
+   "STA#19",
+   "STA#82"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Opt"
+ },
+ {
+  "english": "Consider",
+  "chinese": "详加考虑",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "TLE#157",
+   "MID#44",
+   "PIO#51",
+   "MID#388"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Consider"
+ },
+ {
+  "english": "Growth Spiral",
+  "chinese": "成长涡旋",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "RNA#178",
+   "STA#61",
+   "STA#124"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Growth Spiral"
+ },
+ {
+  "english": "Think Twice",
+  "chinese": "再次考虑",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MSC#787",
+   "FDN#165",
+   "HA4#7"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Think Twice"
+ },
+ {
+  "english": "Torrential Gearhulk",
+  "chinese": "汹涌巨械",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "KLR#70"
+  ],
+  "layout": "normal",
+  "type_line": "Artifact Creature — Construct",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Torrential Gearhulk"
+ },
+ {
+  "english": "Hullbreaker Horror",
+  "chinese": "碎船惊惧兽",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "VOW#63"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Kraken Horror",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Hullbreaker Horror"
+ },
+ {
+  "english": "Dream Eater",
+  "chinese": "食梦史芬斯",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "GRN#38"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Nightmare Sphinx",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Dream Eater"
+ },
+ {
+  "english": "Voracious Greatshark",
+  "chinese": "贪餮硕鲨",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FDN#600",
+   "IKO#70",
+   "J25#382"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Shark",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Voracious Greatshark"
+ },
+ {
+  "english": "Eddymurk Crab",
+  "chinese": "黯涡蟹",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "BLB#48"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Elemental Crab",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Eddymurk Crab"
+ },
+ {
+  "english": "Breeding Pool",
+  "chinese": "滋生之池",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "TRK#279",
+   "EOE#251",
+   "RNA#246",
+   "TRK#401",
+   "TRK#496"
+  ],
+  "layout": "normal",
+  "type_line": "Land — Forest Island",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Breeding Pool"
+ },
+ {
+  "english": "Botanical Sanctum",
+  "chinese": "植物圣所",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "OTJ#267",
+   "KLR#281"
+  ],
+  "layout": "normal",
+  "type_line": "Land",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Botanical Sanctum"
+ },
+ {
+  "english": "Hinterland Harbor",
+  "chinese": "内陆港湾",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DOM#240",
+   "YEOE#35"
+  ],
+  "layout": "normal",
+  "type_line": "Land",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Hinterland Harbor"
+ },
+ {
+  "english": "Yavimaya Coast",
+  "chinese": "亚维马雅海岸",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DMU#261",
+   "DMU#382"
+  ],
+  "layout": "normal",
+  "type_line": "Land",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Yavimaya Coast"
+ },
+ {
+  "english": "Dreamroot Cascade",
+  "chinese": "幻根瀑布",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "SOS#254",
+   "VOW#262",
+   "VOW#282"
+  ],
+  "layout": "normal",
+  "type_line": "Land",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Dreamroot Cascade"
+ },
+ {
+  "english": "Barkchannel Pathway",
+  "chinese": "树渠通路",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "KHM#251",
+   "KHM#290"
+  ],
+  "layout": "modal_dfc",
+  "type_line": "Land // Land",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Barkchannel Pathway // Tidechannel Pathway"
+ },
+ {
+  "english": "Fabled Passage",
+  "chinese": "神奇小径",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "BLB#252",
+   "M21#246",
+   "ELD#244",
+   "TLE#57"
+  ],
+  "layout": "normal",
+  "type_line": "Land",
+  "color_identity": [],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Fabled Passage"
+ },
+ {
+  "english": "Castle Vantress",
+  "chinese": "凡翠丝堡",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ELD#242"
+  ],
+  "layout": "normal",
+  "type_line": "Land",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Castle Vantress"
+ },
+ {
+  "english": "Mystic Sanctuary",
+  "chinese": "神秘圣地",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ELD#247"
+  ],
+  "layout": "normal",
+  "type_line": "Land — Island",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Mystic Sanctuary"
+ },
+ {
+  "english": "Otawara, Soaring City",
+  "chinese": "霄城大田原",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "NEO#271",
+   "NEO#414"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Land",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Otawara, Soaring City"
+ },
+ {
+  "english": "Boseiju, Who Endures",
+  "chinese": "历祚母圣树",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "NEO#266",
+   "NEO#412"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Land",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Boseiju, Who Endures"
+ },
+ {
+  "english": "Field of Ruin",
+  "chinese": "战场遗迹",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MID#262",
+   "THB#242",
+   "XLN#254"
+  ],
+  "layout": "normal",
+  "type_line": "Land",
+  "color_identity": [],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Field of Ruin"
+ },
+ {
+  "english": "Scavenging Ooze",
+  "chinese": "腐食流浆",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FDN#232",
+   "M21#204",
+   "M21#318"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Ooze",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Scavenging Ooze"
+ },
+ {
+  "english": "Shifting Ceratops",
+  "chinese": "变幻犄角龙",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "M20#194"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Dinosaur",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Shifting Ceratops"
+ },
+ {
+  "english": "Mistcutter Hydra",
+  "chinese": "破雾多头龙",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "PIO#184"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Hydra",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Mistcutter Hydra"
+ },
+ {
+  "english": "Unlicensed Hearse",
+  "chinese": "无牌灵车",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "SNC#246",
+   "OTP#64"
+  ],
+  "layout": "normal",
+  "type_line": "Artifact — Vehicle",
+  "color_identity": [],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Unlicensed Hearse"
+ }
+]
