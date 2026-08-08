@@ -336,7 +336,8 @@ _grp_cache = None
 
 
 def load_grp_cache():
-    """grpId → 牌名落盘缓存（MatchRecord/grp_cache.json），值为 None 表示解析失败。"""
+    """grpId → 牌面数据落盘缓存（MatchRecord/grp_cache.json）。
+    新格式 {"name","type_line"}；兼容旧格式纯牌名字符串与 None（解析失败）。"""
     global _grp_cache
     if _grp_cache is None:
         if GRP_CACHE_JSON.is_file():
@@ -354,24 +355,71 @@ def save_grp_cache():
             json.dump(_grp_cache, fh, ensure_ascii=False, indent=2, sort_keys=True)
 
 
-def resolve_grp_card(grp_id):
-    """grpId → 英文牌名：先查落盘缓存，未命中调 resolve_arena_card（含失败→None）并写回。"""
+def resolve_grp_meta(grp_id):
+    """grpId → {"name":..., "type_line":...}（各自可为 None）。
+
+    缓存三种历史形态兼容：dict（新格式）/ str（旧格式纯牌名，补抓 type_line 升级，
+    HTTP 磁盘缓存命中时零网络成本）/ None（历史失败，不重试）。"""
     if grp_id is None:
-        return None
+        return {"name": None, "type_line": None}
     cache = load_grp_cache()
     key = str(grp_id)
     if key in cache:
-        return cache[key]
-    name = resolve_arena_card(grp_id)
-    cache[key] = name
+        entry = cache[key]
+        if isinstance(entry, dict):
+            return {"name": entry.get("name"), "type_line": entry.get("type_line")}
+        if entry is None:
+            return {"name": None, "type_line": None}
+        meta = {"name": entry, "type_line": None}
+        try:
+            card = scryfall_get(f"/cards/arena/{grp_id}")
+            meta["type_line"] = card.get("type_line")
+            cache[key] = meta
+            save_grp_cache()
+        except (MtgToolError, KeyError):
+            pass
+        return meta
+    meta = {"name": None, "type_line": None}
+    try:
+        card = scryfall_get(f"/cards/arena/{grp_id}")
+        meta = {"name": card.get("name"), "type_line": card.get("type_line")}
+    except (MtgToolError, KeyError):
+        pass
+    cache[key] = meta
     save_grp_cache()
-    return name
+    return meta
+
+
+def resolve_grp_card(grp_id):
+    """grpId → 英文牌名（兼容旧接口）；解析失败返回 None。"""
+    return resolve_grp_meta(grp_id)["name"]
 
 
 def card_label(grp_id):
     """展示用牌名：解析失败统一为 <grpId N>。"""
     name = resolve_grp_card(grp_id)
     return name if name else f"<grpId {grp_id}>"
+
+
+_CARD_TYPE_NAMES = ("Battle", "Planeswalker", "Creature", "Instant", "Sorcery",
+                    "Enchantment", "Artifact", "Land")
+
+
+def printed_types(type_line):
+    """从 Scryfall type_line 提取牌面类型（双面牌跨面去重）。
+
+    牌面类型是印刷属性；对局内 gameObjects 的 cardTypes 会被复制/变形效应
+    改写（实测：Spark Double 复制鹏洛客后物件类型变 Planeswalker），不能当印刷类型用。"""
+    if not type_line:
+        return []
+    out = []
+    for face in type_line.split(" // "):
+        head = face.split("—")[0]
+        found = [t for t in _CARD_TYPE_NAMES if t in head]
+        label = "/".join(found) if found else "?"
+        if label not in out:
+            out.append(label)
+    return out
 
 
 def _anno_value(anno, key):
@@ -410,15 +458,6 @@ def build_match_context(log_path, match_id=None):
     以最近一次 gameInfo.matchID/gameNumber 为准。"""
     if not Path(log_path).is_file():
         raise LogToolError(f"日志不存在: {log_path}")
-    # 本家座位以 ConnectResp 的 systemSeatIds[0] 为准（实测本机为 seat 2，不是 seat 1）
-    self_seat = None
-    for payload, _lineno, _ts in iter_json_payloads(log_path):
-        event = payload.get("greToClientEvent")
-        if not isinstance(event, dict):
-            continue
-        for msg in event.get("greToClientMessages") or []:
-            if msg.get("type") == "GREMessageType_ConnectResp" and msg.get("systemSeatIds"):
-                self_seat = msg["systemSeatIds"][0]
     if match_id is None:
         for payload, _lineno, _ts in iter_json_payloads(log_path):
             final = find_key(payload, "finalMatchResult")
@@ -426,6 +465,25 @@ def build_match_context(log_path, match_id=None):
                 match_id = final["matchId"]
         if not match_id:
             raise LogToolError("日志中没有带 finalMatchResult 的比赛记录")
+    # 本家座位按场绑定：ConnectResp 每场一条、紧跟该场开局消息之前（systemSeatIds
+    # 在消息顶层）。用最近的 ConnectResp 座位做待定值，在该 matchID 首个 gameInfo
+    # 出现时绑定；取全日志最后一条会把后续场次的座位错套到前面的比赛上。
+    self_seat = None
+    pending_seat = None
+    for payload, _lineno, _ts in iter_json_payloads(log_path):
+        event = payload.get("greToClientEvent")
+        if not isinstance(event, dict):
+            continue
+        for msg in event.get("greToClientMessages") or []:
+            if msg.get("type") == "GREMessageType_ConnectResp" and msg.get("systemSeatIds"):
+                pending_seat = msg["systemSeatIds"][0]
+                continue
+            gsm = msg.get("gameStateMessage")
+            if not isinstance(gsm, dict):
+                continue
+            info = gsm.get("gameInfo")
+            if self_seat is None and isinstance(info, dict) and info.get("matchID") == match_id:
+                self_seat = pending_seat
     cur_match = None
     cur_game = None
     games = {}
@@ -452,8 +510,6 @@ def build_match_context(log_path, match_id=None):
             if seat is None:
                 continue
             seats.add(seat)
-            if p.get("mulliganCount") is not None:
-                mulligans[gn][seat] = max(mulligans[gn].get(seat, 0), p["mulliganCount"])
         for z in gsm.get("zones") or []:
             if z.get("zoneId") is not None:
                 zones[z["zoneId"]] = {"type": z.get("type"), "ownerSeatId": z.get("ownerSeatId")}
@@ -464,6 +520,24 @@ def build_match_context(log_path, match_id=None):
             objects.pop(iid, None)
     if not games:
         raise LogToolError(f"日志中未找到比赛 {match_id} 的 GRE 消息")
+    # 调度次数按开局手牌数推断：players[].mulliganCount 多数场次缺字段。开局首批
+    # 消息里双方手牌区（ZoneType_Hand + ownerSeatId + objectInstanceIds）都在；
+    # 伦敦调度后最终手牌 = 7 - 调度次数。取首个 turnNumber>=1 消息（含该消息本身，
+    # 实测置底快照与首个 turnInfo 同帧到达）之前的最小非空手牌数，兼容
+    # "重抓 7 → 置底后 6"的快照序列；无快照则不记该座位（未知，不静默当 0）。
+    for gn, msgs in games.items():
+        hand_sizes = {}
+        for gsm in msgs:
+            for z in gsm.get("zones") or []:
+                ids = z.get("objectInstanceIds")
+                if (z.get("type") == "ZoneType_Hand" and z.get("ownerSeatId") is not None
+                        and isinstance(ids, list) and ids):
+                    seat = z["ownerSeatId"]
+                    hand_sizes[seat] = min(hand_sizes.get(seat, 8), len(ids))
+            ti = gsm.get("turnInfo")
+            if isinstance(ti, dict) and (ti.get("turnNumber") or 0) >= 1:
+                break
+        mulligans[gn] = {seat: max(0, 7 - size) for seat, size in hand_sizes.items()}
     opp_seat = next((s for s in sorted(seats) if s != self_seat), None)
     return {
         "match_id": match_id,
@@ -571,10 +645,21 @@ def cmd_opponent(args):
     type_totals = Counter()
     rows = []
     for grp, entry in sorted(seen.items(), key=lambda kv: (-len(kv[1]["ids"]), kv[0])):
-        types = [t.replace("CardType_", "") for t in entry["types"]] or ["?"]
+        ingame = [t.replace("CardType_", "") for t in entry["types"]]
+        printed = printed_types(resolve_grp_meta(grp)["type_line"])
+        if printed:
+            display = "/".join(printed)
+            printed_set = {t for label in printed for t in label.split("/")}
+            divergent = [t for t in ingame if t not in printed_set and t != "?"]
+            if divergent:  # 复制/变形体：保留对局内形态信号但不当印刷类型统计
+                display += f"（复制/变形：{'/'.join(divergent)}）"
+            types = printed
+        else:
+            display = "/".join(ingame) or "?"
+            types = ingame or ["?"]
         for t in types:
             type_totals[t] += len(entry["ids"])
-        rows.append(f"| {len(entry['ids'])} | {card_label(grp)} | {'/'.join(types)} | {entry['pt']} |")
+        rows.append(f"| {len(entry['ids'])} | {card_label(grp)} | {display} | {entry['pt']} |")
     lines = [
         f"# 对手已见牌 - {opp_name}",
         "",
@@ -622,7 +707,10 @@ def cmd_replay(args):
         gn = game["game_number"]
         mull = ctx["mulligans"].get(gn) or {}
         if mull:
-            mull_text = f"我方 {mull.get(self_seat, 0)} 次 / 对方 {mull.get(opp_seat, 0)} 次"
+            def _mull_seat_text(seat):
+                v = mull.get(seat)
+                return "未知" if v is None else f"{v} 次"
+            mull_text = f"我方 {_mull_seat_text(self_seat)} / 对方 {_mull_seat_text(opp_seat)}"
         else:
             mull_text = "调度数据未解析"
         opening = []
@@ -658,6 +746,18 @@ def cmd_replay(args):
                 slot["life"] = (last_life.get(self_seat), last_life.get(opp_seat))
             for a in gsm.get("annotations") or []:
                 types = a.get("type") or []
+                active = ti.get("activePlayer")
+
+                def _actor_of(obj_id):
+                    obj = objects.get(obj_id) or {}
+                    return obj.get("controllerSeatId") or obj.get("ownerSeatId") or active
+
+                def _resp_prefix(actor):
+                    # 回合内事件按施放者归属：非当前回合方的瞬时/闪出响应单独标注
+                    if actor == active:
+                        return ""
+                    return "我方响应：" if actor == self_seat else "对方响应："
+
                 if "AnnotationType_ZoneTransfer" in types:
                     cat = _anno_value(a, "category")
                     action = CATEGORY_ACTIONS.get(cat)
@@ -671,13 +771,15 @@ def cmd_replay(args):
                         action = "移动"
                     for iid in a.get("affectedIds") or []:
                         name = _obj_name(objects, iid)
+                        prefix = _resp_prefix(_actor_of(iid))
                         if action == "抓牌" and name.startswith("<"):
-                            slot["events"].append("抓牌")  # 对方抓牌物件不可见，不展示占位符
+                            slot["events"].append(f"{prefix}抓牌")  # 对方抓牌物件不可见，不展示占位符
                         else:
-                            slot["events"].append(f"{action} {name}（{src}→{dst}）")
+                            slot["events"].append(f"{prefix}{action} {name}（{src}→{dst}）")
                 elif "AnnotationType_DamageDealt" in types:
                     damage = _anno_value(a, "damage")
                     source = _obj_name(objects, a.get("affectorId"))
+                    prefix = _resp_prefix(_actor_of(a.get("affectorId")))
                     for tid in a.get("affectedIds") or []:
                         if tid == self_seat:
                             target = "我方"
@@ -685,7 +787,7 @@ def cmd_replay(args):
                             target = "对方"
                         else:
                             target = _obj_name(objects, tid)
-                        slot["events"].append(f"伤害 {damage}({source}→{target})")
+                        slot["events"].append(f"{prefix}伤害 {damage}({source}→{target})")
         for turn_no, active in turn_order:
             slot = turns[(turn_no, active)]
             side = "我方" if active == self_seat else "对方"
@@ -730,7 +832,7 @@ def _game_self_facts(ctx, game):
     self_seat = ctx["self_seat"]
     zones = ctx["zones"]
     gn = game["game_number"]
-    mull = (ctx["mulligans"].get(gn) or {}).get(self_seat, 0)
+    mull = (ctx["mulligans"].get(gn) or {}).get(self_seat)  # 无开局手牌快照时为 None（未知）
     self_turns = []       # activePlayer==本家 的 turnNumber，按出现顺序
     land_turns = set()    # 本家下过地的 turnNumber
     total_turns = 0
@@ -767,7 +869,7 @@ def _game_self_facts(ctx, game):
     flags = []
     if len(self_turns) >= 3 and lands_t3 < RISK_TURN3_LANDS:
         flags.append(f"T3 未下第三块地（前 3 个自己回合仅下地 {lands_t3} 块，阈值 {RISK_TURN3_LANDS}）")
-    if mull >= RISK_MULLIGAN_LIMIT:
+    if mull is not None and mull >= RISK_MULLIGAN_LIMIT:
         flags.append(f"单局调度≥{RISK_MULLIGAN_LIMIT}（实际 {mull} 次）")
     if len(stuck) >= RISK_STUCK_NONLAND:
         flags.append(f"终局卡手非地牌≥{RISK_STUCK_NONLAND}（实际 {len(stuck)} 张）")
@@ -805,7 +907,7 @@ def cmd_risk(args):
                 sections += [
                     f"### 第 {game['game_number']} 局",
                     "",
-                    f"- 调度次数：{facts['mulligans']}",
+                    f"- 调度次数：{facts['mulligans'] if facts['mulligans'] is not None else '未知'}",
                     f"- 前 6 个自己回合缺地：{'、'.join(facts['missed_land_turns']) or '无'}",
                     f"- 终局卡手非地牌 {len(facts['stuck_names'])} 张"
                     f"（{'、'.join(facts['stuck_names']) or '无'}）",

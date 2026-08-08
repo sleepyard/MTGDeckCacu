@@ -108,9 +108,9 @@ python tools/mtga_log_tool.py risk [--match-id X | --all]
 
 - 默认日志路径 `%USERPROFILE%\AppData\LocalLow\Wizards of the Coast\MTGA\Player.log`，`--log` 可覆盖。
 - 口径：真人对局样本，可信度高于 Forge AI 模拟；对手牌表无法从日志完整还原，不做猜测。
-- 本家识别：比赛结果按 AuthenticateResponse 的 `screenName`（seat 1 可能是对手）；对局内座位按 ConnectResp 的 `systemSeatIds`（同样可能不是 seat 1）。
-- 三件套口径：`opponent` 只聚合对手**公开可见**物件（进场/堆叠/展示），是"已见牌集合"不是完整牌表；`replay` 是事件重建不是录屏，ZoneTransfer 未知 category 在文末原样计数；`risk` 只做事实归纳与阈值标记，不出改动建议。
-- grpId→牌名落盘缓存 `MatchRecord/grp_cache.json`；查不到的（新牌/token）显示 `<grpId N>`，不丢弃。
+- 本家识别：比赛结果按 AuthenticateResponse 的 `screenName`（seat 1 可能是对手）；对局内座位按 ConnectResp 的 `systemSeatIds` **按场绑定**——ConnectResp 每场一条、紧跟该场开局消息之前，取最近一条的座位绑定到该场（取全日志最后一条会把后续场次的座位错套到前面的比赛上）。
+- 三件套口径：`opponent` 只聚合对手**公开可见**物件（进场/堆叠/展示），是"已见牌集合"不是完整牌表；类型列取 Scryfall 印刷类型（type_line），对局内物件类型会被复制/变形改写——不一致时以"（复制/变形：X）"标注，印刷类型才计入类型总计（实测教训：Spark Double 复制鹏洛客后物件类型变 Planeswalker，直接采信会误判套牌属性）；`replay` 是事件重建不是录屏，回合内事件**按施放者归属**——非当前回合方的瞬时/闪出响应标注"对方响应："/"我方响应："（物件不可见时回退当前回合方），ZoneTransfer 未知 category 在文末原样计数；调度次数**按开局手牌数推断**（伦敦调度后手牌 = 7 − 调度次数，取首个 turnInfo 帧之前的最小快照；`players[].mulliganCount` 多数场次缺字段不用），无快照显示"未知"不静默当 0；`risk` 只做事实归纳与阈值标记，不出改动建议。
+- grpId→牌名/牌面数据落盘缓存 `MatchRecord/grp_cache.json`；查不到的（新牌/token）显示 `<grpId N>`，不丢弃。
 - 回归用合成样本：`tools/testdata/mtga_log_sample.txt`（scan）与 `mtga_log_sample2.txt`（三件套）。
 
 ## 退出码
