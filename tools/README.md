@@ -53,8 +53,8 @@ Forge 套牌测试 CLI：牌表转换 `.dck`、AI vs AI 无头模拟、GUI 试�
 # 1. 牌表 → Forge .dck（输出到 tools/forge/simdecks/；双面牌/MDFC 自动取正面名，Forge 不认 "A // B" 全名）
 python tools/forge_tool.py convert deck.txt --name MyDeck
 
-# 2. AI vs AI 模拟：报告写 SimResult/*.md，原始日志 *.log
-python tools/forge_tool.py sim deckA.txt deckB.txt --games 20 --quiet
+# 2. AI vs AI 模拟：报告 + 原始日志默认写 SimResult/；--outdir 可改（约定写入被测套牌的 DeckList 目录，如 .../Golgari/sim/）
+python tools/forge_tool.py sim deckA.txt deckB.txt --games 20 --quiet --outdir DeckList/<主题>/<方向>/sim
 python tools/forge_tool.py sim deckA.txt deckB.txt --matches 3 --format brawl
 
 # 3. 启动 Forge GUI 人工试玩（可选先转换牌表供编辑器导入）

@@ -230,10 +230,11 @@ def cmd_sim(args):
         print(f"[错误] Forge 启动失败: {exc}", file=sys.stderr)
         return 6
 
-    RESULT_DIR.mkdir(exist_ok=True)
+    out_dir = Path(args.outdir) if args.outdir else RESULT_DIR
+    out_dir.mkdir(parents=True, exist_ok=True)
     stamp = time.strftime("%Y%m%d_%H%M%S")
     base = f"{stamp}_{decks[0].stem}_vs_{decks[1].stem}"
-    log_path = RESULT_DIR / (base + ".log")
+    log_path = out_dir / (base + ".log")
     log_path.write_text(output, encoding="utf-8")
 
     load_failed = bool(LOAD_FAIL_PATTERN.search(output))
@@ -270,7 +271,7 @@ def cmd_sim(args):
     if load_failed:
         lines += ["> [警告] 日志疑似含套牌加载失败 / 牌未实现信息，结果可能无效，请核对原始日志。", ""]
     lines += ["> " + AI_CAVEAT, "", f"原始日志: {log_path.name}", ""]
-    report_path = RESULT_DIR / (base + ".md")
+    report_path = out_dir / (base + ".md")
     report_path.write_text("\n".join(lines), encoding="utf-8")
 
     print(str(report_path))
@@ -334,6 +335,9 @@ def build_parser():
                     choices=["constructed", "brawl", "commander"])
     ps.add_argument("--clock", type=int, default=120, help="单局最长秒数，超时判平（默认 120）")
     ps.add_argument("--quiet", action="store_true", help="静默模式，仅输出结果")
+    ps.add_argument("--outdir", default=None,
+                    help="报告/日志输出目录（默认 SimResult/；实测报告约定写入被测套牌的 DeckList 目录，"
+                         "如 DeckList/Explorer_SlimeAgainstHumanity/Golgari/sim/）")
     ps.set_defaults(func=cmd_sim)
 
     pp = sub.add_parser("play", help="启动 Forge GUI 人工试玩")
