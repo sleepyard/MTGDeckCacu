@@ -1,0 +1,188 @@
+[
+ {
+  "english": "Kitesail Freebooter",
+  "chinese": "航筝掠盗",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "M21#107",
+   "XLN#110"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Human Pirate",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Kitesail Freebooter"
+ },
+ {
+  "english": "Feed the Swarm",
+  "chinese": "喂饱虫群",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "TLE#257",
+   "FDN#712",
+   "ZNR#102",
+   "SOA#29",
+   "MAR#16",
+   "OMB#16",
+   "LTC#200"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Feed the Swarm"
+ },
+ {
+  "english": "Withering Torment",
+  "chinese": "凋萎折磨",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DSK#124"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Withering Torment"
+ },
+ {
+  "english": "Lantern of the Lost",
+  "chinese": "逝者明灯",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "VOW#259"
+  ],
+  "layout": "normal",
+  "type_line": "Artifact",
+  "color_identity": [],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Lantern of the Lost"
+ },
+ {
+  "english": "Cling to Dust",
+  "chinese": "执持化尘",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "THB#87"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Cling to Dust"
+ },
+ {
+  "english": "Drag to the Bottom",
+  "chinese": "拖入底部",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DMU#91"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Drag to the Bottom"
+ },
+ {
+  "english": "Elder Gargaroth",
+  "chinese": "年长庞巨兽",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "M21#179"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Beast",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Elder Gargaroth"
+ },
+ {
+  "english": "Voracious Hydra",
+  "chinese": "贪餮多头龙",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "M20#200"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Hydra",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Voracious Hydra"
+ },
+ {
+  "english": "Deathrite Shaman",
+  "chinese": "丧仪祭师",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "EA3#15"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Elf Shaman",
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Deathrite Shaman"
+ },
+ {
+  "english": "Skyreaping",
+  "chinese": "刈空扫击",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "PIO#349"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Skyreaping"
+ }
+]

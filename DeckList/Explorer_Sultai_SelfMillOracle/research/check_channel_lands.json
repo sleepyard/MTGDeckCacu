@@ -1,0 +1,59 @@
+[
+ {
+  "english": "Boseiju, Who Endures",
+  "chinese": "历祚母圣树",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "NEO#266",
+   "NEO#412"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Land",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Boseiju, Who Endures"
+ },
+ {
+  "english": "Takenuma, Abandoned Mire",
+  "chinese": "荒泽竹沼",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "NEO#278",
+   "NEO#416"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Land",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Takenuma, Abandoned Mire"
+ },
+ {
+  "english": "Otawara, Soaring City",
+  "chinese": "霄城大田原",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "NEO#271",
+   "NEO#414"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Land",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Otawara, Soaring City"
+ }
+]

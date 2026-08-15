@@ -1,0 +1,3881 @@
+[
+ {
+  "name": "Aftermath Analyst",
+  "oracle_id": "374e54d8-8e73-4268-9dde-c28c77bbbf32",
+  "layout": "normal",
+  "mana_cost": "{1}{G}",
+  "cmc": 2.0,
+  "type_line": "Creature — Elf Detective",
+  "oracle_text": "When this creature enters, mill three cards. (Put the top three cards of your library into your graveyard.)\n{3}{G}, Sacrifice this creature: Return all land cards from your graveyard to the battlefield tapped.",
+  "power": "1",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "mkm",
+  "set_name": "Murders at Karlov Manor",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Ainok Wayfarer",
+  "oracle_id": "8134f3fd-197a-4b44-a370-311cc955dea3",
+  "layout": "normal",
+  "mana_cost": "{1}{G}",
+  "cmc": 2.0,
+  "type_line": "Creature — Dog Scout",
+  "oracle_text": "When this creature enters, mill three cards. You may put a land card from among them into your hand. If you don't, put a +1/+1 counter on this creature. (To mill three cards, put the top three cards of your library into your graveyard.)",
+  "power": "1",
+  "toughness": "1",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "tdm",
+  "set_name": "Tarkir: Dragonstorm",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Aven Heartstabber",
+  "oracle_id": "fee73267-b0ef-4f43-a0bd-7728691d6f17",
+  "layout": "normal",
+  "mana_cost": "{U}{B}",
+  "cmc": 2.0,
+  "type_line": "Creature — Bird Assassin",
+  "oracle_text": "Flying\nAs long as there are five or more mana values among cards in your graveyard, this creature gets +2/+2 and has deathtouch.\nWhen this creature dies, mill two cards, then draw a card.",
+  "power": "1",
+  "toughness": "1",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "snc",
+  "set_name": "Streets of New Capenna",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Flying",
+   "Mill"
+  ],
+  "color_identity": [
+   "B",
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Blanchwood Prowler",
+  "oracle_id": "8d1a367a-542e-4b94-b466-c922c5fb717b",
+  "layout": "normal",
+  "mana_cost": "{1}{G}",
+  "cmc": 2.0,
+  "type_line": "Creature — Elemental",
+  "oracle_text": "When this creature enters, mill three cards. You may put a land card from among the cards milled this way into your hand. If you don't, put a +1/+1 counter on this creature. (To mill a card, put the top card of your library into your graveyard.)",
+  "power": "1",
+  "toughness": "1",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "bro",
+  "set_name": "The Brothers' War",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Bramble Familiar // Fetch Quest",
+  "oracle_id": "68f36dfa-bbd2-4860-b09b-37e35136be72",
+  "layout": "adventure",
+  "mana_cost": "{1}{G} // {5}{G}{G}",
+  "cmc": 2.0,
+  "type_line": "Creature — Elemental Raccoon // Sorcery — Adventure",
+  "oracle_text": "{T}: Add {G}.\n{1}{G}, {T}, Discard a card: Return this creature to its owner's hand.\n//\nMill seven cards. Then put a creature, enchantment, or land card from among the milled cards onto the battlefield.",
+  "power": "2",
+  "toughness": "2",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "not_legal"
+  },
+  "set": "woe",
+  "set_name": "Wilds of Eldraine",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": [
+   {
+    "name": "Bramble Familiar",
+    "mana_cost": "{1}{G}",
+    "type_line": "Creature — Elemental Raccoon",
+    "oracle_text": "{T}: Add {G}.\n{1}{G}, {T}, Discard a card: Return this creature to its owner's hand.",
+    "power": "2",
+    "toughness": "2",
+    "loyalty": null
+   },
+   {
+    "name": "Fetch Quest",
+    "mana_cost": "{5}{G}{G}",
+    "type_line": "Sorcery — Adventure",
+    "oracle_text": "Mill seven cards. Then put a creature, enchantment, or land card from among the milled cards onto the battlefield.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Coral Colony",
+  "oracle_id": "5e186931-992b-491c-bffc-6877a613d5c3",
+  "layout": "normal",
+  "mana_cost": "{1}{U}",
+  "cmc": 2.0,
+  "type_line": "Creature — Wall",
+  "oracle_text": "Defender\n{1}{U}, {T}: Target player mills X cards, where X is the number of creatures you control with defender. (To mill a card, a player puts the top card of their library into their graveyard.)",
+  "power": "1",
+  "toughness": "4",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "dmu",
+  "set_name": "Dominaria United",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill",
+   "Defender"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Covetous Castaway // Ghostly Castigator",
+  "oracle_id": "8f3e6554-eb8a-4096-81a3-2411186d9cb4",
+  "layout": "transform",
+  "mana_cost": "{1}{U}",
+  "cmc": 2.0,
+  "type_line": "Creature — Human // Creature — Spirit",
+  "oracle_text": "When this creature dies, mill three cards. (Put the top three cards of your library into your graveyard.)\nDisturb {3}{U}{U} (You may cast this card from your graveyard transformed for its disturb cost.)\n//\nFlying\nWhen this creature enters, you may shuffle up to three target cards from your graveyard into your library.\nIf Ghostly Castigator would be put into a graveyard from anywhere, exile it instead.",
+  "power": "1",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "mid",
+  "set_name": "Innistrad: Midnight Hunt",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Flying",
+   "Transform",
+   "Mill",
+   "Disturb"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": [
+   {
+    "name": "Covetous Castaway",
+    "mana_cost": "{1}{U}",
+    "type_line": "Creature — Human",
+    "oracle_text": "When this creature dies, mill three cards. (Put the top three cards of your library into your graveyard.)\nDisturb {3}{U}{U} (You may cast this card from your graveyard transformed for its disturb cost.)",
+    "power": "1",
+    "toughness": "3",
+    "loyalty": null
+   },
+   {
+    "name": "Ghostly Castigator",
+    "mana_cost": "",
+    "type_line": "Creature — Spirit",
+    "oracle_text": "Flying\nWhen this creature enters, you may shuffle up to three target cards from your graveyard into your library.\nIf Ghostly Castigator would be put into a graveyard from anywhere, exile it instead.",
+    "power": "3",
+    "toughness": "4",
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Cruel Somnophage // Can't Wake Up",
+  "oracle_id": "997bdec5-f67b-4822-a3ba-c636e2685e8a",
+  "layout": "adventure",
+  "mana_cost": "{1}{B} // {1}{U}",
+  "cmc": 2.0,
+  "type_line": "Creature — Nightmare // Sorcery — Adventure",
+  "oracle_text": "Cruel Somnophage's power and toughness are each equal to the number of creature cards in all graveyards.\n//\nTarget player mills four cards. (Then exile this card. You may cast the creature later from exile.)",
+  "power": "*",
+  "toughness": "*",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "woe",
+  "set_name": "Wilds of Eldraine",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B",
+   "U"
+  ],
+  "card_faces": [
+   {
+    "name": "Cruel Somnophage",
+    "mana_cost": "{1}{B}",
+    "type_line": "Creature — Nightmare",
+    "oracle_text": "Cruel Somnophage's power and toughness are each equal to the number of creature cards in all graveyards.",
+    "power": "*",
+    "toughness": "*",
+    "loyalty": null
+   },
+   {
+    "name": "Can't Wake Up",
+    "mana_cost": "{1}{U}",
+    "type_line": "Sorcery — Adventure",
+    "oracle_text": "Target player mills four cards. (Then exile this card. You may cast the creature later from exile.)",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Deathbonnet Sprout // Deathbonnet Hulk",
+  "oracle_id": "c92d6f26-5856-42dc-9ee5-21292d78a1fb",
+  "layout": "transform",
+  "mana_cost": "{G}",
+  "cmc": 1.0,
+  "type_line": "Creature — Fungus // Creature — Fungus Horror",
+  "oracle_text": "At the beginning of your upkeep, mill a card. Then if there are three or more creature cards in your graveyard, transform this creature. (To mill a card, put the top card of your library into your graveyard.)\n//\nAt the beginning of your upkeep, you may exile a card from a graveyard. If a creature card was exiled this way, put a +1/+1 counter on this creature.",
+  "power": "1",
+  "toughness": "1",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "mid",
+  "set_name": "Innistrad: Midnight Hunt",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Transform",
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": [
+   {
+    "name": "Deathbonnet Sprout",
+    "mana_cost": "{G}",
+    "type_line": "Creature — Fungus",
+    "oracle_text": "At the beginning of your upkeep, mill a card. Then if there are three or more creature cards in your graveyard, transform this creature. (To mill a card, put the top card of your library into your graveyard.)",
+    "power": "1",
+    "toughness": "1",
+    "loyalty": null
+   },
+   {
+    "name": "Deathbonnet Hulk",
+    "mana_cost": "",
+    "type_line": "Creature — Fungus Horror",
+    "oracle_text": "At the beginning of your upkeep, you may exile a card from a graveyard. If a creature card was exiled this way, put a +1/+1 counter on this creature.",
+    "power": "3",
+    "toughness": "3",
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Deathcap Marionette",
+  "oracle_id": "6c4247d0-6dc8-4139-bbf5-c83dfdc7be1f",
+  "layout": "normal",
+  "mana_cost": "{1}{B}",
+  "cmc": 2.0,
+  "type_line": "Creature — Fungus",
+  "oracle_text": "Deathtouch\nWhen this creature enters, you may mill two cards. (You may put the top two cards of your library into your graveyard.)",
+  "power": "1",
+  "toughness": "1",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "lci",
+  "set_name": "The Lost Caverns of Ixalan",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill",
+   "Deathtouch"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Desperate Bloodseeker",
+  "oracle_id": "de8d7cad-02c7-43f1-896e-eaa73f016ada",
+  "layout": "normal",
+  "mana_cost": "{1}{B}",
+  "cmc": 2.0,
+  "type_line": "Creature — Vampire",
+  "oracle_text": "Lifelink\nWhen this creature enters, target player mills two cards. (They put the top two cards of their library into their graveyard.)",
+  "power": "2",
+  "toughness": "2",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "otj",
+  "set_name": "Outlaws of Thunder Junction",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Lifelink",
+   "Mill"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Devourer of Memory",
+  "oracle_id": "f747b39a-28a0-46a8-a161-182939556d39",
+  "layout": "normal",
+  "mana_cost": "{U}{B}",
+  "cmc": 2.0,
+  "type_line": "Creature — Nightmare",
+  "oracle_text": "Whenever one or more cards are put into your graveyard from your library, this creature gets +1/+1 until end of turn and can't be blocked this turn.\n{1}{U}{B}: Mill a card.",
+  "power": "2",
+  "toughness": "1",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "thb",
+  "set_name": "Theros Beyond Death",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B",
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Diligent Excavator",
+  "oracle_id": "a3866181-c127-45d6-8553-97e9f64a3ca5",
+  "layout": "normal",
+  "mana_cost": "{1}{U}",
+  "cmc": 2.0,
+  "type_line": "Creature — Human Artificer",
+  "oracle_text": "Whenever you cast a historic spell, target player mills two cards. (Artifacts, legendaries, and Sagas are historic.)",
+  "power": "1",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "dom",
+  "set_name": "Dominaria",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Excavated Wall",
+  "oracle_id": "16e48b95-f030-400c-a2b7-c3f3111cc165",
+  "layout": "normal",
+  "mana_cost": "{1}",
+  "cmc": 1.0,
+  "type_line": "Artifact Creature — Wall",
+  "oracle_text": "Defender\n{1}, {T}: Mill a card. (Put the top card of your library into your graveyard.)",
+  "power": "0",
+  "toughness": "4",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "stx",
+  "set_name": "Strixhaven: School of Mages",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill",
+   "Defender"
+  ],
+  "color_identity": [],
+  "card_faces": []
+ },
+ {
+  "name": "Exhibition Tidecaller",
+  "oracle_id": "d32c9439-4c97-412b-83cc-6d9acb48be3c",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Creature — Djinn Wizard",
+  "oracle_text": "Opus — Whenever you cast an instant or sorcery spell, target player mills three cards. If five or more mana was spent to cast that spell, that player mills ten cards instead.",
+  "power": "0",
+  "toughness": "2",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "sos",
+  "set_name": "Secrets of Strixhaven",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Mill",
+   "Opus"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Eye Collector",
+  "oracle_id": "553c2006-e123-406e-ab4a-1d1f67c7468c",
+  "layout": "normal",
+  "mana_cost": "{B}",
+  "cmc": 1.0,
+  "type_line": "Creature — Faerie",
+  "oracle_text": "Flying\nWhenever this creature deals combat damage to a player, each player mills a card. (Each player puts the top card of their library into their graveyard.)",
+  "power": "1",
+  "toughness": "1",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "eld",
+  "set_name": "Throne of Eldraine",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Flying",
+   "Mill"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Fallaji Archaeologist",
+  "oracle_id": "bf037457-82e3-45fd-bc17-5bc25e66c15e",
+  "layout": "normal",
+  "mana_cost": "{1}{U}",
+  "cmc": 2.0,
+  "type_line": "Creature — Human Scout",
+  "oracle_text": "When this creature enters, mill three cards. You may put a noncreature, nonland card from among the cards milled this way into your hand. If you don't, put a +1/+1 counter on this creature. (To mill a card, put the top card of your library into your graveyard.)",
+  "power": "0",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "bro",
+  "set_name": "The Brothers' War",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Festerleech",
+  "oracle_id": "d14fdc1d-62bc-4e9c-b79b-8c9c3232f0bc",
+  "layout": "normal",
+  "mana_cost": "{B}",
+  "cmc": 1.0,
+  "type_line": "Creature — Zombie Leech",
+  "oracle_text": "Whenever this creature deals combat damage to a player, you mill two cards.\n{1}{B}: This creature gets +2/+2 until end of turn. Activate only once each turn.",
+  "power": "1",
+  "toughness": "1",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "mkm",
+  "set_name": "Murders at Karlov Manor",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Glowspore Shaman",
+  "oracle_id": "ac7a9d73-dbdf-4e97-b382-67cd30ef5649",
+  "layout": "normal",
+  "mana_cost": "{B}{G}",
+  "cmc": 2.0,
+  "type_line": "Creature — Elf Shaman",
+  "oracle_text": "When this creature enters, mill three cards. You may put a land card from your graveyard on top of your library. (To mill a card, put the top card of your library into your graveyard.)",
+  "power": "3",
+  "toughness": "1",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "grn",
+  "set_name": "Guilds of Ravnica",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Gnawing Vermin",
+  "oracle_id": "33ef3d51-845d-460b-97a0-95e7591cf466",
+  "layout": "normal",
+  "mana_cost": "{B}",
+  "cmc": 1.0,
+  "type_line": "Creature — Rat",
+  "oracle_text": "When this creature enters, target player mills two cards.\nWhen this creature dies, target creature you don't control gets -1/-1 until end of turn.",
+  "power": "1",
+  "toughness": "1",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "bro",
+  "set_name": "The Brothers' War",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Go-Shintai of Lost Wisdom",
+  "oracle_id": "f6a2092a-093e-4cd6-9eb0-d8ed32da896c",
+  "layout": "normal",
+  "mana_cost": "{1}{U}",
+  "cmc": 2.0,
+  "type_line": "Legendary Enchantment Creature — Shrine",
+  "oracle_text": "Flying\nAt the beginning of your end step, you may pay {1}. When you do, target player mills X cards, where X is the number of Shrines you control. (To mill a card, a player puts the top card of their library into their graveyard.)",
+  "power": "0",
+  "toughness": "4",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "neo",
+  "set_name": "Kamigawa: Neon Dynasty",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Flying",
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Heirloom Mirror // Inherited Fiend",
+  "oracle_id": "b33390dd-f2f8-4059-83a9-45c0edccd5e4",
+  "layout": "transform",
+  "mana_cost": "{1}{B}",
+  "cmc": 2.0,
+  "type_line": "Artifact // Creature — Demon",
+  "oracle_text": "{1}, {T}, Pay 1 life, Discard a card: Draw a card, mill a card, then put a ritual counter on this artifact. Then if it has three or more ritual counters on it, remove them and transform it. Activate only as a sorcery.\n//\nFlying\n{2}{B}: Exile target creature card from a graveyard. Put a +1/+1 counter on this creature.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "mid",
+  "set_name": "Innistrad: Midnight Hunt",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Flying",
+   "Transform",
+   "Mill"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": [
+   {
+    "name": "Heirloom Mirror",
+    "mana_cost": "{1}{B}",
+    "type_line": "Artifact",
+    "oracle_text": "{1}, {T}, Pay 1 life, Discard a card: Draw a card, mill a card, then put a ritual counter on this artifact. Then if it has three or more ritual counters on it, remove them and transform it. Activate only as a sorcery.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "Inherited Fiend",
+    "mana_cost": "",
+    "type_line": "Creature — Demon",
+    "oracle_text": "Flying\n{2}{B}: Exile target creature card from a graveyard. Put a +1/+1 counter on this creature.",
+    "power": "4",
+    "toughness": "4",
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Inverted Iceberg // Iceberg Titan",
+  "oracle_id": "3feedc63-173e-4713-8e96-8f1c9576055f",
+  "layout": "transform",
+  "mana_cost": "{1}{U}",
+  "cmc": 2.0,
+  "type_line": "Artifact // Artifact Creature — Golem",
+  "oracle_text": "When this artifact enters, mill a card, then draw a card. (To mill a card, put the top card of your library into your graveyard.)\nCraft with artifact {4}{U}{U} ({4}{U}{U}, Exile this artifact, Exile another artifact you control or an artifact card from your graveyard: Return this card transformed under its owner's control. Craft only as a sorcery.)\n//\nWhenever this creature attacks, you may tap or untap target artifact or creature.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "lci",
+  "set_name": "The Lost Caverns of Ixalan",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Craft",
+   "Transform",
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": [
+   {
+    "name": "Inverted Iceberg",
+    "mana_cost": "{1}{U}",
+    "type_line": "Artifact",
+    "oracle_text": "When this artifact enters, mill a card, then draw a card. (To mill a card, put the top card of your library into your graveyard.)\nCraft with artifact {4}{U}{U} ({4}{U}{U}, Exile this artifact, Exile another artifact you control or an artifact card from your graveyard: Return this card transformed under its owner's control. Craft only as a sorcery.)",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "Iceberg Titan",
+    "mana_cost": "",
+    "type_line": "Artifact Creature — Golem",
+    "oracle_text": "Whenever this creature attacks, you may tap or untap target artifact or creature.",
+    "power": "6",
+    "toughness": "6",
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Jace, Vryn's Prodigy // Jace, Telepath Unbound",
+  "oracle_id": "594f6881-c059-46f8-aa4e-7151d502de73",
+  "layout": "transform",
+  "mana_cost": "{1}{U}",
+  "cmc": 2.0,
+  "type_line": "Legendary Creature — Human Wizard // Legendary Planeswalker — Jace",
+  "oracle_text": "{T}: Draw a card, then discard a card. If there are five or more cards in your graveyard, exile Jace, then return him to the battlefield transformed under his owner's control.\n//\n+1: Up to one target creature gets -2/-0 until your next turn.\n−3: You may cast target instant or sorcery card from your graveyard this turn. If that spell would be put into your graveyard, exile it instead.\n−9: You get an emblem with \"Whenever you cast a spell, target opponent mills five cards.\"",
+  "power": "0",
+  "toughness": "2",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "pio",
+  "set_name": "Pioneer Masters",
+  "games": [
+   "arena"
+  ],
+  "keywords": [
+   "Transform",
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": [
+   {
+    "name": "Jace, Vryn's Prodigy",
+    "mana_cost": "{1}{U}",
+    "type_line": "Legendary Creature — Human Wizard",
+    "oracle_text": "{T}: Draw a card, then discard a card. If there are five or more cards in your graveyard, exile Jace, then return him to the battlefield transformed under his owner's control.",
+    "power": "0",
+    "toughness": "2",
+    "loyalty": null
+   },
+   {
+    "name": "Jace, Telepath Unbound",
+    "mana_cost": "",
+    "type_line": "Legendary Planeswalker — Jace",
+    "oracle_text": "+1: Up to one target creature gets -2/-0 until your next turn.\n−3: You may cast target instant or sorcery card from your graveyard this turn. If that spell would be put into your graveyard, exile it instead.\n−9: You get an emblem with \"Whenever you cast a spell, target opponent mills five cards.\"",
+    "power": null,
+    "toughness": null,
+    "loyalty": "5"
+   }
+  ]
+ },
+ {
+  "name": "Krydle of Baldur's Gate",
+  "oracle_id": "77212081-0b49-4d92-9c5a-1f21e6907fce",
+  "layout": "normal",
+  "mana_cost": "{U}{B}",
+  "cmc": 2.0,
+  "type_line": "Legendary Creature — Human Elf Rogue",
+  "oracle_text": "Whenever Krydle deals combat damage to a player, that player loses 1 life and mills a card, then you gain 1 life and scry 1.\nWhenever you attack, you may pay {2}. If you do, target creature can't be blocked this turn.",
+  "power": "1",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "not_legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "not_legal",
+   "competitivebrawl": "not_legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "afr",
+  "set_name": "Adventures in the Forgotten Realms",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill",
+   "Scry"
+  ],
+  "color_identity": [
+   "B",
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Lluwen, Imperfect Naturalist",
+  "oracle_id": "81ff5764-72ce-4b9a-a14f-07413700d935",
+  "layout": "normal",
+  "mana_cost": "{B/G}{B/G}",
+  "cmc": 2.0,
+  "type_line": "Legendary Creature — Elf Druid",
+  "oracle_text": "When Lluwen enters, mill four cards, then you may put a creature or land card from among the milled cards on top of your library.\n{2}{B/G}{B/G}{B/G}, {T}, Discard a land card: Create a 1/1 black and green Worm creature token for each land card in your graveyard.",
+  "power": "1",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "ecl",
+  "set_name": "Lorwyn Eclipsed",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Ludevic, Necrogenius // Olag, Ludevic's Hubris",
+  "oracle_id": "f6f684f6-0c8a-4676-ba4e-d3e064293128",
+  "layout": "transform",
+  "mana_cost": "{U}{B}",
+  "cmc": 2.0,
+  "type_line": "Legendary Creature — Human Wizard // Legendary Creature — Zombie",
+  "oracle_text": "Whenever Ludevic enters or attacks, mill a card.\n{X}{U}{U}{B}{B}, Exile X creature cards from your graveyard: Transform Ludevic. X can't be 0. Activate only as a sorcery.\n//\nAs this creature transforms into Olag, Ludevic's Hubris, it becomes a copy of a creature card exiled with it, except its name is Olag, Ludevic's Hubris, it's 4/4, and it's a legendary blue and black Zombie in addition to its other colors and types. Put a number of +1/+1 counters on Olag equal to the number of creature cards exiled with it.",
+  "power": "2",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "mid",
+  "set_name": "Innistrad: Midnight Hunt",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Transform",
+   "Mill"
+  ],
+  "color_identity": [
+   "B",
+   "U"
+  ],
+  "card_faces": [
+   {
+    "name": "Ludevic, Necrogenius",
+    "mana_cost": "{U}{B}",
+    "type_line": "Legendary Creature — Human Wizard",
+    "oracle_text": "Whenever Ludevic enters or attacks, mill a card.\n{X}{U}{U}{B}{B}, Exile X creature cards from your graveyard: Transform Ludevic. X can't be 0. Activate only as a sorcery.",
+    "power": "2",
+    "toughness": "3",
+    "loyalty": null
+   },
+   {
+    "name": "Olag, Ludevic's Hubris",
+    "mana_cost": "",
+    "type_line": "Legendary Creature — Zombie",
+    "oracle_text": "As this creature transforms into Olag, Ludevic's Hubris, it becomes a copy of a creature card exiled with it, except its name is Olag, Ludevic's Hubris, it's 4/4, and it's a legendary blue and black Zombie in addition to its other colors and types. Put a number of +1/+1 counters on Olag equal to the number of creature cards exiled with it.",
+    "power": "4",
+    "toughness": "4",
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Manic Scribe",
+  "oracle_id": "d2ef475d-6043-4da8-83f0-dffa76052707",
+  "layout": "normal",
+  "mana_cost": "{1}{U}",
+  "cmc": 2.0,
+  "type_line": "Creature — Human Wizard",
+  "oracle_text": "When this creature enters, each opponent mills three cards.\nDelirium — At the beginning of each opponent's upkeep, if there are four or more card types among cards in your graveyard, that player mills three cards.",
+  "power": "0",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "sir",
+  "set_name": "Shadows over Innistrad Remastered",
+  "games": [
+   "arena"
+  ],
+  "keywords": [
+   "Delirium",
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Master Pakku",
+  "oracle_id": "b1727c07-c829-4d64-a1c5-8b53c743888a",
+  "layout": "normal",
+  "mana_cost": "{1}{U}",
+  "cmc": 2.0,
+  "type_line": "Legendary Creature — Human Advisor Ally",
+  "oracle_text": "Prowess (Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn.)\nWhenever Master Pakku becomes tapped, target player mills X cards, where X is the number of Lesson cards in your graveyard. (They put the top X cards of their library into their graveyard.)",
+  "power": "1",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "tla",
+  "set_name": "Avatar: The Last Airbender",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Prowess",
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Merfolk Secretkeeper // Venture Deeper",
+  "oracle_id": "4f5096d4-bbb5-4a48-9dd0-9dabdd2ac125",
+  "layout": "adventure",
+  "mana_cost": "{U} // {U}",
+  "cmc": 1.0,
+  "type_line": "Creature — Merfolk Wizard // Sorcery — Adventure",
+  "oracle_text": "Target player mills four cards. (Then exile this card. You may cast the creature later from exile.)",
+  "power": "0",
+  "toughness": "4",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "eld",
+  "set_name": "Throne of Eldraine",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": [
+   {
+    "name": "Merfolk Secretkeeper",
+    "mana_cost": "{U}",
+    "type_line": "Creature — Merfolk Wizard",
+    "oracle_text": "",
+    "power": "0",
+    "toughness": "4",
+    "loyalty": null
+   },
+   {
+    "name": "Venture Deeper",
+    "mana_cost": "{U}",
+    "type_line": "Sorcery — Adventure",
+    "oracle_text": "Target player mills four cards. (Then exile this card. You may cast the creature later from exile.)",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Merfolk Windrobber",
+  "oracle_id": "be8b9bef-a98d-40a8-bedd-d78f1f08f93b",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Creature — Merfolk Rogue",
+  "oracle_text": "Flying\nWhenever this creature deals combat damage to a player, that player mills a card. (They put the top card of their library into their graveyard.)\nSacrifice this creature: Draw a card. Activate only if an opponent has eight or more cards in their graveyard.",
+  "power": "1",
+  "toughness": "1",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "znr",
+  "set_name": "Zendikar Rising",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Flying",
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Minister of Inquiries",
+  "oracle_id": "99894900-771f-4fca-bebf-9f23ec4654c2",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Creature — Vedalken Advisor",
+  "oracle_text": "When this creature enters, you get {E}{E} (two energy counters).\n{T}, Pay {E}: Target player mills three cards.",
+  "power": "1",
+  "toughness": "2",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "klr",
+  "set_name": "Kaladesh Remastered",
+  "games": [
+   "arena"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Mire Triton",
+  "oracle_id": "4fe6f784-0290-4d4a-85ae-0b66522d31e9",
+  "layout": "normal",
+  "mana_cost": "{1}{B}",
+  "cmc": 2.0,
+  "type_line": "Creature — Zombie Merfolk",
+  "oracle_text": "Deathtouch\nWhen this creature enters, mill two cards and you gain 2 life. (To mill a card, put the top card of your library into your graveyard.)",
+  "power": "2",
+  "toughness": "1",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "jmp",
+  "set_name": "Jumpstart",
+  "games": [
+   "arena",
+   "paper"
+  ],
+  "keywords": [
+   "Mill",
+   "Deathtouch"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Molt Tender",
+  "oracle_id": "9a39ca64-e1a9-42ef-8efd-6aa3edde3d93",
+  "layout": "normal",
+  "mana_cost": "{G}",
+  "cmc": 1.0,
+  "type_line": "Creature — Insect Druid",
+  "oracle_text": "{T}: Mill a card. (Put the top card of your library into your graveyard.)\n{T}, Exile a card from your graveyard: Add one mana of any color.",
+  "power": "1",
+  "toughness": "1",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "dft",
+  "set_name": "Aetherdrift",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Mysterio's Phantasm",
+  "oracle_id": "99419378-8a23-44f3-aebe-e62d6e20e877",
+  "layout": "normal",
+  "mana_cost": "{1}{U}",
+  "cmc": 2.0,
+  "type_line": "Creature — Illusion Villain",
+  "oracle_text": "Flying, vigilance\nWhenever this creature attacks, mill a card. (Put the top card of your library into your graveyard.)",
+  "power": "1",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "spm",
+  "set_name": "Marvel's Spider-Man",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Flying",
+   "Vigilance",
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Nashi, Searcher in the Dark",
+  "oracle_id": "ade8fc6f-efaa-4a24-96d8-99ef5026cd74",
+  "layout": "normal",
+  "mana_cost": "{U}{B}",
+  "cmc": 2.0,
+  "type_line": "Legendary Creature — Rat Ninja Wizard",
+  "oracle_text": "Menace\nWhenever Nashi deals combat damage to a player, you mill that many cards. You may put any number of legendary and/or enchantment cards from among them into your hand. If you put no cards into your hand this way, put a +1/+1 counter on Nashi.",
+  "power": "2",
+  "toughness": "2",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "dsk",
+  "set_name": "Duskmourn: House of Horror",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Menace",
+   "Mill"
+  ],
+  "color_identity": [
+   "B",
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Overwhelmed Apprentice",
+  "oracle_id": "e68d6459-2f32-4320-a062-6d33f85348f9",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Creature — Human Wizard",
+  "oracle_text": "When this creature enters, each opponent mills two cards. Then you scry 2. (Look at the top two cards of your library, then put any number of them on the bottom and the rest on top in any order.)",
+  "power": "1",
+  "toughness": "2",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "eld",
+  "set_name": "Throne of Eldraine",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill",
+   "Scry"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Paramecia Coloniex",
+  "oracle_id": "9076a886-efe0-4c99-8661-f0fd7a7b3129",
+  "layout": "normal",
+  "mana_cost": "{1}{B}",
+  "cmc": 2.0,
+  "type_line": "Creature — Zombie Worm",
+  "oracle_text": "When this creature enters, mill three cards. (Put the top three cards of your library into your graveyard.)\nWhen this creature dies, you may exile it. When you do, put target creature card from your graveyard on top of your library.",
+  "power": "2",
+  "toughness": "2",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "tmt",
+  "set_name": "Teenage Mutant Ninja Turtles",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Patchwork Beastie",
+  "oracle_id": "6cf995e9-115a-4659-bace-9fbe75898b48",
+  "layout": "normal",
+  "mana_cost": "{G}",
+  "cmc": 1.0,
+  "type_line": "Artifact Creature — Beast",
+  "oracle_text": "Delirium — This creature can't attack or block unless there are four or more card types among cards in your graveyard.\nAt the beginning of your upkeep, you may mill a card. (You may put the top card of your library into your graveyard.)",
+  "power": "3",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "dsk",
+  "set_name": "Duskmourn: House of Horror",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Delirium",
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Persistent Petitioners",
+  "oracle_id": "0e488c6c-aae2-450f-b969-7bb5a1b37a66",
+  "layout": "normal",
+  "mana_cost": "{1}{U}",
+  "cmc": 2.0,
+  "type_line": "Creature — Human Advisor",
+  "oracle_text": "{1}, {T}: Target player mills a card. (They put the top card of their library into their graveyard.)\nTap four untapped Advisors you control: Target player mills twelve cards.\nA deck can have any number of cards named Persistent Petitioners.",
+  "power": "1",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "rna",
+  "set_name": "Ravnica Allegiance",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Picklock Prankster // Free the Fae",
+  "oracle_id": "22d82f4c-2896-477e-8d20-8fe43acd4ba2",
+  "layout": "adventure",
+  "mana_cost": "{1}{U} // {1}{U}",
+  "cmc": 2.0,
+  "type_line": "Creature — Faerie Rogue // Instant — Adventure",
+  "oracle_text": "Flying, vigilance\n//\nMill four cards. Then put an instant, sorcery, or Faerie card from among the milled cards into your hand.",
+  "power": "1",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "woe",
+  "set_name": "Wilds of Eldraine",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Flying",
+   "Vigilance",
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": [
+   {
+    "name": "Picklock Prankster",
+    "mana_cost": "{1}{U}",
+    "type_line": "Creature — Faerie Rogue",
+    "oracle_text": "Flying, vigilance",
+    "power": "1",
+    "toughness": "3",
+    "loyalty": null
+   },
+   {
+    "name": "Free the Fae",
+    "mana_cost": "{1}{U}",
+    "type_line": "Instant — Adventure",
+    "oracle_text": "Mill four cards. Then put an instant, sorcery, or Faerie card from among the milled cards into your hand.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Platypus-Bear",
+  "oracle_id": "933e4e8a-01ea-4f58-8f5e-4f6c43f4e105",
+  "layout": "normal",
+  "mana_cost": "{1}{G/U}",
+  "cmc": 2.0,
+  "type_line": "Creature — Platypus Bear",
+  "oracle_text": "Defender\nWhen this creature enters, mill two cards. (Put the top two cards of your library into your graveyard.)\nAs long as there is a Lesson card in your graveyard, this creature can attack as though it didn't have defender.",
+  "power": "2",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "tla",
+  "set_name": "Avatar: The Last Airbender",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill",
+   "Defender"
+  ],
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Rick Jones, Destined Sidekick",
+  "oracle_id": "4bccfa67-0c6f-42a1-b8d4-0842a8230d1e",
+  "layout": "normal",
+  "mana_cost": "{G}",
+  "cmc": 1.0,
+  "type_line": "Legendary Creature — Human Advisor",
+  "oracle_text": "{3}, {T}: Mill four cards. You may put a Hero or enchantment card from among those cards into your hand. (To mill four cards, put the top four cards of your library into your graveyard.)",
+  "power": "0",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "msh",
+  "set_name": "Marvel Super Heroes",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Ruin Crab",
+  "oracle_id": "8afc00d4-a1c6-4329-af2c-a7f58a0c33e7",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Creature — Crab",
+  "oracle_text": "Landfall — Whenever a land you control enters, each opponent mills three cards. (To mill a card, a player puts the top card of their library into their graveyard.)",
+  "power": "0",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "znr",
+  "set_name": "Zendikar Rising",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill",
+   "Landfall"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Sage of Mysteries",
+  "oracle_id": "62c949c8-0011-4ab7-8388-e643be79df83",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Creature — Human Wizard",
+  "oracle_text": "Constellation — Whenever an enchantment you control enters, target player mills two cards.",
+  "power": "0",
+  "toughness": "2",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "thb",
+  "set_name": "Theros Beyond Death",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill",
+   "Constellation"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Scarblade Scout",
+  "oracle_id": "f6758e8f-5462-48a7-96d3-60d07b1563fc",
+  "layout": "normal",
+  "mana_cost": "{1}{B}",
+  "cmc": 2.0,
+  "type_line": "Creature — Elf Scout",
+  "oracle_text": "Lifelink\nWhen this creature enters, mill two cards. (Put the top two cards of your library into your graveyard.)",
+  "power": "2",
+  "toughness": "2",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "ecl",
+  "set_name": "Lorwyn Eclipsed",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Lifelink",
+   "Mill"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Scrabbling Skullcrab",
+  "oracle_id": "1448489c-dfb8-43aa-ae3d-ed832381c1d9",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Creature — Crab Skeleton",
+  "oracle_text": "Eerie — Whenever an enchantment you control enters and whenever you fully unlock a Room, target player mills two cards. (They put the top two cards of their library into their graveyard.)",
+  "power": "0",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "dsk",
+  "set_name": "Duskmourn: House of Horror",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Mill",
+   "Eerie"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Seedship Broodtender",
+  "oracle_id": "15c994b9-901a-46d6-804b-24560a14a481",
+  "layout": "normal",
+  "mana_cost": "{B}{G}",
+  "cmc": 2.0,
+  "type_line": "Creature — Insect Citizen",
+  "oracle_text": "When this creature enters, mill three cards. (Put the top three cards of your library into your graveyard.)\n{3}{B}{G}, Sacrifice this creature: Return target creature or Spacecraft card from your graveyard to the battlefield. Activate only as a sorcery.",
+  "power": "2",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "eoe",
+  "set_name": "Edge of Eternities",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Skola Grovedancer",
+  "oracle_id": "0e3246ef-e0b4-49bc-a715-b69c4b6be461",
+  "layout": "normal",
+  "mana_cost": "{1}{G}",
+  "cmc": 2.0,
+  "type_line": "Enchantment Creature — Satyr Druid",
+  "oracle_text": "Whenever a land card is put into your graveyard from anywhere, you gain 1 life.\n{2}{G}: Mill a card. (Put the top card of your library into your graveyard.)",
+  "power": "2",
+  "toughness": "2",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "thb",
+  "set_name": "Theros Beyond Death",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Skull Prophet",
+  "oracle_id": "39b51f62-8421-42d1-86d3-74fd6e6f31a2",
+  "layout": "normal",
+  "mana_cost": "{B}{G}",
+  "cmc": 2.0,
+  "type_line": "Creature — Human Druid",
+  "oracle_text": "{T}: Add {B} or {G}.\n{T}: Mill two cards. (Put the top two cards of your library into your graveyard.)",
+  "power": "3",
+  "toughness": "1",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "iko",
+  "set_name": "Ikoria: Lair of Behemoths",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Snooping Newsie",
+  "oracle_id": "347a5faa-5656-4a36-af44-ab5a3ed267f4",
+  "layout": "normal",
+  "mana_cost": "{U}{B}",
+  "cmc": 2.0,
+  "type_line": "Creature — Human Rogue",
+  "oracle_text": "When this creature enters, mill two cards. (Put the top two cards of your library into your graveyard.)\nAs long as there are five or more mana values among cards in your graveyard, this creature gets +1/+1 and has lifelink.",
+  "power": "2",
+  "toughness": "2",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "snc",
+  "set_name": "Streets of New Capenna",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B",
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Soaring Thought-Thief",
+  "oracle_id": "5ed445c1-8a04-4fab-91ef-4d52db95c3b5",
+  "layout": "normal",
+  "mana_cost": "{U}{B}",
+  "cmc": 2.0,
+  "type_line": "Creature — Human Rogue",
+  "oracle_text": "Flash\nFlying\nAs long as an opponent has eight or more cards in their graveyard, Rogues you control get +1/+0.\nWhenever one or more Rogues you control attack, each opponent mills two cards.",
+  "power": "1",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "znr",
+  "set_name": "Zendikar Rising",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Flying",
+   "Flash",
+   "Mill"
+  ],
+  "color_identity": [
+   "B",
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Sparring Dummy",
+  "oracle_id": "036b7b89-e49a-4560-9de9-1d4d71f3f666",
+  "layout": "normal",
+  "mana_cost": "{1}{G}",
+  "cmc": 2.0,
+  "type_line": "Artifact Creature — Scarecrow",
+  "oracle_text": "Defender\n{T}: Mill a card. You may put a land card milled this way into your hand. You gain 2 life if a Lesson card is milled this way. (To mill a card, put the top card of your library into your graveyard.)",
+  "power": "1",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "tla",
+  "set_name": "Avatar: The Last Airbender",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill",
+   "Defender"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Stitcher's Supplier",
+  "oracle_id": "7fd61a18-6e4f-40c5-aa00-3d101ec1ec82",
+  "layout": "normal",
+  "mana_cost": "{B}",
+  "cmc": 1.0,
+  "type_line": "Creature — Zombie",
+  "oracle_text": "When this creature enters or dies, mill three cards. (Put the top three cards of your library into your graveyard.)",
+  "power": "1",
+  "toughness": "1",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "m19",
+  "set_name": "Core Set 2019",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Stubborn Burrowfiend",
+  "oracle_id": "24bc7bd5-f262-45a2-8e94-377fef2ba5d5",
+  "layout": "normal",
+  "mana_cost": "{1}{G}",
+  "cmc": 2.0,
+  "type_line": "Creature — Badger Beast Mount",
+  "oracle_text": "Whenever this creature becomes saddled for the first time each turn, mill two cards, then this creature gets +X/+X until end of turn, where X is the number of creature cards in your graveyard.\nSaddle 2 (Tap any number of other creatures you control with total power 2 or more: This Mount becomes saddled until end of turn. Saddle only as a sorcery.)",
+  "power": "2",
+  "toughness": "2",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "otj",
+  "set_name": "Outlaws of Thunder Junction",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Saddle",
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Teachings of the Kirin // Kirin-Touched Orochi",
+  "oracle_id": "cb7edb5e-3a90-41c7-ae52-dc564086bf22",
+  "layout": "transform",
+  "mana_cost": "{1}{G}",
+  "cmc": 2.0,
+  "type_line": "Enchantment — Saga // Enchantment Creature — Snake Monk",
+  "oracle_text": "(As this Saga enters and after your draw step, add a lore counter.)\nI — Mill three cards. Create a 1/1 colorless Spirit creature token.\nII — Put a +1/+1 counter on target creature you control.\nIII — Exile this Saga, then return it to the battlefield transformed under your control.\n//\nWhenever this creature attacks, choose one —\n• Exile target creature card from a graveyard. When you do, create a 1/1 colorless Spirit creature token.\n• Exile target noncreature card from a graveyard. When you do, put a +1/+1 counter on target creature you control.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "neo",
+  "set_name": "Kamigawa: Neon Dynasty",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Transform",
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": [
+   {
+    "name": "Teachings of the Kirin",
+    "mana_cost": "{1}{G}",
+    "type_line": "Enchantment — Saga",
+    "oracle_text": "(As this Saga enters and after your draw step, add a lore counter.)\nI — Mill three cards. Create a 1/1 colorless Spirit creature token.\nII — Put a +1/+1 counter on target creature you control.\nIII — Exile this Saga, then return it to the battlefield transformed under your control.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "Kirin-Touched Orochi",
+    "mana_cost": "",
+    "type_line": "Enchantment Creature — Snake Monk",
+    "oracle_text": "Whenever this creature attacks, choose one —\n• Exile target creature card from a graveyard. When you do, create a 1/1 colorless Spirit creature token.\n• Exile target noncreature card from a graveyard. When you do, put a +1/+1 counter on target creature you control.",
+    "power": "1",
+    "toughness": "1",
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "The Ancient One",
+  "oracle_id": "6615f881-960c-4216-a32a-63856bc3afd0",
+  "layout": "normal",
+  "mana_cost": "{U}{B}",
+  "cmc": 2.0,
+  "type_line": "Legendary Creature — Spirit God",
+  "oracle_text": "Descend 8 — The Ancient One can't attack or block unless there are eight or more permanent cards in your graveyard.\n{2}{U}{B}: Draw a card, then discard a card. When you discard a card this way, target player mills cards equal to its mana value.",
+  "power": "8",
+  "toughness": "8",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "lci",
+  "set_name": "The Lost Caverns of Ixalan",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Descend",
+   "Mill"
+  ],
+  "color_identity": [
+   "B",
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Thieves' Guild Enforcer",
+  "oracle_id": "84c0db59-255d-41af-a3d4-3f3548f1195f",
+  "layout": "normal",
+  "mana_cost": "{B}",
+  "cmc": 1.0,
+  "type_line": "Creature — Human Rogue",
+  "oracle_text": "Flash\nWhenever this creature or another Rogue you control enters, each opponent mills two cards.\nAs long as an opponent has eight or more cards in their graveyard, this creature gets +2/+1 and has deathtouch.",
+  "power": "1",
+  "toughness": "1",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "m21",
+  "set_name": "Core Set 2021",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Flash",
+   "Mill"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Throne of the Grim Captain // The Grim Captain",
+  "oracle_id": "a7c96442-706b-4fd8-9b38-052872dafe58",
+  "layout": "transform",
+  "mana_cost": "{2}",
+  "cmc": 2.0,
+  "type_line": "Legendary Artifact // Legendary Creature — Skeleton Spirit Pirate",
+  "oracle_text": "{T}: Mill two cards.\nCraft with a Dinosaur, a Merfolk, a Pirate, and a Vampire {4} ({4}, Exile this artifact, Exile the four from among permanents you control and/or cards in your graveyard: Return this card transformed under its owner's control. Craft only as a sorcery.)\n//\nMenace, trample, lifelink, hexproof\nWhenever The Grim Captain attacks, each opponent sacrifices a nonland permanent of their choice. Then you may put an exiled creature card used to craft The Grim Captain onto the battlefield under your control tapped and attacking.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "lci",
+  "set_name": "The Lost Caverns of Ixalan",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Lifelink",
+   "Craft",
+   "Transform",
+   "Hexproof",
+   "Trample",
+   "Menace",
+   "Mill"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": [
+   {
+    "name": "Throne of the Grim Captain",
+    "mana_cost": "{2}",
+    "type_line": "Legendary Artifact",
+    "oracle_text": "{T}: Mill two cards.\nCraft with a Dinosaur, a Merfolk, a Pirate, and a Vampire {4} ({4}, Exile this artifact, Exile the four from among permanents you control and/or cards in your graveyard: Return this card transformed under its owner's control. Craft only as a sorcery.)",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "The Grim Captain",
+    "mana_cost": "",
+    "type_line": "Legendary Creature — Skeleton Spirit Pirate",
+    "oracle_text": "Menace, trample, lifelink, hexproof\nWhenever The Grim Captain attacks, each opponent sacrifices a nonland permanent of their choice. Then you may put an exiled creature card used to craft The Grim Captain onto the battlefield under your control tapped and attacking.",
+    "power": "7",
+    "toughness": "7",
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Towering-Wave Mystic",
+  "oracle_id": "121a1efa-03f2-4b5f-8e72-539de028457e",
+  "layout": "normal",
+  "mana_cost": "{1}{U}",
+  "cmc": 2.0,
+  "type_line": "Creature — Merfolk Wizard",
+  "oracle_text": "Whenever this creature deals damage, target player mills that many cards.",
+  "power": "2",
+  "toughness": "1",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "jmp",
+  "set_name": "Jumpstart",
+  "games": [
+   "arena",
+   "paper"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Town Greeter",
+  "oracle_id": "9dc61ef6-da22-42a8-b348-dfd5722deadf",
+  "layout": "normal",
+  "mana_cost": "{1}{G}",
+  "cmc": 2.0,
+  "type_line": "Creature — Human Citizen",
+  "oracle_text": "When this creature enters, mill four cards. You may put a land card from among them into your hand. If you put a Town card into your hand this way, you gain 2 life. (To mill four cards, a player puts the top four cards of their library into their graveyard.)",
+  "power": "1",
+  "toughness": "1",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "fin",
+  "set_name": "Final Fantasy",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Undead Butler",
+  "oracle_id": "426fa8e8-b0f9-4b6c-b22b-04ec2073187a",
+  "layout": "normal",
+  "mana_cost": "{1}{B}",
+  "cmc": 2.0,
+  "type_line": "Creature — Zombie",
+  "oracle_text": "When this creature enters, mill three cards. (Put the top three cards of your library into your graveyard.)\nWhen this creature dies, you may exile it. When you do, return target creature card from your graveyard to your hand.",
+  "power": "1",
+  "toughness": "2",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "vow",
+  "set_name": "Innistrad: Crimson Vow",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Urborg Lhurgoyf",
+  "oracle_id": "f84d8217-51a4-49ba-9df6-d080ed38f37d",
+  "layout": "normal",
+  "mana_cost": "{1}{G}",
+  "cmc": 2.0,
+  "type_line": "Creature — Lhurgoyf",
+  "oracle_text": "Kicker {U} and/or {B} (You may pay an additional {U} and/or {B} as you cast this spell.)\nAs this creature enters, mill three cards for each time it was kicked.\nUrborg Lhurgoyf's power is equal to the number of creature cards in your graveyard and its toughness is equal to that number plus 1.",
+  "power": "*",
+  "toughness": "1+*",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "dmu",
+  "set_name": "Dominaria United",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill",
+   "Kicker"
+  ],
+  "color_identity": [
+   "B",
+   "G",
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Vantress Gargoyle",
+  "oracle_id": "fc7c0197-bfa1-43b8-87c8-f134192b14c0",
+  "layout": "normal",
+  "mana_cost": "{1}{U}",
+  "cmc": 2.0,
+  "type_line": "Artifact Creature — Gargoyle",
+  "oracle_text": "Flying\nThis creature can't attack unless defending player has seven or more cards in their graveyard.\nThis creature can't block unless you have four or more cards in hand.\n{T}: Each player mills a card.",
+  "power": "5",
+  "toughness": "4",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "eld",
+  "set_name": "Throne of Eldraine",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Flying",
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Veteran Ice Climber",
+  "oracle_id": "ccaadf8d-22c0-4139-b734-03ac2fcb4494",
+  "layout": "normal",
+  "mana_cost": "{1}{U}",
+  "cmc": 2.0,
+  "type_line": "Creature — Human Scout",
+  "oracle_text": "Vigilance\nThis creature can't be blocked.\nWhenever this creature attacks, up to one target player mills cards equal to this creature's power. (They put that many cards from the top of their library into their graveyard.)",
+  "power": "1",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "tdm",
+  "set_name": "Tarkir: Dragonstorm",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Vigilance",
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Vilespawn Spider",
+  "oracle_id": "3e969073-76cc-4a2c-9abd-3a4094488fe5",
+  "layout": "normal",
+  "mana_cost": "{G}{U}",
+  "cmc": 2.0,
+  "type_line": "Creature — Spider",
+  "oracle_text": "Reach\nAt the beginning of your upkeep, mill a card. (Put the top card of your library into your graveyard.)\n{2}{G}{U}, {T}, Sacrifice this creature: Create a 1/1 green Insect creature token for each creature card in your graveyard. Activate only as a sorcery.",
+  "power": "2",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "vow",
+  "set_name": "Innistrad: Crimson Vow",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Reach",
+   "Mill"
+  ],
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Visage of Dread // Dread Osseosaur",
+  "oracle_id": "7cad43df-31c9-47b5-bc05-4a0f6544b396",
+  "layout": "transform",
+  "mana_cost": "{1}{B}",
+  "cmc": 2.0,
+  "type_line": "Artifact // Creature — Dinosaur Skeleton Horror",
+  "oracle_text": "When this artifact enters, target opponent reveals their hand. You choose an artifact or creature card from it. That player discards that card.\nCraft with two creatures {5}{B} ({5}{B}, Exile this artifact, Exile the two from among creatures you control and/or creature cards in your graveyard: Return this card transformed under its owner's control. Craft only as a sorcery.)\n//\nMenace\nWhenever this creature enters or attacks, you may mill two cards. (You may put the top two cards of your library into your graveyard.)",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "lci",
+  "set_name": "The Lost Caverns of Ixalan",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Craft",
+   "Transform",
+   "Menace",
+   "Mill"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": [
+   {
+    "name": "Visage of Dread",
+    "mana_cost": "{1}{B}",
+    "type_line": "Artifact",
+    "oracle_text": "When this artifact enters, target opponent reveals their hand. You choose an artifact or creature card from it. That player discards that card.\nCraft with two creatures {5}{B} ({5}{B}, Exile this artifact, Exile the two from among creatures you control and/or creature cards in your graveyard: Return this card transformed under its owner's control. Craft only as a sorcery.)",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "Dread Osseosaur",
+    "mana_cost": "",
+    "type_line": "Creature — Dinosaur Skeleton Horror",
+    "oracle_text": "Menace\nWhenever this creature enters or attacks, you may mill two cards. (You may put the top two cards of your library into your graveyard.)",
+    "power": "5",
+    "toughness": "4",
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Wailing Ghoul",
+  "oracle_id": "6ce24851-70d2-416c-8733-78928b4eee74",
+  "layout": "normal",
+  "mana_cost": "{1}{B}",
+  "cmc": 2.0,
+  "type_line": "Creature — Zombie",
+  "oracle_text": "When this creature enters, mill two cards. (Put the top two cards of your library into your graveyard.)",
+  "power": "1",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "jmp",
+  "set_name": "Jumpstart",
+  "games": [
+   "arena",
+   "paper"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Wall of Lost Thoughts",
+  "oracle_id": "49b80368-d38a-4877-b1de-f3b5f3d40d4d",
+  "layout": "normal",
+  "mana_cost": "{1}{U}",
+  "cmc": 2.0,
+  "type_line": "Creature — Wall",
+  "oracle_text": "Defender (This creature can't attack.)\nWhen this creature enters, target player mills four cards. (They put the top four cards of their library into their graveyard.)",
+  "power": "0",
+  "toughness": "4",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "jmp",
+  "set_name": "Jumpstart",
+  "games": [
+   "arena",
+   "paper"
+  ],
+  "keywords": [
+   "Mill",
+   "Defender"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Zulaport Duelist",
+  "oracle_id": "e8237d12-2860-4cc8-85a4-458e4c68e69a",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Creature — Human Rogue",
+  "oracle_text": "Flash\nWhen this creature enters, up to one target creature gets -2/-0 until end of turn. Its controller mills two cards. (They put the top two cards of their library into their graveyard.)",
+  "power": "1",
+  "toughness": "1",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "znr",
+  "set_name": "Zendikar Rising",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Flash",
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ }
+]

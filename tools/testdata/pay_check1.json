@@ -1,0 +1,338 @@
+[
+ {
+  "english": "Scavenging Ooze",
+  "chinese": "腐食流浆",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FDN#232",
+   "M21#204",
+   "M21#318"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Ooze",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Scavenging Ooze"
+ },
+ {
+  "english": "Biogenic Ooze",
+  "chinese": "生源流浆",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "RNA#122"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Ooze",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Biogenic Ooze"
+ },
+ {
+  "english": "Consuming Blob",
+  "chinese": "噬物黏浆",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MID#177"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Ooze",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Consuming Blob"
+ },
+ {
+  "english": "Ochre Jelly",
+  "chinese": "赭冻怪",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "AFR#196",
+   "AFR#330"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Ooze",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Ochre Jelly"
+ },
+ {
+  "english": "Predator Ooze",
+  "chinese": "掠食流浆",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FDN#642"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Ooze",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Predator Ooze"
+ },
+ {
+  "english": "Ooze Patrol",
+  "chinese": "流浆巡卫",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DFT#172"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Ooze",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Ooze Patrol"
+ },
+ {
+  "english": "Oran-Rief Ooze",
+  "chinese": "欧兰黎流浆",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ZNR#198",
+   "J25#693"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Ooze",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Oran-Rief Ooze"
+ },
+ {
+  "english": "Experiment One",
+  "chinese": "首号实验体",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "PIO#173"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Human Ooze",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Experiment One"
+ },
+ {
+  "english": "Miming Slime",
+  "chinese": "拟态黏泞",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "PIO#382"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Miming Slime"
+ },
+ {
+  "english": "Acidic Slime",
+  "chinese": "酸液黏菌",
+  "legal": "not_legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "HA7#14"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Ooze",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [
+   "赛制 pioneer 合法性: not_legal"
+  ],
+  "ok": false,
+  "scryfall_name": "Acidic Slime"
+ },
+ {
+  "english": "Gelatinous Cube",
+  "chinese": "凝胶怪",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "AFR#105",
+   "AFR#313"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Ooze",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Gelatinous Cube"
+ },
+ {
+  "english": "Sludge Monster",
+  "chinese": "泥泞怪物",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MID#76"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Horror",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Sludge Monster"
+ },
+ {
+  "english": "Necroplasm",
+  "chinese": "死灵原浆",
+  "legal": "not_legal",
+  "platform": "arena",
+  "platform_ok": false,
+  "platform_prints": [],
+  "layout": "normal",
+  "type_line": "Creature — Ooze",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [
+   "赛制 pioneer 合法性: not_legal",
+   "遍历 3 张印刷，无 Arena 版本"
+  ],
+  "ok": false,
+  "scryfall_name": "Necroplasm"
+ },
+ {
+  "english": "Umori, the Collector",
+  "chinese": "集晶流浆乌墨理",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "IKO#231",
+   "MUL#62",
+   "MUL#127"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Creature — Ooze",
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Umori, the Collector"
+ },
+ {
+  "english": "Slogurk, the Overslime",
+  "chinese": "流浆王斯罗咕",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MID#242",
+   "MID#324"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Creature — Ooze",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Slogurk, the Overslime"
+ },
+ {
+  "english": "March of the World Ooze",
+  "chinese": "流浆行进",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DFT#169"
+  ],
+  "layout": "normal",
+  "type_line": "Enchantment",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "March of the World Ooze"
+ },
+ {
+  "english": "Mutagen Man, Living Ooze",
+  "chinese": "活体药剂突变剂人",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "TMT#124"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Creature — Ooze Mutant",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Mutagen Man, Living Ooze"
+ },
+ {
+  "english": "Oozegarden",
+  "chinese": null,
+  "legal": null,
+  "platform": "arena",
+  "platform_ok": null,
+  "platform_prints": [],
+  "layout": null,
+  "type_line": null,
+  "color_identity": null,
+  "notes": [
+   "模糊匹配到 'Ooze Garden'，与请求名不一致，按未命中处理",
+   "中文名缺失"
+  ],
+  "ok": false,
+  "scryfall_name": null
+ }
+]

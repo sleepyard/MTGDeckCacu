@@ -1,0 +1,380 @@
+[
+ {
+  "english": "Fatal Push",
+  "chinese": "送终一击",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FCA#9",
+   "KLR#84"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Fatal Push"
+ },
+ {
+  "english": "Heartless Act",
+  "chinese": "无情手段",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "TLA#103",
+   "IKO#91"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Heartless Act"
+ },
+ {
+  "english": "Cut Down",
+  "chinese": "斩落",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DMU#89",
+   "DMU#432"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Cut Down"
+ },
+ {
+  "english": "Go for the Throat",
+  "chinese": "直刺咽喉",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "BRO#102",
+   "J25#447"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Go for the Throat"
+ },
+ {
+  "english": "Bitter Triumph",
+  "chinese": "惨痛胜利",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "LCI#91",
+   "SOA#26"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Bitter Triumph"
+ },
+ {
+  "english": "Anoint with Affliction",
+  "chinese": "折磨赐圣",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ONE#81"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Anoint with Affliction"
+ },
+ {
+  "english": "Sheoldred's Edict",
+  "chinese": "希欧蕊的勒令",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ONE#108",
+   "SOA#32"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Sheoldred's Edict"
+ },
+ {
+  "english": "Eliminate",
+  "chinese": "涤除",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "M21#97",
+   "STA#30",
+   "STA#93"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Eliminate"
+ },
+ {
+  "english": "Negate",
+  "chinese": "失效",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "TMT#47",
+   "FDN#710",
+   "MOM#68",
+   "DMU#58",
+   "ZNR#71",
+   "M20#69",
+   "RIX#44",
+   "MOR#43",
+   "STA#18",
+   "STA#81"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Negate"
+ },
+ {
+  "english": "Spell Pierce",
+  "chinese": "点破咒语",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DFT#64",
+   "NEO#80",
+   "XLN#81",
+   "SOA#23"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Spell Pierce"
+ },
+ {
+  "english": "Make Disappear",
+  "chinese": "人间消失",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "SNC#49"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Make Disappear"
+ },
+ {
+  "english": "Thoughtseize",
+  "chinese": "攫取思绪",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "LRW#145",
+   "OTP#20",
+   "AKR#127"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Thoughtseize"
+ },
+ {
+  "english": "Duress",
+  "chinese": "逼从",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FDN#606",
+   "ONE#92",
+   "MID#98",
+   "M21#96",
+   "M20#97",
+   "M19#94",
+   "XLN#105",
+   "STA#29",
+   "STA#92",
+   "PANA#6"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Duress"
+ },
+ {
+  "english": "Hopeless Nightmare",
+  "chinese": "无望梦魇",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "WOE#95"
+  ],
+  "layout": "normal",
+  "type_line": "Enchantment",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Hopeless Nightmare"
+ },
+ {
+  "english": "Extinction Event",
+  "chinese": "生灵绝灭",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "IKO#88",
+   "MAR#65"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Extinction Event"
+ },
+ {
+  "english": "Shadows' Verdict",
+  "chinese": "黯影裁定",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ZNR#124"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Shadows' Verdict"
+ },
+ {
+  "english": "Path of Peril",
+  "chinese": "险峻路途",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "VOW#124"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "B",
+   "W"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Path of Peril"
+ },
+ {
+  "english": "Toxic Deluge",
+  "chinese": "毒雨倾盆",
+  "legal": "not_legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MH3#277"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [
+   "赛制 pioneer 合法性: not_legal"
+  ],
+  "ok": false,
+  "scryfall_name": "Toxic Deluge"
+ },
+ {
+  "english": "Languish",
+  "chinese": "衰萎",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "HOC#187",
+   "JMP#246"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Languish"
+ }
+]

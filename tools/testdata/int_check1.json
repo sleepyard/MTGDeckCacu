@@ -1,0 +1,481 @@
+[
+ {
+  "english": "Bushwhack",
+  "chinese": "野林开路",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FDN#215",
+   "BRO#174",
+   "J25#641"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Bushwhack"
+ },
+ {
+  "english": "Tail Swipe",
+  "chinese": "甩尾扫击",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DMU#182",
+   "J25#721"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Tail Swipe"
+ },
+ {
+  "english": "Inscription of Abundance",
+  "chinese": "丰足铭文",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ZNR#186"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Inscription of Abundance"
+ },
+ {
+  "english": "Ram Through",
+  "chinese": "轰然撞倒",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "IKO#170"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Ram Through"
+ },
+ {
+  "english": "Fatal Push",
+  "chinese": "送终一击",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FCA#9",
+   "KLR#84"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Fatal Push"
+ },
+ {
+  "english": "Go for the Throat",
+  "chinese": "直刺咽喉",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "BRO#102",
+   "J25#447"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Go for the Throat"
+ },
+ {
+  "english": "Heartless Act",
+  "chinese": "无情手段",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "TLA#103",
+   "IKO#91"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Heartless Act"
+ },
+ {
+  "english": "Cut Down",
+  "chinese": "斩落",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DMU#89",
+   "DMU#432"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Cut Down"
+ },
+ {
+  "english": "Abrupt Decay",
+  "chinese": "突发衰败",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "OTP#34"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Abrupt Decay"
+ },
+ {
+  "english": "Assassin's Trophy",
+  "chinese": "杀手留念",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MKM#187",
+   "GRN#152"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Assassin's Trophy"
+ },
+ {
+  "english": "Tear Asunder",
+  "chinese": "撕成碎片",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DMU#183"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Tear Asunder"
+ },
+ {
+  "english": "Cankerbloom",
+  "chinese": "散疡菌兽",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ONE#161"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Phyrexian Fungus",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Cankerbloom"
+ },
+ {
+  "english": "Boseiju Who Endures",
+  "chinese": null,
+  "legal": null,
+  "platform": "arena",
+  "platform_ok": null,
+  "platform_prints": [],
+  "layout": null,
+  "type_line": null,
+  "color_identity": null,
+  "notes": [
+   "模糊匹配到 'Boseiju, Who Endures'，与请求名不一致，按未命中处理",
+   "中文名缺失"
+  ],
+  "ok": false,
+  "scryfall_name": null
+ },
+ {
+  "english": "Naturalize",
+  "chinese": "回归自然",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "M19#190",
+   "RIX#139",
+   "KTK#142"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Naturalize"
+ },
+ {
+  "english": "Fade from History",
+  "chinese": "淡出历史",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "BRO#177"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Fade from History"
+ },
+ {
+  "english": "Blossoming Defense",
+  "chinese": "防御全开",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ECL#167",
+   "KLR#155"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Blossoming Defense"
+ },
+ {
+  "english": "Snakeskin Veil",
+  "chinese": "蛇皮帘幕",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "TDM#159",
+   "FDN#233",
+   "OTJ#181",
+   "KHM#194",
+   "J25#713",
+   "STA#57",
+   "STA#120"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Snakeskin Veil"
+ },
+ {
+  "english": "Tyvar's Stand",
+  "chinese": "泰瓦奋战",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ONE#190"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Tyvar's Stand"
+ },
+ {
+  "english": "Thoughtseize",
+  "chinese": "攫取思绪",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "LRW#145",
+   "OTP#20",
+   "AKR#127"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Thoughtseize"
+ },
+ {
+  "english": "Duress",
+  "chinese": "逼从",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FDN#606",
+   "ONE#92",
+   "MID#98",
+   "M21#96",
+   "M20#97",
+   "M19#94",
+   "XLN#105",
+   "STA#29",
+   "STA#92",
+   "PANA#6"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Duress"
+ },
+ {
+  "english": "The Meathook Massacre",
+  "chinese": "肉钩大屠杀",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MID#112"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Enchantment",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "The Meathook Massacre"
+ },
+ {
+  "english": "Shadows' Verdict",
+  "chinese": "黯影裁定",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ZNR#124"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Shadows' Verdict"
+ },
+ {
+  "english": "Golden Hind",
+  "chinese": "金角牝鹿",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": false,
+  "platform_prints": [],
+  "layout": "normal",
+  "type_line": "Creature — Elk",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [
+   "遍历 1 张印刷，无 Arena 版本"
+  ],
+  "ok": false,
+  "scryfall_name": "Golden Hind"
+ },
+ {
+  "english": "Sentinel of the Nameless City",
+  "chinese": "无名城哨卫",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "LCI#211"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Merfolk Warrior Scout",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Sentinel of the Nameless City"
+ },
+ {
+  "english": "Sheoldred the Apocalypse",
+  "chinese": null,
+  "legal": null,
+  "platform": "arena",
+  "platform_ok": null,
+  "platform_prints": [],
+  "layout": null,
+  "type_line": null,
+  "color_identity": null,
+  "notes": [
+   "模糊匹配到 'Sheoldred, the Apocalypse'，与请求名不一致，按未命中处理",
+   "中文名缺失"
+  ],
+  "ok": false,
+  "scryfall_name": null
+ }
+]

@@ -17,7 +17,7 @@ python tools/mtg_tool.py search "f:pioneer game:arena date<=2026-08-08 ci<=ug o:
 # 2. 逐牌三重核对（赛制合法 / Arena 平台可用【遍历全部印刷】/ mtgch 中文名），输出 Markdown 表格
 python tools/mtg_tool.py check "Brineborn Cutthroat" "Brazen Borrower" --format pioneer --platform arena --out check.json
 
-# 3. 牌表机器门禁（主牌≥60、备牌≤15、同名≤4（基本地豁免）、逐牌赛制+平台、可选颜色身份）
+# 3. 牌表机器门禁（主牌≥60、备牌≤15、同名≤4（基本地与牌面"any number of cards named"豁免）、逐牌赛制+平台、可选颜色身份）
 python tools/mtg_tool.py validate deck.txt --format pioneer --bo3 --colors ug
 
 # 4. 环境基线（已发售系列 + 禁牌表，Markdown 可直接粘进报告）
@@ -48,7 +48,7 @@ Forge 套牌测试 CLI：牌表转换 `.dck`、AI vs AI 无头模拟、GUI 试�
 ## 用法
 
 ```bash
-# 1. 牌表 → Forge .dck（输出到 tools/forge/simdecks/）
+# 1. 牌表 → Forge .dck（输出到 tools/forge/simdecks/；双面牌/MDFC 自动取正面名，Forge 不认 "A // B" 全名）
 python tools/forge_tool.py convert deck.txt --name MyDeck
 
 # 2. AI vs AI 模拟：报告写 SimResult/*.md，原始日志 *.log

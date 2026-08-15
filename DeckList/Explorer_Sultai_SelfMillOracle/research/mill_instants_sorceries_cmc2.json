@@ -1,0 +1,1374 @@
+[
+ {
+  "name": "Bramble Familiar // Fetch Quest",
+  "oracle_id": "68f36dfa-bbd2-4860-b09b-37e35136be72",
+  "layout": "adventure",
+  "mana_cost": "{1}{G} // {5}{G}{G}",
+  "cmc": 2.0,
+  "type_line": "Creature — Elemental Raccoon // Sorcery — Adventure",
+  "oracle_text": "{T}: Add {G}.\n{1}{G}, {T}, Discard a card: Return this creature to its owner's hand.\n//\nMill seven cards. Then put a creature, enchantment, or land card from among the milled cards onto the battlefield.",
+  "power": "2",
+  "toughness": "2",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "not_legal"
+  },
+  "set": "woe",
+  "set_name": "Wilds of Eldraine",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": [
+   {
+    "name": "Bramble Familiar",
+    "mana_cost": "{1}{G}",
+    "type_line": "Creature — Elemental Raccoon",
+    "oracle_text": "{T}: Add {G}.\n{1}{G}, {T}, Discard a card: Return this creature to its owner's hand.",
+    "power": "2",
+    "toughness": "2",
+    "loyalty": null
+   },
+   {
+    "name": "Fetch Quest",
+    "mana_cost": "{5}{G}{G}",
+    "type_line": "Sorcery — Adventure",
+    "oracle_text": "Mill seven cards. Then put a creature, enchantment, or land card from among the milled cards onto the battlefield.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Cache Grab",
+  "oracle_id": "06ccec61-27d2-4079-80b5-29ebd3a980ee",
+  "layout": "normal",
+  "mana_cost": "{1}{G}",
+  "cmc": 2.0,
+  "type_line": "Instant",
+  "oracle_text": "Mill four cards. You may put a permanent card from among the cards milled this way into your hand. If you control a Squirrel or returned a Squirrel card to your hand this way, create a Food token. (To mill four cards, put the top four cards of your library into your graveyard. A Food token is an artifact with \"{2}, {T}, Sacrifice this token: You gain 3 life.\")",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "blb",
+  "set_name": "Bloomburrow",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Food",
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Compelling Argument",
+  "oracle_id": "686e0b86-121c-45be-842d-c83d3b6547f6",
+  "layout": "normal",
+  "mana_cost": "{1}{U}",
+  "cmc": 2.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Target player mills five cards.\nCycling {U} ({U}, Discard this card: Draw a card.)",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "akr",
+  "set_name": "Amonkhet Remastered",
+  "games": [
+   "arena"
+  ],
+  "keywords": [
+   "Mill",
+   "Cycling"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Corpse Churn",
+  "oracle_id": "e2aeac0b-af74-4c47-9ac1-51fbf869c95f",
+  "layout": "normal",
+  "mana_cost": "{1}{B}",
+  "cmc": 2.0,
+  "type_line": "Instant",
+  "oracle_text": "Mill three cards, then you may return a creature card from your graveyard to your hand. (To mill three cards, put the top three cards of your library into your graveyard.)",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "iko",
+  "set_name": "Ikoria: Lair of Behemoths",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Cruel Somnophage // Can't Wake Up",
+  "oracle_id": "997bdec5-f67b-4822-a3ba-c636e2685e8a",
+  "layout": "adventure",
+  "mana_cost": "{1}{B} // {1}{U}",
+  "cmc": 2.0,
+  "type_line": "Creature — Nightmare // Sorcery — Adventure",
+  "oracle_text": "Cruel Somnophage's power and toughness are each equal to the number of creature cards in all graveyards.\n//\nTarget player mills four cards. (Then exile this card. You may cast the creature later from exile.)",
+  "power": "*",
+  "toughness": "*",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "woe",
+  "set_name": "Wilds of Eldraine",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B",
+   "U"
+  ],
+  "card_faces": [
+   {
+    "name": "Cruel Somnophage",
+    "mana_cost": "{1}{B}",
+    "type_line": "Creature — Nightmare",
+    "oracle_text": "Cruel Somnophage's power and toughness are each equal to the number of creature cards in all graveyards.",
+    "power": "*",
+    "toughness": "*",
+    "loyalty": null
+   },
+   {
+    "name": "Can't Wake Up",
+    "mana_cost": "{1}{U}",
+    "type_line": "Sorcery — Adventure",
+    "oracle_text": "Target player mills four cards. (Then exile this card. You may cast the creature later from exile.)",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Dread Summons",
+  "oracle_id": "642fa01d-025e-44dd-8360-5325e5a28282",
+  "layout": "normal",
+  "mana_cost": "{X}{B}{B}",
+  "cmc": 2.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Each player mills X cards. For each creature card put into a graveyard this way, you create a tapped 2/2 black Zombie creature token. (To mill a card, a player puts the top card of their library into their graveyard.)",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "fdn",
+  "set_name": "Foundations",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Grapple with the Past",
+  "oracle_id": "d14c633d-977a-4f78-85c2-88582b3c3670",
+  "layout": "normal",
+  "mana_cost": "{1}{G}",
+  "cmc": 2.0,
+  "type_line": "Instant",
+  "oracle_text": "Mill three cards, then you may return a creature or land card from your graveyard to your hand. (To mill three cards, put the top three cards of your library into your graveyard.)",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "sir",
+  "set_name": "Shadows over Innistrad Remastered",
+  "games": [
+   "arena"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Grave Strength",
+  "oracle_id": "feb2f08e-79c7-4d51-bf55-e649f5ff5e07",
+  "layout": "normal",
+  "mana_cost": "{1}{B}",
+  "cmc": 2.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Choose target creature. Mill three cards, then put a +1/+1 counter on that creature for each creature card in your graveyard. (To mill three cards, put the top three cards of your library into your graveyard.)",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "j25",
+  "set_name": "Foundations Jumpstart",
+  "games": [
+   "paper",
+   "arena"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Jidoor, Aristocratic Capital // Overture",
+  "oracle_id": "bd513d9d-5aa2-4860-bd86-8b5d9430f133",
+  "layout": "adventure",
+  "mana_cost": "{4}{U}{U}",
+  "cmc": 0.0,
+  "type_line": "Land — Town // Sorcery — Adventure",
+  "oracle_text": "This land enters tapped.\n{T}: Add {U}.\n//\nTarget opponent mills half their library, rounded down. (Then exile this card. You may play the land later from exile.)",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "not_legal"
+  },
+  "set": "fin",
+  "set_name": "Final Fantasy",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": [
+   {
+    "name": "Jidoor, Aristocratic Capital",
+    "mana_cost": "",
+    "type_line": "Land — Town",
+    "oracle_text": "This land enters tapped.\n{T}: Add {U}.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "Overture",
+    "mana_cost": "{4}{U}{U}",
+    "type_line": "Sorcery — Adventure",
+    "oracle_text": "Target opponent mills half their library, rounded down. (Then exile this card. You may play the land later from exile.)",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Maddening Cacophony",
+  "oracle_id": "e0f0f290-c83f-4d97-9f5d-786c7136b0d1",
+  "layout": "normal",
+  "mana_cost": "{1}{U}",
+  "cmc": 2.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Kicker {3}{U}\nEach opponent mills eight cards. If this spell was kicked, instead each opponent mills half their library, rounded up.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "znr",
+  "set_name": "Zendikar Rising",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill",
+   "Kicker"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Merfolk Secretkeeper // Venture Deeper",
+  "oracle_id": "4f5096d4-bbb5-4a48-9dd0-9dabdd2ac125",
+  "layout": "adventure",
+  "mana_cost": "{U} // {U}",
+  "cmc": 1.0,
+  "type_line": "Creature — Merfolk Wizard // Sorcery — Adventure",
+  "oracle_text": "Target player mills four cards. (Then exile this card. You may cast the creature later from exile.)",
+  "power": "0",
+  "toughness": "4",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "eld",
+  "set_name": "Throne of Eldraine",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": [
+   {
+    "name": "Merfolk Secretkeeper",
+    "mana_cost": "{U}",
+    "type_line": "Creature — Merfolk Wizard",
+    "oracle_text": "",
+    "power": "0",
+    "toughness": "4",
+    "loyalty": null
+   },
+   {
+    "name": "Venture Deeper",
+    "mana_cost": "{U}",
+    "type_line": "Sorcery — Adventure",
+    "oracle_text": "Target player mills four cards. (Then exile this card. You may cast the creature later from exile.)",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Midnight Tilling",
+  "oracle_id": "79bc2c6d-b03d-4ceb-b468-293378ec73ae",
+  "layout": "normal",
+  "mana_cost": "{1}{G}",
+  "cmc": 2.0,
+  "type_line": "Instant",
+  "oracle_text": "Mill four cards, then you may return a permanent card from among them to your hand. (To mill four cards, put the top four cards of your library into your graveyard.)",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "ecl",
+  "set_name": "Lorwyn Eclipsed",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Picklock Prankster // Free the Fae",
+  "oracle_id": "22d82f4c-2896-477e-8d20-8fe43acd4ba2",
+  "layout": "adventure",
+  "mana_cost": "{1}{U} // {1}{U}",
+  "cmc": 2.0,
+  "type_line": "Creature — Faerie Rogue // Instant — Adventure",
+  "oracle_text": "Flying, vigilance\n//\nMill four cards. Then put an instant, sorcery, or Faerie card from among the milled cards into your hand.",
+  "power": "1",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "woe",
+  "set_name": "Wilds of Eldraine",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Flying",
+   "Vigilance",
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": [
+   {
+    "name": "Picklock Prankster",
+    "mana_cost": "{1}{U}",
+    "type_line": "Creature — Faerie Rogue",
+    "oracle_text": "Flying, vigilance",
+    "power": "1",
+    "toughness": "3",
+    "loyalty": null
+   },
+   {
+    "name": "Free the Fae",
+    "mana_cost": "{1}{U}",
+    "type_line": "Instant — Adventure",
+    "oracle_text": "Mill four cards. Then put an instant, sorcery, or Faerie card from among the milled cards into your hand.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Quag Feast",
+  "oracle_id": "78957246-4092-4f4a-80e3-142e24226962",
+  "layout": "normal",
+  "mana_cost": "{1}{B}",
+  "cmc": 2.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Choose target creature, planeswalker, or Vehicle. Mill two cards, then destroy the chosen permanent if its mana value is less than or equal to the number of cards in your graveyard.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "dft",
+  "set_name": "Aetherdrift",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Rapid Rescue",
+  "oracle_id": "de1ad369-5aa3-4c54-8fb1-30b7f1d4d542",
+  "layout": "normal",
+  "mana_cost": "{G}",
+  "cmc": 1.0,
+  "type_line": "Instant",
+  "oracle_text": "Mill two cards. You may put a permanent card from among the milled cards into your hand. You gain 2 life. (To mill two cards, put the top two cards of your library into your graveyard.)",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "msh",
+  "set_name": "Marvel Super Heroes",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Roots of Wisdom",
+  "oracle_id": "8f6af612-a4a1-4165-ae4d-ff6353cbaf8d",
+  "layout": "normal",
+  "mana_cost": "{1}{G}",
+  "cmc": 2.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Mill three cards, then return a land card or Elf card from your graveyard to your hand. If you can't, draw a card. (To mill a card, put the top card of your library into your graveyard.)",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "khm",
+  "set_name": "Kaldheim",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Say Its Name",
+  "oracle_id": "474f0675-4088-4f77-8081-f9ed7d492837",
+  "layout": "normal",
+  "mana_cost": "{1}{G}",
+  "cmc": 2.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Mill three cards. Then you may return a creature or land card from your graveyard to your hand.\nExile this card and two other cards named Say Its Name from your graveyard: Search your graveyard, hand, and/or library for a card named Altanak, the Thrice-Called and put it onto the battlefield. If you search your library this way, shuffle. Activate only as a sorcery.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "dsk",
+  "set_name": "Duskmourn: House of Horror",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Scout the City",
+  "oracle_id": "ecb8e283-5cdb-4e6a-bdff-546c1617363c",
+  "layout": "normal",
+  "mana_cost": "{1}{G}",
+  "cmc": 2.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Choose one —\n• Look Around — Mill three cards. You may put a permanent card from among them into your hand. You gain 3 life. (To mill three cards, put the top three cards of your library into your graveyard.)\n• Bring Down — Destroy target creature with flying.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "msc",
+  "set_name": "Marvel Super Heroes Commander",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Look Around",
+   "Bring Down",
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Seed of Hope",
+  "oracle_id": "863d6607-912b-4186-9874-87d5473ec481",
+  "layout": "normal",
+  "mana_cost": "{G}",
+  "cmc": 1.0,
+  "type_line": "Instant",
+  "oracle_text": "Mill two cards. You may put a permanent card from among the milled cards into your hand. You gain 2 life. (To mill two cards, put the top two cards of your library into your graveyard.)",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "mom",
+  "set_name": "March of the Machine",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Smuggler's Surprise",
+  "oracle_id": "605f719d-01f8-406c-9d4c-3f4992c6a69f",
+  "layout": "normal",
+  "mana_cost": "{G}",
+  "cmc": 1.0,
+  "type_line": "Instant",
+  "oracle_text": "Spree (Choose one or more additional costs.)\n+ {2} — Mill four cards. You may put up to two creature and/or land cards from among the milled cards into your hand.\n+ {4}{G} — You may put up to two creature cards from your hand onto the battlefield.\n+ {1} — Creatures you control with power 4 or greater gain hexproof and indestructible until end of turn.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "otj",
+  "set_name": "Outlaws of Thunder Junction",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Spree",
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Sweet Oblivion",
+  "oracle_id": "c023538d-2feb-4af5-a44e-b355a190f081",
+  "layout": "normal",
+  "mana_cost": "{1}{U}",
+  "cmc": 2.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Target player mills four cards.\nEscape—{3}{U}, Exile four other cards from your graveyard. (You may cast this card from your graveyard for its escape cost.)",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "thb",
+  "set_name": "Theros Beyond Death",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Escape",
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Tome Scour",
+  "oracle_id": "446a9d7e-9c1a-4e83-8342-2ed5acae2eed",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Target player mills five cards.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "legal",
+   "tlr": "legal"
+  },
+  "set": "pio",
+  "set_name": "Pioneer Masters",
+  "games": [
+   "arena"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Vicious Rumors",
+  "oracle_id": "55b72b1f-6463-406a-8824-d99a3c028285",
+  "layout": "normal",
+  "mana_cost": "{B}",
+  "cmc": 1.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Vicious Rumors deals 1 damage to each opponent. Each opponent discards a card, then mills a card. You gain 1 life.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "grn",
+  "set_name": "Guilds of Ravnica",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Winds of Rebuke",
+  "oracle_id": "6840a63d-d627-4a18-afa9-018406767642",
+  "layout": "normal",
+  "mana_cost": "{1}{U}",
+  "cmc": 2.0,
+  "type_line": "Instant",
+  "oracle_text": "Return target nonland permanent to its owner's hand. Each player mills two cards.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "akr",
+  "set_name": "Amonkhet Remastered",
+  "games": [
+   "arena"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Witherbloom Command",
+  "oracle_id": "7cc81fb3-495c-47cd-8c56-96197d87e9e0",
+  "layout": "normal",
+  "mana_cost": "{B}{G}",
+  "cmc": 2.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Choose two —\n• Target player mills three cards, then you return a land card from your graveyard to your hand.\n• Destroy target noncreature, nonland permanent with mana value 2 or less.\n• Target creature gets -3/-1 until end of turn.\n• Target opponent loses 2 life and you gain 2 life.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "stx",
+  "set_name": "Strixhaven: School of Mages",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "card_faces": []
+ }
+]

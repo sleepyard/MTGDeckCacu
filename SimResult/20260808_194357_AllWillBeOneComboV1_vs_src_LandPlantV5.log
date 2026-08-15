@@ -1,0 +1,201 @@
+Error handling registered!
+19:42:36 [INFO ] GuiBase: ##########################################
+19:42:36 [INFO ] GuiBase: APP: Forge v.2.0.13-SNAPSHOT-06.22
+19:42:36 [INFO ] GuiBase: Java: 21.0.12 (Microsoft)
+19:42:36 [INFO ] GuiBase: OS: Windows 10 10.0 amd64
+19:42:36 [INFO ] GuiBase: RAM: 12064 MB max, 16 CPUs
+19:42:36 [INFO ] GuiBase: ##########################################
+Language 'en-US' loaded successfully.
+(ThreadUtil first call): Running with priority 5
+Read cards: 33319 archived files in 0 ms (25 parts) using thread pool
+Read cards: 821 files in 0 ms (8 parts) using thread pool
+Simulation mode
+Ai(1)-AllWillBeOneComboV1 vs Ai(2)-_src_LandPlantV5 - twenty  games of Constructed
+The Millennium Calendar Did not have activator set in SpellAbilityRestriction.canPlay()
+The Millennium Calendar Did not have activator set in SpellAbilityRestriction.canPlay()
+Trumpeting Carnosaur Did not have activator set in SpellAbilityRestriction.canPlay()
+Trumpeting Carnosaur Did not have activator set in SpellAbilityRestriction.canPlay()
+Game Outcome: Turn 8
+Game Outcome: Ai(1)-AllWillBeOneComboV1 has lost because life total reached 0
+Game Outcome: Ai(2)-_src_LandPlantV5 has won because all opponents have lost
+Match Result: Ai(1)-AllWillBeOneComboV1: 0 Ai(2)-_src_LandPlantV5: 1 
+
+Game Result: Game 1 ended in 6638 ms. Ai(2)-_src_LandPlantV5 has won!
+
+Game Outcome: Turn 7
+Game Outcome: Ai(1)-AllWillBeOneComboV1 has won because all opponents have lost
+Game Outcome: Ai(2)-_src_LandPlantV5 has lost because life total reached 0
+Match Result: Ai(1)-AllWillBeOneComboV1: 1 Ai(2)-_src_LandPlantV5: 1 
+
+Game Result: Game 2 ended in 2386 ms. Ai(1)-AllWillBeOneComboV1 has won!
+
+All Will Be One Did not have activator set in SpellAbilityRestriction.canPlay()
+All Will Be One Did not have activator set in SpellAbilityRestriction.canPlay()
+Game Outcome: Turn 9
+Game Outcome: Ai(1)-AllWillBeOneComboV1 has lost because life total reached 0
+Game Outcome: Ai(2)-_src_LandPlantV5 has won because all opponents have lost
+Match Result: Ai(1)-AllWillBeOneComboV1: 1 Ai(2)-_src_LandPlantV5: 2 
+
+Game Result: Game 3 ended in 4324 ms. Ai(2)-_src_LandPlantV5 has won!
+
+The Millennium Calendar Did not have activator set in SpellAbilityRestriction.canPlay()
+The Millennium Calendar Did not have activator set in SpellAbilityRestriction.canPlay()
+Game Outcome: Turn 6
+Game Outcome: Ai(1)-AllWillBeOneComboV1 has won because all opponents have lost
+Game Outcome: Ai(2)-_src_LandPlantV5 has lost because life total reached 0
+Match Result: Ai(1)-AllWillBeOneComboV1: 2 Ai(2)-_src_LandPlantV5: 2 
+
+Game Result: Game 4 ended in 1898 ms. Ai(1)-AllWillBeOneComboV1 has won!
+
+Game Outcome: Turn 8
+Game Outcome: Ai(1)-AllWillBeOneComboV1 has won because all opponents have lost
+Game Outcome: Ai(2)-_src_LandPlantV5 has lost because life total reached 0
+Match Result: Ai(1)-AllWillBeOneComboV1: 3 Ai(2)-_src_LandPlantV5: 2 
+
+Game Result: Game 5 ended in 5558 ms. Ai(1)-AllWillBeOneComboV1 has won!
+
+Trumpeting Carnosaur Did not have activator set in SpellAbilityRestriction.canPlay()
+Trumpeting Carnosaur Did not have activator set in SpellAbilityRestriction.canPlay()
+Trumpeting Carnosaur Did not have activator set in SpellAbilityRestriction.canPlay()
+Trumpeting Carnosaur Did not have activator set in SpellAbilityRestriction.canPlay()
+Trumpeting Carnosaur Did not have activator set in SpellAbilityRestriction.canPlay()
+Trumpeting Carnosaur Did not have activator set in SpellAbilityRestriction.canPlay()
+Game Outcome: Turn 12
+Game Outcome: Ai(1)-AllWillBeOneComboV1 has lost because life total reached 0
+Game Outcome: Ai(2)-_src_LandPlantV5 has won because all opponents have lost
+Match Result: Ai(1)-AllWillBeOneComboV1: 3 Ai(2)-_src_LandPlantV5: 3 
+
+Game Result: Game 6 ended in 8694 ms. Ai(2)-_src_LandPlantV5 has won!
+
+Game Outcome: Turn 8
+Game Outcome: Ai(1)-AllWillBeOneComboV1 has won because all opponents have lost
+Game Outcome: Ai(2)-_src_LandPlantV5 has lost because life total reached 0
+Match Result: Ai(1)-AllWillBeOneComboV1: 4 Ai(2)-_src_LandPlantV5: 3 
+
+Game Result: Game 7 ended in 2281 ms. Ai(1)-AllWillBeOneComboV1 has won!
+
+Blackcleave Cliffs Did not have activator set in SpellAbilityRestriction.canPlay()
+Game Outcome: Turn 8
+Game Outcome: Ai(1)-AllWillBeOneComboV1 has lost because life total reached 0
+Game Outcome: Ai(2)-_src_LandPlantV5 has won because all opponents have lost
+Match Result: Ai(1)-AllWillBeOneComboV1: 4 Ai(2)-_src_LandPlantV5: 4 
+
+Game Result: Game 8 ended in 4922 ms. Ai(2)-_src_LandPlantV5 has won!
+
+Game Outcome: Turn 8
+Game Outcome: Ai(1)-AllWillBeOneComboV1 has lost because life total reached 0
+Game Outcome: Ai(2)-_src_LandPlantV5 has won because all opponents have lost
+Match Result: Ai(1)-AllWillBeOneComboV1: 4 Ai(2)-_src_LandPlantV5: 5 
+
+Game Result: Game 9 ended in 3619 ms. Ai(2)-_src_LandPlantV5 has won!
+
+Game Outcome: Turn 7
+Game Outcome: Ai(1)-AllWillBeOneComboV1 has lost because life total reached 0
+Game Outcome: Ai(2)-_src_LandPlantV5 has won because all opponents have lost
+Match Result: Ai(1)-AllWillBeOneComboV1: 4 Ai(2)-_src_LandPlantV5: 6 
+
+Game Result: Game 10 ended in 1898 ms. Ai(2)-_src_LandPlantV5 has won!
+
+Game Outcome: Turn 8
+Game Outcome: Ai(1)-AllWillBeOneComboV1 has lost because life total reached 0
+Game Outcome: Ai(2)-_src_LandPlantV5 has won because all opponents have lost
+Match Result: Ai(1)-AllWillBeOneComboV1: 4 Ai(2)-_src_LandPlantV5: 7 
+
+Game Result: Game 11 ended in 3108 ms. Ai(2)-_src_LandPlantV5 has won!
+
+Game Outcome: Turn 8
+Game Outcome: Ai(1)-AllWillBeOneComboV1 has lost because life total reached 0
+Game Outcome: Ai(2)-_src_LandPlantV5 has won because all opponents have lost
+Match Result: Ai(1)-AllWillBeOneComboV1: 4 Ai(2)-_src_LandPlantV5: 8 
+
+Game Result: Game 12 ended in 2314 ms. Ai(2)-_src_LandPlantV5 has won!
+
+Game Outcome: Turn 8
+Game Outcome: Ai(1)-AllWillBeOneComboV1 has lost because life total reached 0
+Game Outcome: Ai(2)-_src_LandPlantV5 has won because all opponents have lost
+Match Result: Ai(1)-AllWillBeOneComboV1: 4 Ai(2)-_src_LandPlantV5: 9 
+
+Game Result: Game 13 ended in 3742 ms. Ai(2)-_src_LandPlantV5 has won!
+
+Game Outcome: Turn 10
+Game Outcome: Ai(1)-AllWillBeOneComboV1 has lost because life total reached 0
+Game Outcome: Ai(2)-_src_LandPlantV5 has won because all opponents have lost
+Match Result: Ai(1)-AllWillBeOneComboV1: 4 Ai(2)-_src_LandPlantV5: 10 
+
+Game Result: Game 14 ended in 4102 ms. Ai(2)-_src_LandPlantV5 has won!
+
+Blood Crypt Did not have activator set in SpellAbilityRestriction.canPlay()
+Blood Crypt Did not have activator set in SpellAbilityRestriction.canPlay()
+Game Outcome: Turn 7
+Game Outcome: Ai(1)-AllWillBeOneComboV1 has lost because life total reached 0
+Game Outcome: Ai(2)-_src_LandPlantV5 has won because all opponents have lost
+Match Result: Ai(1)-AllWillBeOneComboV1: 4 Ai(2)-_src_LandPlantV5: 11 
+
+Game Result: Game 15 ended in 3002 ms. Ai(2)-_src_LandPlantV5 has won!
+
+Game Outcome: Turn 8
+Game Outcome: Ai(1)-AllWillBeOneComboV1 has lost because life total reached 0
+Game Outcome: Ai(2)-_src_LandPlantV5 has won because all opponents have lost
+Match Result: Ai(1)-AllWillBeOneComboV1: 4 Ai(2)-_src_LandPlantV5: 12 
+
+Game Result: Game 16 ended in 3080 ms. Ai(2)-_src_LandPlantV5 has won!
+
+Game Outcome: Turn 8
+Game Outcome: Ai(1)-AllWillBeOneComboV1 has lost because life total reached 0
+Game Outcome: Ai(2)-_src_LandPlantV5 has won because all opponents have lost
+Match Result: Ai(1)-AllWillBeOneComboV1: 4 Ai(2)-_src_LandPlantV5: 13 
+
+Game Result: Game 17 ended in 1628 ms. Ai(2)-_src_LandPlantV5 has won!
+
+Voldaren Epicure Did not have activator set in SpellAbilityRestriction.canPlay()
+Game Outcome: Turn 9
+Game Outcome: Ai(1)-AllWillBeOneComboV1 has lost because life total reached 0
+Game Outcome: Ai(2)-_src_LandPlantV5 has won because all opponents have lost
+Match Result: Ai(1)-AllWillBeOneComboV1: 4 Ai(2)-_src_LandPlantV5: 14 
+
+Game Result: Game 18 ended in 4192 ms. Ai(2)-_src_LandPlantV5 has won!
+
+Game Outcome: Turn 7
+Game Outcome: Ai(1)-AllWillBeOneComboV1 has won because all opponents have lost
+Game Outcome: Ai(2)-_src_LandPlantV5 has lost because life total reached 0
+Match Result: Ai(1)-AllWillBeOneComboV1: 5 Ai(2)-_src_LandPlantV5: 14 
+
+Game Result: Game 19 ended in 1658 ms. Ai(1)-AllWillBeOneComboV1 has won!
+
+Blackcleave Cliffs Did not have activator set in SpellAbilityRestriction.canPlay()
+Game Outcome: Turn 8
+Game Outcome: Ai(1)-AllWillBeOneComboV1 has lost because life total reached 0
+Game Outcome: Ai(2)-_src_LandPlantV5 has won because all opponents have lost
+Match Result: Ai(1)-AllWillBeOneComboV1: 5 Ai(2)-_src_LandPlantV5: 15 
+
+Game Result: Game 20 ended in 2522 ms. Ai(2)-_src_LandPlantV5 has won!
+
+
+--- stderr ---
+Upcoming set Star Trek (TRK) dated in the future. All `upcoming` cards will be added to this set with unknown rarity.
+The card A-Alrund's Epiphany was not assigned to any set. Adding it to UNKNOWN set... to fix see res/editions/ folder. 
+The card A-Baba Lysaga, Night Witch was not assigned to any set. Adding it to UNKNOWN set... to fix see res/editions/ folder. 
+The card A-Divide by Zero was not assigned to any set. Adding it to UNKNOWN set... to fix see res/editions/ folder. 
+The card A-Esika's Chariot was not assigned to any set. Adding it to UNKNOWN set... to fix see res/editions/ folder. 
+The card A-Faceless Haven was not assigned to any set. Adding it to UNKNOWN set... to fix see res/editions/ folder. 
+The card A-Fires of Invention was not assigned to any set. Adding it to UNKNOWN set... to fix see res/editions/ folder. 
+The card A-Goldspan Dragon was not assigned to any set. Adding it to UNKNOWN set... to fix see res/editions/ folder. 
+The card A-Hullbreaker Horror was not assigned to any set. Adding it to UNKNOWN set... to fix see res/editions/ folder. 
+The card A-Kumano Faces Kakkazan was not assigned to any set. Adding it to UNKNOWN set... to fix see res/editions/ folder. 
+The card A-Luminarch Aspirant was not assigned to any set. Adding it to UNKNOWN set... to fix see res/editions/ folder. 
+The card A-Monster Manual was not assigned to any set. Adding it to UNKNOWN set... to fix see res/editions/ folder. 
+The card A-Omnath, Locus of Creation was not assigned to any set. Adding it to UNKNOWN set... to fix see res/editions/ folder. 
+The card A-The Meathook Massacre was not assigned to any set. Adding it to UNKNOWN set... to fix see res/editions/ folder. 
+The card A-Unholy Heat was not assigned to any set. Adding it to UNKNOWN set... to fix see res/editions/ folder. 
+The card Blinding Radiance was not assigned to any set. Adding it to UNKNOWN set... to fix see res/editions/ folder. 
+The card Goblin Bruiser was not assigned to any set. Adding it to UNKNOWN set... to fix see res/editions/ folder. 
+The card Ogre Painbringer was not assigned to any set. Adding it to UNKNOWN set... to fix see res/editions/ folder. 
+The card Titanic Pelagosaur was not assigned to any set. Adding it to UNKNOWN set... to fix see res/editions/ folder. 
+The card Treetop Recluse was not assigned to any set. Adding it to UNKNOWN set... to fix see res/editions/ folder. 
+Upcoming set Star Trek (TRK) dated in the future. All `upcoming` cards will be added to this set with unknown rarity.
+Archdruid's Charm (120) - [Couldn't add to stack, failed to target] - Choose one —
+• Search your library for a creature or land card and reveal it. Put it onto the battlefield tapped if it's a land card. Otherwise, put it into your hand. Then shuffle.
+• Put a +1/+1 counter on target creature you control. Then that creature deals damage equal to its power to target creature you don't control.
+• Exile target artifact or enchantment.
+
+[[Lair of the Hydra (87), Topiary Stomper (83)], [Etching of Kumano (26)]]

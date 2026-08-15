@@ -98,7 +98,8 @@ def to_dck(sections, name):
         if not entries:
             continue
         lines.append(header)
-        lines.extend(f"{qty} {card}" for qty, card in entries)
+        # Forge 只认双面牌的正面名（如 "Spikefield Hazard // Spikefield Cave" → "Spikefield Hazard"）
+        lines.extend(f"{qty} {card.split(' // ')[0]}" for qty, card in entries)
     return "\n".join(lines) + "\n"
 
 

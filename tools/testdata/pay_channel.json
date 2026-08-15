@@ -1,0 +1,258 @@
+[
+ {
+  "name": "Boseiju, Who Endures",
+  "oracle_id": "bf1341dd-41a3-49f6-87ec-63170dde4324",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Legendary Land",
+  "oracle_text": "{T}: Add {G}.\nChannel — {1}{G}, Discard this card: Destroy target artifact, enchantment, or nonbasic land an opponent controls. That player may search their library for a land card with a basic land type, put it onto the battlefield, then shuffle. This ability costs {1} less to activate for each legendary creature you control.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "neo",
+  "set_name": "Kamigawa: Neon Dynasty",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Channel"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Eiganjo, Seat of the Empire",
+  "oracle_id": "7edb3d15-4f70-4ebe-8c5e-caf6a225076d",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Legendary Land",
+  "oracle_text": "{T}: Add {W}.\nChannel — {2}{W}, Discard this card: It deals 4 damage to target attacking or blocking creature. This ability costs {1} less to activate for each legendary creature you control.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "neo",
+  "set_name": "Kamigawa: Neon Dynasty",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Channel"
+  ],
+  "color_identity": [
+   "W"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Otawara, Soaring City",
+  "oracle_id": "e9b6a394-691c-425a-9307-76d8edc7375e",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Legendary Land",
+  "oracle_text": "{T}: Add {U}.\nChannel — {3}{U}, Discard this card: Return target artifact, creature, enchantment, or planeswalker to its owner's hand. This ability costs {1} less to activate for each legendary creature you control.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "neo",
+  "set_name": "Kamigawa: Neon Dynasty",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Channel"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Sokenzan, Crucible of Defiance",
+  "oracle_id": "c5ee72d5-3a9e-4fe5-8802-3286ee612055",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Legendary Land",
+  "oracle_text": "{T}: Add {R}.\nChannel — {3}{R}, Discard this card: Create two 1/1 colorless Spirit creature tokens. They gain haste until end of turn. This ability costs {1} less to activate for each legendary creature you control.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "neo",
+  "set_name": "Kamigawa: Neon Dynasty",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Channel"
+  ],
+  "color_identity": [
+   "R"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Takenuma, Abandoned Mire",
+  "oracle_id": "ac2dd694-d2f1-4025-8400-12332bdc882a",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Legendary Land",
+  "oracle_text": "{T}: Add {B}.\nChannel — {3}{B}, Discard this card: Mill three cards, then return a creature or planeswalker card from your graveyard to your hand. This ability costs {1} less to activate for each legendary creature you control.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "neo",
+  "set_name": "Kamigawa: Neon Dynasty",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Mill",
+   "Channel"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": []
+ }
+]

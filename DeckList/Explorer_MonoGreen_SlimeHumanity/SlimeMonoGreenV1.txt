@@ -1,0 +1,24 @@
+Deck
+4 Aftermath Analyst
+1 Bala Ged Recovery
+2 Blossoming Tortoise
+2 Boseiju, Who Endures
+4 Cache Grab
+2 Eden, Seat of the Sanctum
+17 Forest
+2 Grapple with the Past
+3 Hardened Scales
+1 Lair of the Hydra
+2 Ram Through
+2 Satyr Wayfinder
+4 Scavenging Ooze
+14 Slime Against Humanity
+
+Sideboard
+1 Consuming Blob
+3 Haywire Mite
+3 Healer of the Glade
+2 Heroic Intervention
+2 Natural State
+2 Obstinate Baloth
+2 Tail Swipe

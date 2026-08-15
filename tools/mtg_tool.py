@@ -393,6 +393,14 @@ def check_card(name, fmt, platform, use_cache=True):
     if not zh:
         rec["notes"].append("中文名缺失")
 
+    # 4. 张数无上限例外（牌面 "A deck can have any number of cards named ..."，
+    #    如 Slime Against Humanity / Hare Apparent / Rat Colony；MDFC 读 card_faces）
+    if card is not None:
+        texts = [card.get("oracle_text") or ""]
+        texts += [f.get("oracle_text") or "" for f in card.get("card_faces") or []]
+        rec["any_number_of"] = any(
+            "a deck can have any number of cards named" in t.lower() for t in texts)
+
     return rec
 
 
@@ -579,14 +587,18 @@ def cmd_validate(args):
                    "platform_ok": None}
         card_info[name] = rec
 
-    # ---- 同名上限（基本地豁免；同名跨主备合并计数）
+    # ---- 同名上限（基本地豁免；牌面 "any number of cards named" 豁免；同名跨主备合并计数）
     totals = {}
     for sec in ("main", "sideboard"):
         for qty, name in sections[sec]:
             totals[name] = totals.get(name, 0) + qty
     for name, total in sorted(totals.items()):
         rec = card_info[name]
-        if not is_basic_land(rec.get("type_line")) and total > 4:
+        if is_basic_land(rec.get("type_line")) or total <= 4:
+            continue
+        if rec.get("any_number_of"):
+            print(f"  [豁免] '{name}' 牌面允许任意张数，共 {total} 张", file=sys.stderr)
+        else:
             vio(f"'{name}' 共 {total} 张 > 4（非基本地）")
 
     # ---- 逐牌三重核对 + 颜色身份

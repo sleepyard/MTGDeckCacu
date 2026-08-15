@@ -1,0 +1,121 @@
+[
+ {
+  "english": "Akawalli, the Seething Tower",
+  "chinese": "火热伟菇阿卡瓦利",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "LCI#220"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Creature — Fungus",
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Akawalli, the Seething Tower"
+ },
+ {
+  "english": "Jace, Wielder of Mysteries",
+  "chinese": "博奥杰斯",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "WAR#54",
+   "WAR#54★"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Planeswalker — Jace",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Jace, Wielder of Mysteries"
+ },
+ {
+  "english": "Thassa, Deep-Dwelling",
+  "chinese": "深洋塔萨",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "THB#71",
+   "THB#261"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Enchantment Creature — God",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Thassa, Deep-Dwelling"
+ },
+ {
+  "english": "Gyruda, Doom of Depths",
+  "chinese": "深渊灾祸翟鲁达",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "IKO#221",
+   "MUL#42",
+   "MUL#107",
+   "IKO#384"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Creature — Demon Kraken",
+  "color_identity": [
+   "B",
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Gyruda, Doom of Depths"
+ },
+ {
+  "english": "Polukranos, Unchained",
+  "chinese": "脱缰的波禄卡诺斯",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "THB#224"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Creature — Zombie Hydra",
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Polukranos, Unchained"
+ },
+ {
+  "english": "Uro, Titan of Nature's Wrath",
+  "chinese": "天怒泰坦乌洛",
+  "legal": "banned",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "THB#229"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Creature — Elder Giant",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "notes": [
+   "赛制 pioneer 合法性: banned"
+  ],
+  "ok": false,
+  "scryfall_name": "Uro, Titan of Nature's Wrath"
+ }
+]

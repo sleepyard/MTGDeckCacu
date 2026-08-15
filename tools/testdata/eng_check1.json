@@ -1,0 +1,427 @@
+[
+ {
+  "english": "Aftermath Analyst",
+  "chinese": "事后分析师",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MKM#148"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Elf Detective",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Aftermath Analyst"
+ },
+ {
+  "english": "Cache Grab",
+  "chinese": "贪婪备储",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "BLB#167"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Cache Grab"
+ },
+ {
+  "english": "Grisly Salvage",
+  "chinese": "骇人回收",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "HA5#23"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Grisly Salvage"
+ },
+ {
+  "english": "Satyr Wayfinder",
+  "chinese": "引路羊蹄人",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "EA2#17"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Satyr",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Satyr Wayfinder"
+ },
+ {
+  "english": "Mulch",
+  "chinese": "护根",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "VOW#210"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Mulch"
+ },
+ {
+  "english": "Winding Way",
+  "chinese": "蜿蜒长路",
+  "legal": "not_legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "J21#670"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [
+   "赛制 pioneer 合法性: not_legal"
+  ],
+  "ok": false,
+  "scryfall_name": "Winding Way"
+ },
+ {
+  "english": "Old Stickfingers",
+  "chinese": "老枯指",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MID#234",
+   "MID#321"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Creature — Horror",
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Old Stickfingers"
+ },
+ {
+  "english": "Eccentric Farmer",
+  "chinese": "古怪农夫",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MID#185"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Human Peasant",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Eccentric Farmer"
+ },
+ {
+  "english": "Deathbonnet Sprout",
+  "chinese": "毒顶菇新芽",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MID#181"
+  ],
+  "layout": "transform",
+  "type_line": "Creature — Fungus // Creature — Fungus Horror",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Deathbonnet Sprout // Deathbonnet Hulk"
+ },
+ {
+  "english": "Overgrown Pest",
+  "chinese": "增生害虫",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MOM#197"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Pest",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Overgrown Pest"
+ },
+ {
+  "english": "Insidious Roots",
+  "chinese": "潜伏繁根",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MKM#208"
+  ],
+  "layout": "normal",
+  "type_line": "Enchantment",
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Insidious Roots"
+ },
+ {
+  "english": "Mire Triton",
+  "chinese": "泥沼屈东",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "JMP#257",
+   "THB#105"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Zombie Merfolk",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Mire Triton"
+ },
+ {
+  "english": "Seed of Hope",
+  "chinese": "希望种子",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MOM#204"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Seed of Hope"
+ },
+ {
+  "english": "Track Down",
+  "chinese": "追查行踪",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "M21#211"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Track Down"
+ },
+ {
+  "english": "Commune with the Gods",
+  "chinese": "领受神言",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "PIO#169"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Commune with the Gods"
+ },
+ {
+  "english": "Gather the Pack",
+  "chinese": "召集猎群",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "PIO#379"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Gather the Pack"
+ },
+ {
+  "english": "Grapple with the Past",
+  "chinese": "纠结过往",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "SIR#198"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Grapple with the Past"
+ },
+ {
+  "english": "Vessel of Nascency",
+  "chinese": "起源皿",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "SIR#224"
+  ],
+  "layout": "normal",
+  "type_line": "Enchantment",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Vessel of Nascency"
+ },
+ {
+  "english": "Crawling Infestation",
+  "chinese": "蠕爬侵扰",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "VOW#193"
+  ],
+  "layout": "normal",
+  "type_line": "Enchantment",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Crawling Infestation"
+ },
+ {
+  "english": "Colossal Grave-Reaver",
+  "chinese": "裂坟庞巨龙",
+  "legal": "not_legal",
+  "platform": "arena",
+  "platform_ok": false,
+  "platform_prints": [],
+  "layout": "normal",
+  "type_line": "Creature — Dragon",
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "notes": [
+   "赛制 pioneer 合法性: not_legal",
+   "遍历 2 张印刷，无 Arena 版本"
+  ],
+  "ok": false,
+  "scryfall_name": "Colossal Grave-Reaver"
+ },
+ {
+  "english": "Deathcap Cultivator",
+  "chinese": "毒帽蕈栽客",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "SIR#193"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Human Druid",
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Deathcap Cultivator"
+ },
+ {
+  "english": "Six",
+  "chinese": "六树妖",
+  "legal": "not_legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MH3#169"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Creature — Treefolk",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [
+   "赛制 pioneer 合法性: not_legal"
+  ],
+  "ok": false,
+  "scryfall_name": "Six"
+ },
+ {
+  "english": "Will of the Wisps",
+  "chinese": null,
+  "legal": null,
+  "platform": "arena",
+  "platform_ok": null,
+  "platform_prints": [],
+  "layout": null,
+  "type_line": null,
+  "color_identity": null,
+  "notes": [
+   "Scryfall 精确查名未命中 (404 Card not found)",
+   "中文名缺失"
+  ],
+  "ok": false,
+  "scryfall_name": null
+ }
+]

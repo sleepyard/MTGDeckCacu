@@ -1,0 +1,218 @@
+[
+ {
+  "english": "Hydra's Growth",
+  "chinese": "多头龙式生长",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "THB#172"
+  ],
+  "layout": "normal",
+  "type_line": "Enchantment — Aura",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Hydra's Growth"
+ },
+ {
+  "english": "Terrasymbiosis",
+  "chinese": "地貌共生",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "EOE#210"
+  ],
+  "layout": "normal",
+  "type_line": "Enchantment",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Terrasymbiosis"
+ },
+ {
+  "english": "Mossborn Hydra",
+  "chinese": "苔生多头龙",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FDN#107"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Elemental Hydra",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Mossborn Hydra"
+ },
+ {
+  "english": "Ornery Tumblewagg",
+  "chinese": "暴躁滚枝兽",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "OTJ#171"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Brushwagg Mount",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Ornery Tumblewagg"
+ },
+ {
+  "english": "Quilled Greatwurm",
+  "chinese": "刺毛高大亚龙",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FDN#111"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Wurm",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Quilled Greatwurm"
+ },
+ {
+  "english": "The Great Henge",
+  "chinese": "巨石圆阵",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ELD#161",
+   "TLE#41"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Artifact",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "The Great Henge"
+ },
+ {
+  "english": "Evolution Sage",
+  "chinese": "演化智者",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "WAR#159"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Elf Druid",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Evolution Sage"
+ },
+ {
+  "english": "Karn's Bastion",
+  "chinese": "卡恩关堡",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "WAR#248"
+  ],
+  "layout": "normal",
+  "type_line": "Land",
+  "color_identity": [],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Karn's Bastion"
+ },
+ {
+  "english": "Wildwood Mentor",
+  "chinese": "野林导师",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "WOE#322"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Treefolk",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Wildwood Mentor"
+ },
+ {
+  "english": "Woodland Champion",
+  "chinese": "林地斗士",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "M20#205",
+   "J25#741"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Elf Scout",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Woodland Champion"
+ },
+ {
+  "english": "Tribute to the World Tree",
+  "chinese": "永志世界树",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MOM#211"
+  ],
+  "layout": "normal",
+  "type_line": "Enchantment",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Tribute to the World Tree"
+ },
+ {
+  "english": "Meltstrider Eulogist",
+  "chinese": "炽行赞颂兵",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "EOE#197"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Insect Soldier",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Meltstrider Eulogist"
+ }
+]

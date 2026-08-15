@@ -1,0 +1,238 @@
+[
+ {
+  "english": "Agadeem's Awakening",
+  "chinese": "艾格丁觉醒",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ZNR#90"
+  ],
+  "layout": "modal_dfc",
+  "type_line": "Sorcery // Land",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Agadeem's Awakening // Agadeem, the Undercrypt"
+ },
+ {
+  "english": "Hagra Mauling",
+  "chinese": "赫嘎撕咬",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ZNR#106"
+  ],
+  "layout": "modal_dfc",
+  "type_line": "Instant // Land",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Hagra Mauling // Hagra Broodpit"
+ },
+ {
+  "english": "Malakir Rebirth",
+  "chinese": "马拉奇再生",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ZNR#111"
+  ],
+  "layout": "modal_dfc",
+  "type_line": "Instant // Land",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Malakir Rebirth // Malakir Mire"
+ },
+ {
+  "english": "Souls of the Lost",
+  "chinese": "失落者灵魂",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "LCI#121"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Spirit",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Souls of the Lost"
+ },
+ {
+  "english": "Urborg Lhurgoyf",
+  "chinese": "乌尔博格拉高耶夫",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DMU#186"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Lhurgoyf",
+  "color_identity": [
+   "B",
+   "G",
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Urborg Lhurgoyf"
+ },
+ {
+  "english": "Akawalli the Seething Tower",
+  "chinese": null,
+  "legal": null,
+  "platform": "arena",
+  "platform_ok": null,
+  "platform_prints": [],
+  "layout": null,
+  "type_line": null,
+  "color_identity": null,
+  "notes": [
+   "模糊匹配到 'Akawalli, the Seething Tower'，与请求名不一致，按未命中处理",
+   "中文名缺失"
+  ],
+  "ok": false,
+  "scryfall_name": null
+ },
+ {
+  "english": "The Everflowing Well",
+  "chinese": "汩汩涌井",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "LCI#56"
+  ],
+  "layout": "transform",
+  "type_line": "Legendary Artifact // Legendary Artifact Land",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "The Everflowing Well // The Myriad Pools"
+ },
+ {
+  "english": "The Scarab God",
+  "chinese": "甲虫神",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "AKR#259"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Creature — God",
+  "color_identity": [
+   "B",
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "The Scarab God"
+ },
+ {
+  "english": "Jace Wielder of Mysteries",
+  "chinese": null,
+  "legal": null,
+  "platform": "arena",
+  "platform_ok": null,
+  "platform_prints": [],
+  "layout": null,
+  "type_line": null,
+  "color_identity": null,
+  "notes": [
+   "模糊匹配到 'Jace, Wielder of Mysteries'，与请求名不一致，按未命中处理",
+   "中文名缺失"
+  ],
+  "ok": false,
+  "scryfall_name": null
+ },
+ {
+  "english": "Thassa Deep-Dwelling",
+  "chinese": null,
+  "legal": null,
+  "platform": "arena",
+  "platform_ok": null,
+  "platform_prints": [],
+  "layout": null,
+  "type_line": null,
+  "color_identity": null,
+  "notes": [
+   "模糊匹配到 'Thassa, Deep-Dwelling'，与请求名不一致，按未命中处理",
+   "中文名缺失"
+  ],
+  "ok": false,
+  "scryfall_name": null
+ },
+ {
+  "english": "Essence Flux",
+  "chinese": "菁华异变",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "JMP#151",
+   "SIR#67"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Essence Flux"
+ },
+ {
+  "english": "Ghostly Flicker",
+  "chinese": "鬼影闪烁",
+  "legal": "not_legal",
+  "platform": "arena",
+  "platform_ok": false,
+  "platform_prints": [],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [
+   "赛制 pioneer 合法性: not_legal",
+   "遍历 6 张印刷，无 Arena 版本"
+  ],
+  "ok": false,
+  "scryfall_name": "Ghostly Flicker"
+ },
+ {
+  "english": "Aetherling",
+  "chinese": "乙太精怪",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "PIO#43"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Shapeshifter",
+  "color_identity": [
+   "U"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Aetherling"
+ }
+]

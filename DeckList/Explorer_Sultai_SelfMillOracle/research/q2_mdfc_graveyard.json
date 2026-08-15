@@ -1,0 +1,559 @@
+[
+ {
+  "name": "Agadeem's Awakening // Agadeem, the Undercrypt",
+  "oracle_id": "562d71b9-1646-474e-9293-55da6947a758",
+  "layout": "modal_dfc",
+  "mana_cost": "{X}{B}{B}{B}",
+  "cmc": 3.0,
+  "type_line": "Sorcery // Land",
+  "oracle_text": "Return from your graveyard to the battlefield any number of target creature cards that each have a different mana value X or less.\n//\nAs this land enters, you may pay 3 life. If you don't, it enters tapped.\n{T}: Add {B}.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "znr",
+  "set_name": "Zendikar Rising",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": [
+   {
+    "name": "Agadeem's Awakening",
+    "mana_cost": "{X}{B}{B}{B}",
+    "type_line": "Sorcery",
+    "oracle_text": "Return from your graveyard to the battlefield any number of target creature cards that each have a different mana value X or less.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "Agadeem, the Undercrypt",
+    "mana_cost": "",
+    "type_line": "Land",
+    "oracle_text": "As this land enters, you may pay 3 life. If you don't, it enters tapped.\n{T}: Add {B}.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Bala Ged Recovery // Bala Ged Sanctuary",
+  "oracle_id": "d2075f58-b0e9-4e85-b7e6-0523a27a1d5b",
+  "layout": "modal_dfc",
+  "mana_cost": "{2}{G}",
+  "cmc": 3.0,
+  "type_line": "Sorcery // Land",
+  "oracle_text": "Return target card from your graveyard to your hand.\n//\nThis land enters tapped.\n{T}: Add {G}.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "znr",
+  "set_name": "Zendikar Rising",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": [
+   {
+    "name": "Bala Ged Recovery",
+    "mana_cost": "{2}{G}",
+    "type_line": "Sorcery",
+    "oracle_text": "Return target card from your graveyard to your hand.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "Bala Ged Sanctuary",
+    "mana_cost": "",
+    "type_line": "Land",
+    "oracle_text": "This land enters tapped.\n{T}: Add {G}.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Blackbloom Rogue // Blackbloom Bog",
+  "oracle_id": "34320ebf-da97-44a4-bbeb-a9da06548289",
+  "layout": "modal_dfc",
+  "mana_cost": "{2}{B}",
+  "cmc": 3.0,
+  "type_line": "Creature — Human Rogue // Land",
+  "oracle_text": "Menace (This creature can't be blocked except by two or more creatures.)\nThis creature gets +3/+0 as long as an opponent has eight or more cards in their graveyard.\n//\nThis land enters tapped.\n{T}: Add {B}.",
+  "power": "2",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "znr",
+  "set_name": "Zendikar Rising",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Menace"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": [
+   {
+    "name": "Blackbloom Rogue",
+    "mana_cost": "{2}{B}",
+    "type_line": "Creature — Human Rogue",
+    "oracle_text": "Menace (This creature can't be blocked except by two or more creatures.)\nThis creature gets +3/+0 as long as an opponent has eight or more cards in their graveyard.",
+    "power": "2",
+    "toughness": "3",
+    "loyalty": null
+   },
+   {
+    "name": "Blackbloom Bog",
+    "mana_cost": "",
+    "type_line": "Land",
+    "oracle_text": "This land enters tapped.\n{T}: Add {B}.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Blex, Vexing Pest // Search for Blex",
+  "oracle_id": "b2c53124-e422-4786-8135-67c350d71a36",
+  "layout": "modal_dfc",
+  "mana_cost": "{2}{G} // {2}{B}{B}",
+  "cmc": 3.0,
+  "type_line": "Legendary Creature — Pest // Sorcery",
+  "oracle_text": "Other Pests, Bats, Insects, Snakes, and Spiders you control get +1/+1.\nWhen Blex dies, you gain 4 life.\n//\nLook at the top five cards of your library. You may put any number of them into your hand and the rest into your graveyard. You lose 3 life for each card you put into your hand this way.",
+  "power": "3",
+  "toughness": "2",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "not_legal"
+  },
+  "set": "stx",
+  "set_name": "Strixhaven: School of Mages",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [],
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "card_faces": [
+   {
+    "name": "Blex, Vexing Pest",
+    "mana_cost": "{2}{G}",
+    "type_line": "Legendary Creature — Pest",
+    "oracle_text": "Other Pests, Bats, Insects, Snakes, and Spiders you control get +1/+1.\nWhen Blex dies, you gain 4 life.",
+    "power": "3",
+    "toughness": "2",
+    "loyalty": null
+   },
+   {
+    "name": "Search for Blex",
+    "mana_cost": "{2}{B}{B}",
+    "type_line": "Sorcery",
+    "oracle_text": "Look at the top five cards of your library. You may put any number of them into your hand and the rest into your graveyard. You lose 3 life for each card you put into your hand this way.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Egon, God of Death // Throne of Death",
+  "oracle_id": "8fa7bd8f-f712-4dd1-9ffb-e30dfe744389",
+  "layout": "modal_dfc",
+  "mana_cost": "{2}{B} // {B}",
+  "cmc": 3.0,
+  "type_line": "Legendary Creature — God // Legendary Artifact",
+  "oracle_text": "Deathtouch\nAt the beginning of your upkeep, exile two cards from your graveyard. If you can't, sacrifice Egon and draw a card.\n//\nAt the beginning of your upkeep, mill a card.\n{2}{B}, {T}, Exile a creature card from your graveyard: Draw a card.",
+  "power": "6",
+  "toughness": "6",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "khm",
+  "set_name": "Kaldheim",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill",
+   "Deathtouch"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": [
+   {
+    "name": "Egon, God of Death",
+    "mana_cost": "{2}{B}",
+    "type_line": "Legendary Creature — God",
+    "oracle_text": "Deathtouch\nAt the beginning of your upkeep, exile two cards from your graveyard. If you can't, sacrifice Egon and draw a card.",
+    "power": "6",
+    "toughness": "6",
+    "loyalty": null
+   },
+   {
+    "name": "Throne of Death",
+    "mana_cost": "{B}",
+    "type_line": "Legendary Artifact",
+    "oracle_text": "At the beginning of your upkeep, mill a card.\n{2}{B}, {T}, Exile a creature card from your graveyard: Draw a card.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Jorn, God of Winter // Kaldring, the Rimestaff",
+  "oracle_id": "bd43b485-e42e-4c20-adcb-799b0ce18a59",
+  "layout": "modal_dfc",
+  "mana_cost": "{2}{G} // {1}{U}{B}",
+  "cmc": 3.0,
+  "type_line": "Legendary Snow Creature — God // Legendary Snow Artifact",
+  "oracle_text": "Whenever Jorn attacks, untap each snow permanent you control.\n//\n{T}: You may play target snow permanent card from your graveyard this turn. If you do, it enters tapped.",
+  "power": "3",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "khm",
+  "set_name": "Kaldheim",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [],
+  "color_identity": [
+   "B",
+   "G",
+   "U"
+  ],
+  "card_faces": [
+   {
+    "name": "Jorn, God of Winter",
+    "mana_cost": "{2}{G}",
+    "type_line": "Legendary Snow Creature — God",
+    "oracle_text": "Whenever Jorn attacks, untap each snow permanent you control.",
+    "power": "3",
+    "toughness": "3",
+    "loyalty": null
+   },
+   {
+    "name": "Kaldring, the Rimestaff",
+    "mana_cost": "{1}{U}{B}",
+    "type_line": "Legendary Snow Artifact",
+    "oracle_text": "{T}: You may play target snow permanent card from your graveyard this turn. If you do, it enters tapped.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Pestilent Cauldron // Restorative Burst",
+  "oracle_id": "78780f37-f215-4ae1-adce-6255b0146873",
+  "layout": "modal_dfc",
+  "mana_cost": "{2}{B} // {3}{G}{G}",
+  "cmc": 3.0,
+  "type_line": "Artifact // Sorcery",
+  "oracle_text": "{T}, Discard a card: Create a 1/1 black and green Pest creature token with \"When this token dies, you gain 1 life.\"\n{1}, {T}: Each opponent mills cards equal to the amount of life you gained this turn.\n{4}, {T}: Exile four target cards from a single graveyard. Draw a card.\n//\nReturn up to two target creature, land, and/or planeswalker cards from your graveyard to your hand. Each player gains 4 life. Exile Restorative Burst.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "not_legal"
+  },
+  "set": "stx",
+  "set_name": "Strixhaven: School of Mages",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "card_faces": [
+   {
+    "name": "Pestilent Cauldron",
+    "mana_cost": "{2}{B}",
+    "type_line": "Artifact",
+    "oracle_text": "{T}, Discard a card: Create a 1/1 black and green Pest creature token with \"When this token dies, you gain 1 life.\"\n{1}, {T}: Each opponent mills cards equal to the amount of life you gained this turn.\n{4}, {T}: Exile four target cards from a single graveyard. Draw a card.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "Restorative Burst",
+    "mana_cost": "{3}{G}{G}",
+    "type_line": "Sorcery",
+    "oracle_text": "Return up to two target creature, land, and/or planeswalker cards from your graveyard to your hand. Each player gains 4 life. Exile Restorative Burst.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Tergrid, God of Fright // Tergrid's Lantern",
+  "oracle_id": "8485cfaa-1dbf-432b-b5d0-92a6aa6a329b",
+  "layout": "modal_dfc",
+  "mana_cost": "{3}{B}{B} // {3}{B}",
+  "cmc": 5.0,
+  "type_line": "Legendary Creature — God // Legendary Artifact",
+  "oracle_text": "Menace\nWhenever an opponent sacrifices a nontoken permanent or discards a permanent card, you may put that card from a graveyard onto the battlefield under your control.\n//\n{T}: Target player loses 3 life unless they sacrifice a nonland permanent of their choice or discard a card.\n{3}{B}: Untap Tergrid's Lantern.",
+  "power": "4",
+  "toughness": "5",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "not_legal"
+  },
+  "set": "khm",
+  "set_name": "Kaldheim",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Menace"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": [
+   {
+    "name": "Tergrid, God of Fright",
+    "mana_cost": "{3}{B}{B}",
+    "type_line": "Legendary Creature — God",
+    "oracle_text": "Menace\nWhenever an opponent sacrifices a nontoken permanent or discards a permanent card, you may put that card from a graveyard onto the battlefield under your control.",
+    "power": "4",
+    "toughness": "5",
+    "loyalty": null
+   },
+   {
+    "name": "Tergrid's Lantern",
+    "mana_cost": "{3}{B}",
+    "type_line": "Legendary Artifact",
+    "oracle_text": "{T}: Target player loses 3 life unless they sacrifice a nonland permanent of their choice or discard a card.\n{3}{B}: Untap Tergrid's Lantern.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ }
+]

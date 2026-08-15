@@ -1,0 +1,105 @@
+[
+ {
+  "name": "Molderhulk",
+  "oracle_id": "a6fa840a-817c-4e84-9dd3-d28a011f2214",
+  "layout": "normal",
+  "mana_cost": "{7}{B}{G}",
+  "cmc": 9.0,
+  "type_line": "Creature — Fungus Zombie",
+  "oracle_text": "Undergrowth — This spell costs {1} less to cast for each creature card in your graveyard.\nWhen this creature enters, return target land card from your graveyard to the battlefield.",
+  "power": "6",
+  "toughness": "6",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "not_legal"
+  },
+  "set": "grn",
+  "set_name": "Guilds of Ravnica",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Undergrowth"
+  ],
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Wrenn and Realmbreaker",
+  "oracle_id": "4566fb92-448e-4b3f-9045-9d74323c35d1",
+  "layout": "normal",
+  "mana_cost": "{1}{G}{G}",
+  "cmc": 3.0,
+  "type_line": "Legendary Planeswalker — Wrenn",
+  "oracle_text": "Lands you control have \"{T}: Add one mana of any color.\"\n+1: Up to one target land you control becomes a 3/3 Elemental creature with vigilance, hexproof, and haste until your next turn. It's still a land.\n−2: Mill three cards. You may put a permanent card from among the milled cards into your hand.\n−7: You get an emblem with \"You may play lands and cast permanent spells from your graveyard.\"",
+  "power": null,
+  "toughness": null,
+  "loyalty": "4",
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "mom",
+  "set_name": "March of the Machine",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ }
+]

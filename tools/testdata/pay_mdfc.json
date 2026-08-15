@@ -1,0 +1,1380 @@
+[
+ {
+  "name": "Agadeem's Awakening // Agadeem, the Undercrypt",
+  "oracle_id": "562d71b9-1646-474e-9293-55da6947a758",
+  "layout": "modal_dfc",
+  "mana_cost": "{X}{B}{B}{B}",
+  "cmc": 3.0,
+  "type_line": "Sorcery // Land",
+  "oracle_text": "Return from your graveyard to the battlefield any number of target creature cards that each have a different mana value X or less.\n//\nAs this land enters, you may pay 3 life. If you don't, it enters tapped.\n{T}: Add {B}.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "znr",
+  "set_name": "Zendikar Rising",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": [
+   {
+    "name": "Agadeem's Awakening",
+    "mana_cost": "{X}{B}{B}{B}",
+    "type_line": "Sorcery",
+    "oracle_text": "Return from your graveyard to the battlefield any number of target creature cards that each have a different mana value X or less.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "Agadeem, the Undercrypt",
+    "mana_cost": "",
+    "type_line": "Land",
+    "oracle_text": "As this land enters, you may pay 3 life. If you don't, it enters tapped.\n{T}: Add {B}.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Bala Ged Recovery // Bala Ged Sanctuary",
+  "oracle_id": "d2075f58-b0e9-4e85-b7e6-0523a27a1d5b",
+  "layout": "modal_dfc",
+  "mana_cost": "{2}{G}",
+  "cmc": 3.0,
+  "type_line": "Sorcery // Land",
+  "oracle_text": "Return target card from your graveyard to your hand.\n//\nThis land enters tapped.\n{T}: Add {G}.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "znr",
+  "set_name": "Zendikar Rising",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": [
+   {
+    "name": "Bala Ged Recovery",
+    "mana_cost": "{2}{G}",
+    "type_line": "Sorcery",
+    "oracle_text": "Return target card from your graveyard to your hand.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "Bala Ged Sanctuary",
+    "mana_cost": "",
+    "type_line": "Land",
+    "oracle_text": "This land enters tapped.\n{T}: Add {G}.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Blackbloom Rogue // Blackbloom Bog",
+  "oracle_id": "34320ebf-da97-44a4-bbeb-a9da06548289",
+  "layout": "modal_dfc",
+  "mana_cost": "{2}{B}",
+  "cmc": 3.0,
+  "type_line": "Creature — Human Rogue // Land",
+  "oracle_text": "Menace (This creature can't be blocked except by two or more creatures.)\nThis creature gets +3/+0 as long as an opponent has eight or more cards in their graveyard.\n//\nThis land enters tapped.\n{T}: Add {B}.",
+  "power": "2",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "znr",
+  "set_name": "Zendikar Rising",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Menace"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": [
+   {
+    "name": "Blackbloom Rogue",
+    "mana_cost": "{2}{B}",
+    "type_line": "Creature — Human Rogue",
+    "oracle_text": "Menace (This creature can't be blocked except by two or more creatures.)\nThis creature gets +3/+0 as long as an opponent has eight or more cards in their graveyard.",
+    "power": "2",
+    "toughness": "3",
+    "loyalty": null
+   },
+   {
+    "name": "Blackbloom Bog",
+    "mana_cost": "",
+    "type_line": "Land",
+    "oracle_text": "This land enters tapped.\n{T}: Add {B}.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Blex, Vexing Pest // Search for Blex",
+  "oracle_id": "b2c53124-e422-4786-8135-67c350d71a36",
+  "layout": "modal_dfc",
+  "mana_cost": "{2}{G} // {2}{B}{B}",
+  "cmc": 3.0,
+  "type_line": "Legendary Creature — Pest // Sorcery",
+  "oracle_text": "Other Pests, Bats, Insects, Snakes, and Spiders you control get +1/+1.\nWhen Blex dies, you gain 4 life.\n//\nLook at the top five cards of your library. You may put any number of them into your hand and the rest into your graveyard. You lose 3 life for each card you put into your hand this way.",
+  "power": "3",
+  "toughness": "2",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "not_legal"
+  },
+  "set": "stx",
+  "set_name": "Strixhaven: School of Mages",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [],
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "card_faces": [
+   {
+    "name": "Blex, Vexing Pest",
+    "mana_cost": "{2}{G}",
+    "type_line": "Legendary Creature — Pest",
+    "oracle_text": "Other Pests, Bats, Insects, Snakes, and Spiders you control get +1/+1.\nWhen Blex dies, you gain 4 life.",
+    "power": "3",
+    "toughness": "2",
+    "loyalty": null
+   },
+   {
+    "name": "Search for Blex",
+    "mana_cost": "{2}{B}{B}",
+    "type_line": "Sorcery",
+    "oracle_text": "Look at the top five cards of your library. You may put any number of them into your hand and the rest into your graveyard. You lose 3 life for each card you put into your hand this way.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Darkbore Pathway // Slitherbore Pathway",
+  "oracle_id": "868e6e68-4367-4073-a864-235d5961ae56",
+  "layout": "modal_dfc",
+  "mana_cost": null,
+  "cmc": 0.0,
+  "type_line": "Land // Land",
+  "oracle_text": "{T}: Add {B}.\n//\n{T}: Add {G}.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "khm",
+  "set_name": "Kaldheim",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [],
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "card_faces": [
+   {
+    "name": "Darkbore Pathway",
+    "mana_cost": "",
+    "type_line": "Land",
+    "oracle_text": "{T}: Add {B}.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "Slitherbore Pathway",
+    "mana_cost": "",
+    "type_line": "Land",
+    "oracle_text": "{T}: Add {G}.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Egon, God of Death // Throne of Death",
+  "oracle_id": "8fa7bd8f-f712-4dd1-9ffb-e30dfe744389",
+  "layout": "modal_dfc",
+  "mana_cost": "{2}{B} // {B}",
+  "cmc": 3.0,
+  "type_line": "Legendary Creature — God // Legendary Artifact",
+  "oracle_text": "Deathtouch\nAt the beginning of your upkeep, exile two cards from your graveyard. If you can't, sacrifice Egon and draw a card.\n//\nAt the beginning of your upkeep, mill a card.\n{2}{B}, {T}, Exile a creature card from your graveyard: Draw a card.",
+  "power": "6",
+  "toughness": "6",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "khm",
+  "set_name": "Kaldheim",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill",
+   "Deathtouch"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": [
+   {
+    "name": "Egon, God of Death",
+    "mana_cost": "{2}{B}",
+    "type_line": "Legendary Creature — God",
+    "oracle_text": "Deathtouch\nAt the beginning of your upkeep, exile two cards from your graveyard. If you can't, sacrifice Egon and draw a card.",
+    "power": "6",
+    "toughness": "6",
+    "loyalty": null
+   },
+   {
+    "name": "Throne of Death",
+    "mana_cost": "{B}",
+    "type_line": "Legendary Artifact",
+    "oracle_text": "At the beginning of your upkeep, mill a card.\n{2}{B}, {T}, Exile a creature card from your graveyard: Draw a card.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Hagra Mauling // Hagra Broodpit",
+  "oracle_id": "37783ce6-af58-4ef6-8ab4-587079970307",
+  "layout": "modal_dfc",
+  "mana_cost": "{2}{B}{B}",
+  "cmc": 4.0,
+  "type_line": "Instant // Land",
+  "oracle_text": "This spell costs {1} less to cast if an opponent controls no basic lands.\nDestroy target creature.\n//\nThis land enters tapped.\n{T}: Add {B}.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "not_legal"
+  },
+  "set": "znr",
+  "set_name": "Zendikar Rising",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": [
+   {
+    "name": "Hagra Mauling",
+    "mana_cost": "{2}{B}{B}",
+    "type_line": "Instant",
+    "oracle_text": "This spell costs {1} less to cast if an opponent controls no basic lands.\nDestroy target creature.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "Hagra Broodpit",
+    "mana_cost": "",
+    "type_line": "Land",
+    "oracle_text": "This land enters tapped.\n{T}: Add {B}.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Kazandu Mammoth // Kazandu Valley",
+  "oracle_id": "2ac1c95c-2a9d-40bc-9cad-9cadfa3f19f7",
+  "layout": "modal_dfc",
+  "mana_cost": "{1}{G}{G}",
+  "cmc": 3.0,
+  "type_line": "Creature — Elephant // Land",
+  "oracle_text": "Landfall — Whenever a land you control enters, this creature gets +2/+2 until end of turn.\n//\nThis land enters tapped.\n{T}: Add {G}.",
+  "power": "3",
+  "toughness": "3",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "znr",
+  "set_name": "Zendikar Rising",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Landfall"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": [
+   {
+    "name": "Kazandu Mammoth",
+    "mana_cost": "{1}{G}{G}",
+    "type_line": "Creature — Elephant",
+    "oracle_text": "Landfall — Whenever a land you control enters, this creature gets +2/+2 until end of turn.",
+    "power": "3",
+    "toughness": "3",
+    "loyalty": null
+   },
+   {
+    "name": "Kazandu Valley",
+    "mana_cost": "",
+    "type_line": "Land",
+    "oracle_text": "This land enters tapped.\n{T}: Add {G}.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Khalni Ambush // Khalni Territory",
+  "oracle_id": "37a55560-6e32-4f54-b9a8-fd157aea6eb5",
+  "layout": "modal_dfc",
+  "mana_cost": "{2}{G}",
+  "cmc": 3.0,
+  "type_line": "Instant // Land",
+  "oracle_text": "Target creature you control fights target creature you don't control. (Each deals damage equal to its power to the other.)\n//\nThis land enters tapped.\n{T}: Add {G}.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "znr",
+  "set_name": "Zendikar Rising",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Fight"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": [
+   {
+    "name": "Khalni Ambush",
+    "mana_cost": "{2}{G}",
+    "type_line": "Instant",
+    "oracle_text": "Target creature you control fights target creature you don't control. (Each deals damage equal to its power to the other.)",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "Khalni Territory",
+    "mana_cost": "",
+    "type_line": "Land",
+    "oracle_text": "This land enters tapped.\n{T}: Add {G}.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Kolvori, God of Kinship // The Ringhart Crest",
+  "oracle_id": "490ac985-79b5-438d-a2e7-f47683b29683",
+  "layout": "modal_dfc",
+  "mana_cost": "{2}{G}{G} // {1}{G}",
+  "cmc": 4.0,
+  "type_line": "Legendary Creature — God // Legendary Artifact",
+  "oracle_text": "As long as you control three or more legendary creatures, Kolvori gets +4/+2 and has vigilance.\n{1}{G}, {T}: Look at the top six cards of your library. You may reveal a legendary creature card from among them and put it into your hand. Put the rest on the bottom of your library in a random order.\n//\nAs The Ringhart Crest enters, choose a creature type.\n{T}: Add {G}. Spend this mana only to cast a creature spell of the chosen type or a legendary creature spell.",
+  "power": "2",
+  "toughness": "4",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "not_legal"
+  },
+  "set": "khm",
+  "set_name": "Kaldheim",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": [
+   {
+    "name": "Kolvori, God of Kinship",
+    "mana_cost": "{2}{G}{G}",
+    "type_line": "Legendary Creature — God",
+    "oracle_text": "As long as you control three or more legendary creatures, Kolvori gets +4/+2 and has vigilance.\n{1}{G}, {T}: Look at the top six cards of your library. You may reveal a legendary creature card from among them and put it into your hand. Put the rest on the bottom of your library in a random order.",
+    "power": "2",
+    "toughness": "4",
+    "loyalty": null
+   },
+   {
+    "name": "The Ringhart Crest",
+    "mana_cost": "{1}{G}",
+    "type_line": "Legendary Artifact",
+    "oracle_text": "As The Ringhart Crest enters, choose a creature type.\n{T}: Add {G}. Spend this mana only to cast a creature spell of the chosen type or a legendary creature spell.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Malakir Rebirth // Malakir Mire",
+  "oracle_id": "a731e87b-8d99-4b64-8ee3-8e540d652366",
+  "layout": "modal_dfc",
+  "mana_cost": "{B}",
+  "cmc": 1.0,
+  "type_line": "Instant // Land",
+  "oracle_text": "Choose target creature. You lose 2 life. Until end of turn, that creature gains \"When this creature dies, return it to the battlefield tapped under its owner's control.\"\n//\nThis land enters tapped.\n{T}: Add {B}.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "znr",
+  "set_name": "Zendikar Rising",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": [
+   {
+    "name": "Malakir Rebirth",
+    "mana_cost": "{B}",
+    "type_line": "Instant",
+    "oracle_text": "Choose target creature. You lose 2 life. Until end of turn, that creature gains \"When this creature dies, return it to the battlefield tapped under its owner's control.\"",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "Malakir Mire",
+    "mana_cost": "",
+    "type_line": "Land",
+    "oracle_text": "This land enters tapped.\n{T}: Add {B}.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Pelakka Predation // Pelakka Caverns",
+  "oracle_id": "b0fd6889-20b4-439b-aa97-2e90aca1675a",
+  "layout": "modal_dfc",
+  "mana_cost": "{2}{B}",
+  "cmc": 3.0,
+  "type_line": "Sorcery // Land",
+  "oracle_text": "Target opponent reveals their hand. You choose a card from it with mana value 3 or greater. That player discards that card.\n//\nThis land enters tapped.\n{T}: Add {B}.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "znr",
+  "set_name": "Zendikar Rising",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": [
+   {
+    "name": "Pelakka Predation",
+    "mana_cost": "{2}{B}",
+    "type_line": "Sorcery",
+    "oracle_text": "Target opponent reveals their hand. You choose a card from it with mana value 3 or greater. That player discards that card.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "Pelakka Caverns",
+    "mana_cost": "",
+    "type_line": "Land",
+    "oracle_text": "This land enters tapped.\n{T}: Add {B}.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Pestilent Cauldron // Restorative Burst",
+  "oracle_id": "78780f37-f215-4ae1-adce-6255b0146873",
+  "layout": "modal_dfc",
+  "mana_cost": "{2}{B} // {3}{G}{G}",
+  "cmc": 3.0,
+  "type_line": "Artifact // Sorcery",
+  "oracle_text": "{T}, Discard a card: Create a 1/1 black and green Pest creature token with \"When this token dies, you gain 1 life.\"\n{1}, {T}: Each opponent mills cards equal to the amount of life you gained this turn.\n{4}, {T}: Exile four target cards from a single graveyard. Draw a card.\n//\nReturn up to two target creature, land, and/or planeswalker cards from your graveyard to your hand. Each player gains 4 life. Exile Restorative Burst.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "not_legal"
+  },
+  "set": "stx",
+  "set_name": "Strixhaven: School of Mages",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "card_faces": [
+   {
+    "name": "Pestilent Cauldron",
+    "mana_cost": "{2}{B}",
+    "type_line": "Artifact",
+    "oracle_text": "{T}, Discard a card: Create a 1/1 black and green Pest creature token with \"When this token dies, you gain 1 life.\"\n{1}, {T}: Each opponent mills cards equal to the amount of life you gained this turn.\n{4}, {T}: Exile four target cards from a single graveyard. Draw a card.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "Restorative Burst",
+    "mana_cost": "{3}{G}{G}",
+    "type_line": "Sorcery",
+    "oracle_text": "Return up to two target creature, land, and/or planeswalker cards from your graveyard to your hand. Each player gains 4 life. Exile Restorative Burst.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Tangled Florahedron // Tangled Vale",
+  "oracle_id": "53542c79-a62a-4d6a-97db-5296e9c68302",
+  "layout": "modal_dfc",
+  "mana_cost": "{1}{G}",
+  "cmc": 2.0,
+  "type_line": "Creature — Elemental // Land",
+  "oracle_text": "{T}: Add {G}.\n//\nThis land enters tapped.\n{T}: Add {G}.",
+  "power": "1",
+  "toughness": "1",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "znr",
+  "set_name": "Zendikar Rising",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": [
+   {
+    "name": "Tangled Florahedron",
+    "mana_cost": "{1}{G}",
+    "type_line": "Creature — Elemental",
+    "oracle_text": "{T}: Add {G}.",
+    "power": "1",
+    "toughness": "1",
+    "loyalty": null
+   },
+   {
+    "name": "Tangled Vale",
+    "mana_cost": "",
+    "type_line": "Land",
+    "oracle_text": "This land enters tapped.\n{T}: Add {G}.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Tergrid, God of Fright // Tergrid's Lantern",
+  "oracle_id": "8485cfaa-1dbf-432b-b5d0-92a6aa6a329b",
+  "layout": "modal_dfc",
+  "mana_cost": "{3}{B}{B} // {3}{B}",
+  "cmc": 5.0,
+  "type_line": "Legendary Creature — God // Legendary Artifact",
+  "oracle_text": "Menace\nWhenever an opponent sacrifices a nontoken permanent or discards a permanent card, you may put that card from a graveyard onto the battlefield under your control.\n//\n{T}: Target player loses 3 life unless they sacrifice a nonland permanent of their choice or discard a card.\n{3}{B}: Untap Tergrid's Lantern.",
+  "power": "4",
+  "toughness": "5",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "not_legal"
+  },
+  "set": "khm",
+  "set_name": "Kaldheim",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Menace"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": [
+   {
+    "name": "Tergrid, God of Fright",
+    "mana_cost": "{3}{B}{B}",
+    "type_line": "Legendary Creature — God",
+    "oracle_text": "Menace\nWhenever an opponent sacrifices a nontoken permanent or discards a permanent card, you may put that card from a graveyard onto the battlefield under your control.",
+    "power": "4",
+    "toughness": "5",
+    "loyalty": null
+   },
+   {
+    "name": "Tergrid's Lantern",
+    "mana_cost": "{3}{B}",
+    "type_line": "Legendary Artifact",
+    "oracle_text": "{T}: Target player loses 3 life unless they sacrifice a nonland permanent of their choice or discard a card.\n{3}{B}: Untap Tergrid's Lantern.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Turntimber Symbiosis // Turntimber, Serpentine Wood",
+  "oracle_id": "403b59f3-7ade-4bc2-a3e6-de0c3c700f18",
+  "layout": "modal_dfc",
+  "mana_cost": "{4}{G}{G}{G}",
+  "cmc": 7.0,
+  "type_line": "Sorcery // Land",
+  "oracle_text": "Look at the top seven cards of your library. You may put a creature card from among them onto the battlefield. If that card has mana value 3 or less, it enters with three additional +1/+1 counters on it. Put the rest on the bottom of your library in a random order.\n//\nAs this land enters, you may pay 3 life. If you don't, it enters tapped.\n{T}: Add {G}.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "not_legal"
+  },
+  "set": "znr",
+  "set_name": "Zendikar Rising",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": [
+   {
+    "name": "Turntimber Symbiosis",
+    "mana_cost": "{4}{G}{G}{G}",
+    "type_line": "Sorcery",
+    "oracle_text": "Look at the top seven cards of your library. You may put a creature card from among them onto the battlefield. If that card has mana value 3 or less, it enters with three additional +1/+1 counters on it. Put the rest on the bottom of your library in a random order.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "Turntimber, Serpentine Wood",
+    "mana_cost": "",
+    "type_line": "Land",
+    "oracle_text": "As this land enters, you may pay 3 life. If you don't, it enters tapped.\n{T}: Add {G}.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Valentin, Dean of the Vein // Lisette, Dean of the Root",
+  "oracle_id": "6e1aa07a-5d9b-4daf-8dc4-c1717360855f",
+  "layout": "modal_dfc",
+  "mana_cost": "{B} // {2}{G}{G}",
+  "cmc": 1.0,
+  "type_line": "Legendary Creature — Vampire Warlock // Legendary Creature — Human Druid",
+  "oracle_text": "Menace, lifelink\nIf a nontoken creature an opponent controls would die, exile it instead. When you do, you may pay {2}. If you do, create a 1/1 black and green Pest creature token with \"When this token dies, you gain 1 life.\"\n//\nWhenever you gain life, you may pay {1}. If you do, put a +1/+1 counter on each creature you control and those creatures gain trample until end of turn.",
+  "power": "1",
+  "toughness": "1",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "not_legal"
+  },
+  "set": "stx",
+  "set_name": "Strixhaven: School of Mages",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Lifelink",
+   "Menace"
+  ],
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "card_faces": [
+   {
+    "name": "Valentin, Dean of the Vein",
+    "mana_cost": "{B}",
+    "type_line": "Legendary Creature — Vampire Warlock",
+    "oracle_text": "Menace, lifelink\nIf a nontoken creature an opponent controls would die, exile it instead. When you do, you may pay {2}. If you do, create a 1/1 black and green Pest creature token with \"When this token dies, you gain 1 life.\"",
+    "power": "1",
+    "toughness": "1",
+    "loyalty": null
+   },
+   {
+    "name": "Lisette, Dean of the Root",
+    "mana_cost": "{2}{G}{G}",
+    "type_line": "Legendary Creature — Human Druid",
+    "oracle_text": "Whenever you gain life, you may pay {1}. If you do, put a +1/+1 counter on each creature you control and those creatures gain trample until end of turn.",
+    "power": "4",
+    "toughness": "4",
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Vastwood Fortification // Vastwood Thicket",
+  "oracle_id": "ce148a0c-6c63-49d5-a156-99efae4e367a",
+  "layout": "modal_dfc",
+  "mana_cost": "{G}",
+  "cmc": 1.0,
+  "type_line": "Instant // Land",
+  "oracle_text": "Put a +1/+1 counter on target creature.\n//\nThis land enters tapped.\n{T}: Add {G}.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "znr",
+  "set_name": "Zendikar Rising",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": [
+   {
+    "name": "Vastwood Fortification",
+    "mana_cost": "{G}",
+    "type_line": "Instant",
+    "oracle_text": "Put a +1/+1 counter on target creature.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "Vastwood Thicket",
+    "mana_cost": "",
+    "type_line": "Land",
+    "oracle_text": "This land enters tapped.\n{T}: Add {G}.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Wandering Archaic // Explore the Vastlands",
+  "oracle_id": "6556c4c0-b10d-4208-821b-0c0a49abd188",
+  "layout": "modal_dfc",
+  "mana_cost": "{5} // {3}",
+  "cmc": 5.0,
+  "type_line": "Creature — Avatar // Sorcery",
+  "oracle_text": "Whenever an opponent casts an instant or sorcery spell, they may pay {2}. If they don't, you may copy that spell. You may choose new targets for the copy.\n//\nEach player looks at the top five cards of their library and may reveal a land card and/or an instant or sorcery card from among them. Each player puts the cards they revealed this way into their hand and the rest on the bottom of their library in a random order. Each player gains 3 life.",
+  "power": "4",
+  "toughness": "4",
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "not_legal"
+  },
+  "set": "stx",
+  "set_name": "Strixhaven: School of Mages",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [],
+  "color_identity": [],
+  "card_faces": [
+   {
+    "name": "Wandering Archaic",
+    "mana_cost": "{5}",
+    "type_line": "Creature — Avatar",
+    "oracle_text": "Whenever an opponent casts an instant or sorcery spell, they may pay {2}. If they don't, you may copy that spell. You may choose new targets for the copy.",
+    "power": "4",
+    "toughness": "4",
+    "loyalty": null
+   },
+   {
+    "name": "Explore the Vastlands",
+    "mana_cost": "{3}",
+    "type_line": "Sorcery",
+    "oracle_text": "Each player looks at the top five cards of their library and may reveal a land card and/or an instant or sorcery card from among them. Each player puts the cards they revealed this way into their hand and the rest on the bottom of their library in a random order. Each player gains 3 life.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Zof Consumption // Zof Bloodbog",
+  "oracle_id": "d9f11985-e460-425d-b083-9cb0edf1983a",
+  "layout": "modal_dfc",
+  "mana_cost": "{4}{B}{B}",
+  "cmc": 6.0,
+  "type_line": "Sorcery // Land",
+  "oracle_text": "Each opponent loses 4 life and you gain 4 life.\n//\nThis land enters tapped.\n{T}: Add {B}.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "not_legal"
+  },
+  "set": "znr",
+  "set_name": "Zendikar Rising",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": [
+   {
+    "name": "Zof Consumption",
+    "mana_cost": "{4}{B}{B}",
+    "type_line": "Sorcery",
+    "oracle_text": "Each opponent loses 4 life and you gain 4 life.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "Zof Bloodbog",
+    "mana_cost": "",
+    "type_line": "Land",
+    "oracle_text": "This land enters tapped.\n{T}: Add {B}.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ }
+]
