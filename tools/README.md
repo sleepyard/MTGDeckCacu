@@ -2,6 +2,8 @@
 
 MTG 套牌构筑工作流 CLI。数据源：Scryfall API + mtgch.com API。仅 Python 标准库（3.7+）。
 
+赛制字段说明：Scryfall `legalities` 没有 `explorer` 字段；`--format explorer` 会按内置别名表（`FORMAT_LEGALITY_ALIAS`，explorer→pioneer）推导合法性并在备注标注，Explorer = 先驱合法 ∩ Arena 可用 ∩ Explorer 专属禁牌（BO1/队列特例仍需人工查官方公告复核）。
+
 ## 通用
 
 - 所有请求带 `User-Agent: NeoMtgDeckCacu/1.0`；Scryfall 节流 ≥100ms；429/5xx 指数退避（遵守 Retry-After），最多重试 5 次。

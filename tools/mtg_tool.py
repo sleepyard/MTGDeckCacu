@@ -308,6 +308,12 @@ def fetch_chinese_name(english_name, use_cache=True):
 
 
 # ---------------------------------------------------------------- check 核心
+# Scryfall legalities 没有 explorer 字段。Explorer = 先驱合法 ∩ Arena 可用 ∩ Explorer 专属禁牌
+# （当前专属禁牌仅 Tibalt's Trickery，且为 MTGA BO1 特例；Winota 已在先驱禁牌表内）。
+# 赛制合法性查询一律按下表走别名推导，BO1 特例与队列差异仍需人工复核。
+FORMAT_LEGALITY_ALIAS = {"explorer": "pioneer"}
+
+
 def check_card(name, fmt, platform, use_cache=True):
     """逐牌三重核对。单牌任何失败都记录在 rec 中，不抛异常中断整体。
 
@@ -355,15 +361,20 @@ def check_card(name, fmt, platform, use_cache=True):
             rec["layout"] = card.get("layout")
             rec["type_line"] = card.get("type_line")
             rec["color_identity"] = card.get("color_identity") or []
-            legal = (card.get("legalities") or {}).get(fmt.lower())
+            lookup_fmt = FORMAT_LEGALITY_ALIAS.get(fmt.lower(), fmt.lower())
+            legal = (card.get("legalities") or {}).get(lookup_fmt)
             if legal is None:
                 rec["ok"] = False
-                rec["notes"].append(f"legalities 中无赛制 '{fmt}' 字段")
+                rec["notes"].append(f"legalities 中无赛制 '{lookup_fmt}' 字段")
             else:
                 rec["legal"] = legal
+                if lookup_fmt != fmt.lower():
+                    rec["notes"].append(
+                        f"Scryfall 无 {fmt} 字段，按 {lookup_fmt} 合法性推导"
+                        "（BO1/队列特例禁牌需另行人工复核）")
                 if legal != LEGAL_OK:
                     rec["ok"] = False
-                    rec["notes"].append(f"赛制 {fmt} 合法性: {legal}")
+                    rec["notes"].append(f"赛制 {lookup_fmt} 合法性: {legal}")
 
     # 2. 平台可用性（遍历全部印刷，不能只看 /cards/named 的最新印刷）
     if card is not None and platform and platform.lower() == "arena":
@@ -640,10 +651,11 @@ def cmd_baseline(args):
                 if (s.get("released_at") or "9999") <= args.date and (s.get("card_count") or 0) > 0]
     released.sort(key=lambda s: (s.get("released_at") or "", s.get("code") or ""))
 
-    # 禁牌
+    # 禁牌（explorer 等无 legalities 字段的赛制走别名推导）
+    lookup_fmt = FORMAT_LEGALITY_ALIAS.get(args.format.lower(), args.format.lower())
     try:
         banned_cards, _, _ = scryfall_search(
-            f"banned:{args.format} date<={args.date}", unique="cards",
+            f"banned:{lookup_fmt} date<={args.date}", unique="cards",
             use_cache=not args.no_cache)
         banned = sorted(dedupe_by_oracle(banned_cards), key=lambda c: c.get("name", ""))
     except QuerySyntaxError as exc:
@@ -672,6 +684,12 @@ def cmd_baseline(args):
         f"### {args.format} 禁牌（{len(banned)} 张，基准日 {args.date}）",
         "",
     ]
+    if lookup_fmt != args.format.lower():
+        lines += [
+            f"> 注：Scryfall 无 {args.format} 禁牌数据，以上为 {lookup_fmt} 禁牌表推导；"
+            f"{args.format} 专属/队列特例禁牌（如 MTGA BO1）需查官方公告另行补充。",
+            "",
+        ]
     lines += [f"- {zh} / {en}" if zh else f"- {en}（中文名缺失）" for en, zh in zh_banned]
     print("\n".join(lines))
     print(f"[摘要] 系列 {len(released)} 个，禁牌 {len(banned)} 张，失败项 0", file=sys.stderr)
