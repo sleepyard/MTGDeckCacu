@@ -2,4 +2,15 @@ tools/cache/
 tools/downloads/
 tools/forge/
 tools/jdk/
-tools/__pycache__/
+tools/llm_config.json
+__pycache__/
+*.pyc
+
+# 本地产出不入库（2026-08-29 起不再跟踪）
+SetReview/
+MatchRecord/
+DeckList/
+AuditReport/
+SimResult/
+tools/auto/
+

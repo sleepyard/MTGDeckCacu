@@ -284,11 +284,13 @@ def name_matches(requested, card):
 def fetch_chinese_name(english_name, use_cache=True):
     """返回 (translated_name 或 None, 错误描述 或 None)。
 
-    查不到返回 (None, None) —— 属正常情形，由调用方标注"中文名缺失"。"""
+    查不到返回 (None, None) —— 属正常情形，由调用方标注"中文名缺失"。
+    mtgch 2026 改版：旧端点 /api/v1/card-names/?q= 已 404，改用
+    /api/v1/result?q=<名>&view=1（view=1 才返回 display_name/display_name_zh）。"""
     try:
         status, payload = http_get_json(
-            MTGCH_BASE + "/api/v1/card-names/", "mtgch",
-            {"q": english_name}, use_cache)
+            MTGCH_BASE + "/api/v1/result", "mtgch",
+            {"q": english_name, "view": 1}, use_cache)
     except MtgToolError as exc:
         return None, f"mtgch 查询失败: {exc}"
     if status >= 400:
@@ -296,15 +298,44 @@ def fetch_chinese_name(english_name, use_cache=True):
     items = payload.get("items") if isinstance(payload, dict) else None
     if not items:
         return None, None
-    # 优先取英文名精确匹配的条目
+    target = english_name.strip().lower()
+    front = target.split(" // ")[0]
+    # 优先取英文名精确匹配的条目（双面/历险牌允许按正面名匹配）
     for item in items:
         if not isinstance(item, dict):
             continue
-        for key in ("name", "english_name", "en_name", "card_name", "english"):
-            if str(item.get(key, "")).strip().lower() == english_name.strip().lower():
-                return item.get("translated_name"), None
+        disp = str(item.get("display_name") or "").strip().lower()
+        if disp == target or disp == front:
+            return item.get("display_name_zh"), None
     first = items[0] if isinstance(items[0], dict) else {}
-    return first.get("translated_name"), None
+    return first.get("display_name_zh"), None
+
+
+def fetch_set_chinese_names(set_code, use_cache=True):
+    """按系列批量拉取 {英文名(小写): 中文名}——一次请求覆盖全系列。
+    mtgch 对逐牌查询限流很凶（实测 429 风暴），批量场景一律走这里。
+    失败返回 (None, 错误描述)。"""
+    try:
+        status, payload = http_get_json(
+            MTGCH_BASE + f"/api/v1/set/{set_code.lower()}/cards/", "mtgch",
+            {}, use_cache)
+    except MtgToolError as exc:
+        return None, f"mtgch 系列查询失败: {exc}"
+    if status >= 400:
+        return None, f"mtgch HTTP {status}"
+    items = payload.get("items") if isinstance(payload, dict) else None
+    if not items:
+        return {}, None
+    out = {}
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        en = str(item.get("display_name") or "").strip().lower()
+        zh = item.get("display_name_zh")
+        if en and zh:
+            out.setdefault(en, zh)
+            out.setdefault(en.split(" // ")[0], zh)
+    return out, None
 
 
 # ---------------------------------------------------------------- check 核心
