@@ -38,6 +38,7 @@ class ColorPlan:
     curve: Mapping[int, int]
     curve_label: str
     curve_bonus: int
+    playable_count: int = 0
 
 
 @dataclass
@@ -177,6 +178,7 @@ def evaluate_color_plan(pool: Iterable[Mapping], colors: Sequence[str], table=No
         curve=dict(curve),
         curve_label=curve_label,
         curve_bonus=curve_bonus,
+        playable_count=len(playable),
     )
 
 
@@ -194,7 +196,12 @@ def choose_color_plan(pool: Iterable[Mapping], table=None,
     plans = enumerate_color_plans(pool, table)
     if not plans:
         raise ValueError("牌池没有可评估的颜色组合")
-    return plans[0]
+    depth_valid = [plan for plan in plans if plan.depth_ok]
+    if depth_valid:
+        return max(depth_valid, key=lambda plan: (plan.score, plan.playable_count))
+    # A shallow pool can make every depth gate fail. Prefer a plan that can
+    # actually supply the nonlands before using score as a tie-breaker.
+    return max(plans, key=lambda plan: (plan.playable_count, plan.score))
 
 
 def _off_color_pips(card: Mapping, colors: Sequence[str]) -> float:

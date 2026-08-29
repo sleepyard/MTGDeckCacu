@@ -47,6 +47,15 @@ class TestPoolParsing(unittest.TestCase):
             path.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
             self.assertEqual(DP.parse_pool_sample(str(path)), [(2, "1"), (1, "2")])
 
+    def test_parse_sample_accepts_mtga_completed_status(self):
+        row = {"payload": {"Payload": json.dumps({
+            "DraftStatus": "Completed", "PickedCards": ["1", "2", "2"]
+        })}}
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "sample.jsonl"
+            path.write_text(json.dumps(row) + "\n", encoding="utf-8")
+            self.assertEqual(DP.parse_pool_sample(str(path)), [(1, "1"), (2, "2")])
+
     def test_load_candidates_requires_json_array(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "candidates.json"
@@ -82,6 +91,41 @@ class TestRendering(unittest.TestCase):
 
 
 class TestCommand(unittest.TestCase):
+    def test_validate_constructed_text_uses_canonical_gate(self):
+        with mock.patch.object(DP.mtg_tool, "cmd_validate", return_value=0) as validate:
+            code, diagnostics = DP.validate_constructed_text(
+                "Deck\n60 Forest\n", "pioneer", bo3=True,
+                colors=("G", "U"), platform="arena")
+        self.assertEqual(code, 0)
+        self.assertEqual(diagnostics, "")
+        validator_args = validate.call_args.args[0]
+        self.assertEqual(validator_args.format, "pioneer")
+        self.assertEqual(validator_args.platform, "arena")
+        self.assertTrue(validator_args.bo3)
+        self.assertEqual(validator_args.colors, "gu")
+
+    def test_constructed_external_gate_failure_does_not_write_deck(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            candidates = Path(tmp) / "candidates.json"
+            seed = Path(tmp) / "seed.txt"
+            output = Path(tmp) / "deck.txt"
+            candidates.write_text(json.dumps([{"name": "Seed"}]), encoding="utf-8")
+            seed.write_text("1 Seed\n", encoding="utf-8")
+            entry = CS.ConstructedEntry(
+                {"name": "Seed", "type_line": "Creature"}, 60, "M1", "seed")
+            deck = CS.ConstructedDeck(
+                "pioneer", [entry], [], [], {}, ("G",), True)
+            args = DP.build_parser().parse_args([
+                "constructed", "--format", "pioneer", "--seed", str(seed),
+                "--candidates", str(candidates), "--out", str(output),
+            ])
+            with mock.patch.object(DP.CS, "build_constructed_deck", return_value=deck), \
+                    mock.patch.object(DP, "validate_constructed_text",
+                                      return_value=(4, "FAIL: card not legal")):
+                self.assertEqual(DP.cmd_constructed(args), 4)
+            self.assertFalse(output.exists())
+            self.assertTrue(any("mtg_tool validate" in item for item in deck.violations))
+
     def test_missing_ratings_is_explicit_error(self):
         args = DP.build_parser().parse_args([
             "limited", "--pool", "pool.txt", "--set", "HOB"

@@ -48,6 +48,16 @@ class TestColorPlans(unittest.TestCase):
         with self.assertRaises(ValueError):
             LS.choose_color_plan([], forced_colors=["X"])
 
+    def test_shallow_pool_fallback_prefers_playable_depth(self):
+        pool = [
+            card("Strong Green", "G", 2, grade="S", count=4, cost="{1}{G}"),
+            card("Playable Blue", "U", 2, grade="C", count=20, cost="{1}{U}"),
+        ]
+        plan = LS.choose_color_plan(pool, CardTable(pool))
+        self.assertEqual(plan.colors, ("U", "G"))
+        self.assertFalse(plan.depth_ok)
+        self.assertEqual(plan.playable_count, 24)
+
 
 class TestLimitedBuild(unittest.TestCase):
     def test_curve_factor_prefers_two_drops_when_available(self):

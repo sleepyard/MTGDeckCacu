@@ -31,7 +31,7 @@ python tools/mtg_tool.py baseline --format pioneer --date 2026-08-08
 # tools/deck_pooper.py
 
 DeckPooper 的限制赛组牌入口（P1）。它要求本地预生成评分表，并只接受牌池文本或
-含 `DraftStatus=Complete` 的轮抓录样 JSONL；没有终态牌池时不会使用中间态数据。
+含 `DraftStatus=Complete/Completed` 的轮抓录样 JSONL；没有终态牌池时不会使用中间态数据。
 
 ```bash
 python tools/deck_pooper.py limited --pool pool.txt --set HOB \
@@ -48,7 +48,8 @@ python tools/deck_pooper.py constructed --format pioneer --seed seeds.txt \
 策略层是纯确定性计算：先枚举 5 个单色与 10 个双色方案，再按颜色深度、splash
 准入、曲线缺口和生物/去除配额选择 23 张非地，最后计算动态地数、法术力配比和
 爆地/卡地检查。评分表缺失、输入格式错误或卡牌查询失败均返回错误码，不静默产出
-伪造结果。
+伪造结果。构筑赛在写入 `--out` 前还会调用 `mtg_tool.py validate`；正式校验失败时
+只保留报告并返回门禁错误码。
 
 ## 牌表格式（validate）
 

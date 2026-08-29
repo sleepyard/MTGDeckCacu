@@ -5,9 +5,12 @@
 """
 
 import argparse
+import contextlib
+import io
 import json
 import re
 import sys
+import tempfile
 from pathlib import Path
 from typing import Dict, Iterable, List, Mapping, Sequence, Tuple
 
@@ -20,6 +23,7 @@ import mtga_auto_tool  # noqa: E402
 
 
 SECTION_HEADERS = {"deck", "sideboard", "commander", "companion", "pool"}
+DRAFT_COMPLETE_STATUSES = {"Complete", "Completed"}
 
 
 def parse_pool_text(path: str) -> List[Tuple[int, str]]:
@@ -70,7 +74,7 @@ def parse_pool_sample(path: str) -> List[Tuple[int, str]]:
             except json.JSONDecodeError as exc:
                 raise ValueError(f"录样第 {lineno} 行 JSON 无法解析: {exc}")
             inner = _inner_status(row.get("payload", row))
-            if not inner or inner.get("DraftStatus") != "Complete":
+            if not inner or inner.get("DraftStatus") not in DRAFT_COMPLETE_STATUSES:
                 continue
             picked = inner.get("PickedCards")
             if isinstance(picked, list) and picked:
@@ -202,6 +206,41 @@ def render_constructed_report(deck: CS.ConstructedDeck, explain: bool = False) -
     return "\n".join(lines) + "\n"
 
 
+def validate_constructed_text(deck_text: str, fmt: str, bo3: bool = False,
+                              colors: Sequence[str] = (), platform=None):
+    """Run the canonical ``mtg_tool`` validator against rendered output.
+
+    The validator consumes a deck file, so the generated text is kept in a
+    short-lived temporary directory and never becomes an output artifact.
+    ``platform`` values other than Arena are already covered by the candidate
+    legality gate; ``mtg_tool`` currently has a dedicated print check only for
+    Arena, so those values intentionally map to ``None`` here.
+    """
+    with tempfile.TemporaryDirectory(prefix="deckpooper_validate_") as tmp:
+        deck_path = Path(tmp) / "deck.txt"
+        deck_path.write_text(deck_text, encoding="utf-8")
+        validator_args = argparse.Namespace(
+            deckfile=str(deck_path),
+            format=fmt,
+            platform="arena" if platform == "arena" else None,
+            bo3=bo3,
+            no_sideboard=False,
+            colors="".join(colors).lower() or None,
+            no_cache=False,
+        )
+        stdout, stderr = io.StringIO(), io.StringIO()
+        try:
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                code = mtg_tool.cmd_validate(validator_args)
+        except Exception as exc:  # validator failures are a hard gate
+            return 2, f"validator exception: {exc}"
+        diagnostics = "\n".join(
+            line.strip() for line in (stdout.getvalue() + "\n" + stderr.getvalue()).splitlines()
+            if line.strip()
+        )
+        return int(code), diagnostics
+
+
 def cmd_limited(args) -> int:
     try:
         table = mtga_draft_tool.load_card_table(args.set)
@@ -238,13 +277,27 @@ def cmd_constructed(args) -> int:
         deck = CS.build_constructed_deck(
             candidates, seed, args.format, bo3=args.bo3,
             strategy=args.strategy, platform=args.platform)
+        deck_text = render_constructed_deck(deck)
+        if deck.valid:
+            validate_code, diagnostics = validate_constructed_text(
+                deck_text, args.format, bo3=args.bo3, colors=deck.colors,
+                platform=args.platform)
+            if validate_code:
+                detail = " ".join(diagnostics.split())[:1000]
+                message = f"mtg_tool validate 失败 (exit code {validate_code})"
+                if detail:
+                    message += f": {detail}"
+                deck.violations.append(message)
+                deck.valid = False
+                deck.report.append(message)
+            else:
+                deck.report.append("mtg_tool validate: 通过")
         report_text = render_constructed_report(deck, explain=args.explain)
         if args.report:
             Path(args.report).write_text(report_text, encoding="utf-8")
         print(report_text, end="")
         if not deck.valid:
             return 4
-        deck_text = render_constructed_deck(deck)
         if args.out:
             Path(args.out).write_text(deck_text, encoding="utf-8")
         else:
