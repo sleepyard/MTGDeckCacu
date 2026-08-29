@@ -12,13 +12,12 @@ import glob
 import itertools
 import json
 import os
-import re
 import sys
 from collections import Counter
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import draft_core as DC  # noqa: E402
+import deck_core as DC  # noqa: E402
 import mtga_log_tool as L  # noqa: E402
 import mtga_draft_tool as D  # noqa: E402
 
@@ -64,17 +63,6 @@ def fetch_card(grp_id):
     return {"name": c["name"], "cmc": c.get("cmc"), "colors": sorted(colors),
             "cost": cost, "type": c.get("type_line") or "",
             "rarity": c.get("rarity") or ""}
-
-
-def count_pips(cost):
-    """法术力费用 → 各色 pip 数（混合/非瑞符号按 1 计，通用/无色不计）。"""
-    pips = Counter()
-    for sym in re.findall(r"\{([^}]+)\}", cost or ""):
-        for part in sym.split("/"):
-            if part in COLORS:
-                pips[part] += 1
-                break  # 混合符号只算一个 pip，取第一个有色面
-    return pips
 
 
 def evaluate_combo(pool, combo, table):
@@ -129,7 +117,7 @@ def build_deck(pool, table, forced_colors=None):
     splash_colors = sorted({x for c in splash for x in c["colors"]} - set(combo))
     pips = Counter()
     for c in main + splash:
-        pips.update(count_pips(c["cost"]))
+        pips.update(DC.parse_mana_pips(c["cost"]))
     mana = DC.mana_base(dict(pips), lands, splash_colors=splash_colors)
 
     report = [f"主色: {'+'.join(COLOR_CN[c] for c in combo)}"

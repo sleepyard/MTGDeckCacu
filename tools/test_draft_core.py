@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""tools/draft_core.py 回归测试：8 轴 WASPAS / 信号读取 / 组牌骨架。
+"""deck_core.py 回归测试：8 轴 WASPAS / 信号读取 / 组牌骨架。
 纯函数，无网络无文件 I/O。运行：python tools/test_draft_core.py"""
 
 import sys
@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import draft_core as DC  # noqa: E402
+import deck_core as DC  # noqa: E402
 
 
 class TestGradeEq(unittest.TestCase):
@@ -182,6 +182,10 @@ class TestColorDepthAndSplash(unittest.TestCase):
 
 
 class TestManaBase(unittest.TestCase):
+    def test_parse_mana_pips_splits_hybrid(self):
+        self.assertEqual(DC.parse_mana_pips("{1}{W}{W}{U/G}{W/P}"),
+                         {"W": 3.0, "U": 0.5, "G": 0.5})
+
     def test_proportional(self):
         alloc = DC.mana_base({"G": 20, "U": 10}, 17)
         self.assertEqual(sum(alloc.values()), 17)

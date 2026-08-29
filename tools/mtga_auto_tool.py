@@ -25,6 +25,7 @@ import sys
 import threading
 import time
 import urllib.error
+from urllib.parse import urlparse
 import urllib.request
 from collections import Counter
 from datetime import datetime
@@ -34,7 +35,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from mtg_tool import MtgToolError, fetch_chinese_name, parse_deckfile, scryfall_get  # noqa: E402
 import mtga_log_tool as MLT  # noqa: E402
-import draft_core  # noqa: E402  纯函数内核（无 I/O、无反向依赖，可顶层导入）
+import deck_core  # noqa: E402  纯函数内核（无 I/O、无反向依赖，可顶层导入）
+import draft_advisor as DRAFT_ADVISOR  # noqa: E402  轮抓八轴推荐（纯函数）
 
 LOG_TOOL = Path(__file__).resolve().parent / "mtga_log_tool.py"
 DEFAULT_LOG = MLT.DEFAULT_LOG
@@ -553,13 +555,14 @@ LLM_SYSTEM_PROMPT = (
 )
 
 
-def load_llm_config():
+def load_llm_config(path=None):
     """读取 tools/llm_config.json（含 api_key，已被 .gitignore 排除）；
     环境变量 DEEPSEEK_API_KEY 可覆盖 api_key。"""
-    if not LLM_CONFIG_JSON.is_file():
+    config_path = Path(path) if path else LLM_CONFIG_JSON
+    if not config_path.is_file():
         raise AutoToolError(
-            f"LLM 配置不存在: {LLM_CONFIG_JSON}（需含 base_url/model/api_key）")
-    with open(LLM_CONFIG_JSON, "r", encoding="utf-8") as fh:
+            f"LLM 配置不存在: {config_path}（需含 base_url/model/api_key）")
+    with open(config_path, "r", encoding="utf-8") as fh:
         cfg = json.load(fh)
     cfg["api_key"] = os.environ.get("DEEPSEEK_API_KEY") or cfg.get("api_key")
     if not cfg.get("api_key"):
@@ -567,6 +570,67 @@ def load_llm_config():
     cfg.setdefault("base_url", "https://api.deepseek.com")
     cfg.setdefault("model", "deepseek-chat")
     return cfg
+
+
+def llm_config_status(path=None):
+    """返回可展示的配置状态，绝不包含 API key 本身。"""
+    config_path = Path(path) if path else LLM_CONFIG_JSON
+    result = {
+        "path": str(config_path),
+        "base_url": "https://api.deepseek.com",
+        "model": "deepseek-chat",
+        "has_api_key": False,
+        "api_key_source": "missing",
+        "error": None,
+    }
+    try:
+        if config_path.is_file():
+            with open(config_path, "r", encoding="utf-8") as fh:
+                cfg = json.load(fh)
+            result["base_url"] = cfg.get("base_url") or result["base_url"]
+            result["model"] = cfg.get("model") or result["model"]
+            if cfg.get("api_key"):
+                result["has_api_key"] = True
+                result["api_key_source"] = "file"
+        env_key = os.environ.get("DEEPSEEK_API_KEY")
+        if env_key:
+            result["has_api_key"] = True
+            result["api_key_source"] = "environment"
+        if not config_path.is_file():
+            result["error"] = "配置文件不存在"
+    except (OSError, json.JSONDecodeError, TypeError) as exc:
+        result["error"] = str(exc)
+    return result
+
+
+def save_llm_config(base_url, model, api_key=None, path=None):
+    """保存端点配置；空 api_key 保留已有文件值并由环境变量优先覆盖。"""
+    config_path = Path(path) if path else LLM_CONFIG_JSON
+    base_url = str(base_url or "").strip().rstrip("/")
+    model = str(model or "").strip()
+    parsed = urlparse(base_url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise AutoToolError("LLM base_url 必须是完整的 http(s) URL")
+    if not model or len(model) > 200:
+        raise AutoToolError("LLM model 不能为空且长度不能超过 200")
+    cfg = {}
+    if config_path.is_file():
+        try:
+            with open(config_path, "r", encoding="utf-8") as fh:
+                cfg = json.load(fh)
+        except (OSError, json.JSONDecodeError) as exc:
+            raise AutoToolError(f"无法读取现有 LLM 配置: {exc}")
+        if not isinstance(cfg, dict):
+            raise AutoToolError("LLM 配置必须是 JSON 对象")
+    cfg["base_url"] = base_url
+    cfg["model"] = model
+    if str(api_key or "").strip():
+        cfg["api_key"] = str(api_key).strip()
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(config_path, "w", encoding="utf-8") as fh:
+        json.dump(cfg, fh, ensure_ascii=False, indent=2)
+        fh.write("\n")
+    return llm_config_status(config_path)
 
 
 def llm_chat(cfg, messages, timeout=60):
@@ -617,6 +681,7 @@ def hand_labels_cn(objects):
 
 
 LLM_ADVICE_LOG = Path(__file__).resolve().parent / "auto" / "llm_advice.jsonl"
+DRAFT_ADVICE_LOG = Path(__file__).resolve().parent / "auto" / "draft_advice.jsonl"
 
 
 def record_llm_advice(match_id, game_state_id, brief, suggestion, prompt=None):
@@ -629,6 +694,28 @@ def record_llm_advice(match_id, game_state_id, brief, suggestion, prompt=None):
                              "brief": brief, "suggestion": suggestion,
                              "prompt": prompt},
                             ensure_ascii=False) + "\n")
+
+
+def record_draft_advice(event_name, pack_number, pick_number, result):
+    """轮抓推荐落盘完整 prompt/结果，供赛后复盘；仅由 --llm 面板调用。"""
+    DRAFT_ADVICE_LOG.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "ts": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "event_name": event_name,
+        "pack_number": pack_number,
+        "pick_number": pick_number,
+        "status": result.status,
+        "error": result.error,
+        "prompt": result.prompt,
+        "response": result.response,
+        "recommendations": [
+            {"name": row.card.get("name"), "scores": dict(row.scores),
+             "total": row.total, "reason": row.reason}
+            for row in result.recommendations
+        ],
+    }
+    with open(DRAFT_ADVICE_LOG, "a", encoding="utf-8") as handle:
+        handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
 
 class StatusBoard:
@@ -1306,7 +1393,7 @@ def cmd_draft_record(args):
 # PackNumber(0起，共3包)/PickNumber(0起，包内递增)/DraftPack(当前包剩余
 # grpId 字符串)/PickedCards(已抓 grpId 累计)。每条新响应 = 一次状态更新。
 DRAFT_PANEL_PORT = 8643  # 避开 advise 监控台的 8642
-DRAFT_GRADES = list(draft_core.GRADE_EQ)  # S→F 强度序，与 mtga_draft_tool.GRADES 同序
+DRAFT_GRADES = list(deck_core.GRADE_EQ)  # S→F 强度序，与 mtga_draft_tool.GRADES 同序
 _DRAFT_SET_RE = re.compile(r"QuickDraft_([A-Z0-9]+)_")
 
 
@@ -1338,10 +1425,12 @@ class DraftPickPanel:
     重建当前包排名快照（牌名/cmc/评分在状态更新时解析并缓存，渲染零 I/O）。
     排名：主键等级（S→F），次键社区分；curve_fit 作第三参考提示。"""
 
-    def __init__(self, set_code=None):
+    def __init__(self, set_code=None, llm=False, llm_config_path=None):
         self._lock = threading.Lock()
         self.event_name = ""
         self.set_code = set_code
+        self.llm_enabled = bool(llm)
+        self.llm_config_path = Path(llm_config_path) if llm_config_path else LLM_CONFIG_JSON
         self.status = None
         self.pack_number = 0
         self.pick_number = 0
@@ -1352,7 +1441,13 @@ class DraftPickPanel:
         self.picked_curve = {}   # 已抓曲线：slot → 张数
         self._table = None
         self._table_loaded = False
-        self._info_cache = {}    # grpId → {name, cn, cmc}
+        self._info_cache = {}    # grpId → name/cn/确定性卡牌元数据
+        self._signals = {}
+        self._signal_key = None
+        self.advice_status = "disabled" if not self.llm_enabled else "pending"
+        self.advice_error = None
+        self.advice_rows = []
+        self._advice_key = None
 
     def feed(self, data):
         """喂内层 BotDraftDraftStatus dict；是轮抓状态返回 True，否则 False。"""
@@ -1394,12 +1489,20 @@ class DraftPickPanel:
         cn = None
         if name:
             cn, _err = fetch_chinese_name(name)
+        raw = {}
         cmc = None
         try:
-            cmc = scryfall_get(f"/cards/arena/{grp_id}").get("cmc")
+            raw = scryfall_get(f"/cards/arena/{grp_id}")
+            cmc = raw.get("cmc")
         except MtgToolError:
             pass
-        info = {"name": name, "cn": cn, "cmc": cmc}
+        info = {"name": name or raw.get("name"), "cn": cn, "cmc": cmc,
+                "colors": raw.get("colors") or [],
+                "rarity": raw.get("rarity") or "",
+                "mana_cost": raw.get("mana_cost") or "",
+                "type_line": raw.get("type_line") or "",
+                "oracle_text": raw.get("oracle_text") or "",
+                "keywords": raw.get("keywords") or []}
         self._info_cache[grp_id] = info
         return info
 
@@ -1413,6 +1516,109 @@ class DraftPickPanel:
     def _slot_label(slot):
         return "5+费" if slot >= 5 else f"{slot}费"
 
+    def _llm_request(self, prompt):
+        cfg = load_llm_config(self.llm_config_path)
+        return llm_chat(cfg, [{"role": "user", "content": prompt}], timeout=60)
+
+    def update_llm_config(self, values):
+        if not isinstance(values, dict):
+            raise AutoToolError("配置请求必须是 JSON 对象")
+        result = save_llm_config(
+            values.get("base_url"), values.get("model"), values.get("api_key"),
+            self.llm_config_path)
+        with self._lock:
+            self.advice_status = "pending" if self.llm_enabled else "disabled"
+            self.advice_error = None
+            self._advice_key = None
+        return result
+
+    def snapshot(self):
+        """返回本地 UI/API 使用的可序列化状态，不含任何密钥。"""
+        with self._lock:
+            return {
+                "event_name": self.event_name,
+                "set_code": self.set_code,
+                "status": self.status,
+                "pack_number": self.pack_number,
+                "pick_number": self.pick_number,
+                "pack_count": len(self.pack),
+                "picked_count": len(self.picked),
+                "rows": [dict(row) for row in self.rows],
+                "picked_grades": {key: list(value)
+                                   for key, value in self.picked_grades.items()},
+                "picked_curve": dict(self.picked_curve),
+                "signals": dict(self._signals),
+                "llm_enabled": self.llm_enabled,
+                "advice_status": self.advice_status,
+                "advice_error": self.advice_error,
+                "llm_config": llm_config_status(self.llm_config_path),
+            }
+
+    def _apply_advice(self, rows, counts, table):
+        """在显式 --llm 时生成一次当前 pick 的八轴推荐并重排可解析牌。"""
+        if not self.llm_enabled:
+            return rows
+        state_key = (self.pack_number, self.pick_number, tuple(self.pack))
+        if state_key == self._advice_key:
+            advice_by_name = {
+                row.card.get("name"): row for row in self.advice_rows
+            }
+        else:
+            cards = []
+            for row in rows:
+                info = self._info_cache.get(row["grp_id"], {})
+                if not info.get("name"):
+                    continue
+                card = dict(info)
+                card.update({"name": info["name"], "grade": row["grade"],
+                             "community_score": row["score"], "note": row["note"],
+                             "grp_id": row["grp_id"]})
+                cards.append(card)
+            if not cards:
+                self.advice_status = "offline"
+                self.advice_error = "当前包没有可解析牌名"
+                self.advice_rows = []
+                self._advice_key = state_key
+                return rows
+
+            if state_key != self._signal_key:
+                signal_cards = [{"colors": card.get("colors") or [],
+                                 "grade": card.get("grade") or ""}
+                                for card in cards]
+                deck_core.update_signals(self._signals, signal_cards,
+                                         self.pick_number + 1)
+                self._signal_key = state_key
+            picked_cards = []
+            for gid in self.picked:
+                info = self._info_cache.get(gid) or self._card_info(gid)
+                if info.get("name"):
+                    picked_cards.append(dict(info))
+            result = DRAFT_ADVISOR.recommend_pick(
+                cards, picked_cards, signals=self._signals, table=table,
+                llm_request=self._llm_request, pick_number=self.pick_number + 1)
+            self.advice_status = result.status
+            self.advice_error = result.error
+            self.advice_rows = list(result.recommendations)
+            self._advice_key = state_key
+            record_draft_advice(self.event_name, self.pack_number,
+                                self.pick_number, result)
+            advice_by_name = {
+                row.card.get("name"): row for row in self.advice_rows
+            }
+
+        for row in rows:
+            recommendation = advice_by_name.get(self._info_cache.get(row["grp_id"], {}).get("name"))
+            if recommendation is not None:
+                row["recommendation_score"] = recommendation.total
+                row["advice_reason"] = recommendation.reason
+            else:
+                row["recommendation_score"] = None
+                row["advice_reason"] = "未解析，未参与推荐"
+        rows.sort(key=lambda row: (
+            row["recommendation_score"] is None,
+            -(row["recommendation_score"] or 0.0), row["label"]))
+        return rows
+
     def _rebuild(self):
         table = self._ensure_table()
         counts = {}
@@ -1420,7 +1626,7 @@ class DraftPickPanel:
             cmc = self._card_info(gid).get("cmc")
             if cmc is None:
                 continue
-            slot = draft_core.cmc_slot(cmc)
+            slot = deck_core.cmc_slot(cmc)
             counts[slot] = counts.get(slot, 0) + 1
         self.picked_curve = counts
         rows = []
@@ -1433,8 +1639,8 @@ class DraftPickPanel:
                 grade = ""
             hint = ""
             if info["cmc"] is not None:
-                fit = draft_core.curve_fit_score(counts, info["cmc"])
-                label = self._slot_label(draft_core.cmc_slot(info["cmc"]))
+                fit = deck_core.curve_fit_score(counts, info["cmc"])
+                label = self._slot_label(deck_core.cmc_slot(info["cmc"]))
                 if fit >= 1.0:
                     hint = f"补{label}缺口"
                 elif fit <= 0.1:
@@ -1442,9 +1648,12 @@ class DraftPickPanel:
             rows.append({"grp_id": gid, "label": self._card_label(gid, info),
                          "grade": grade, "score": entry.get("community_score"),
                          "note": entry.get("note") or "", "hint": hint})
-        rows.sort(key=lambda r: (DRAFT_GRADES.index(r["grade"])
-                                 if r["grade"] in DRAFT_GRADES else len(DRAFT_GRADES),
-                                 -(r["score"] or 0), r["label"]))
+        if self.llm_enabled and self.status == "PickNext":
+            rows = self._apply_advice(rows, counts, table)
+        else:
+            rows.sort(key=lambda r: (DRAFT_GRADES.index(r["grade"])
+                                     if r["grade"] in DRAFT_GRADES else len(DRAFT_GRADES),
+                                     -(r["score"] or 0), r["label"]))
         self.rows = rows
         groups = {}
         for gid in self.picked:
@@ -1460,23 +1669,58 @@ class DraftPickPanel:
         """格式化当前快照为自刷新页面（纯字符串拼接，全量转义，无 I/O）。"""
         with self._lock:
             esc = html.escape
+            config = llm_config_status(self.llm_config_path)
             head = (f"{esc(self.event_name) or '（等待轮抓状态…）'}"
                     f"　系列 {esc(self.set_code or '?')}")
-            parts = [f"<h1>轮抓 pick 排名面板</h1>", f"<p class=\"meta\">{head}</p>"]
+            key_state = ("已配置（" + str(config["api_key_source"]) + ")"
+                         if config["has_api_key"] else "未配置")
+            config_error = (f"；{config['error']}" if config["error"] else "")
+            parts = [
+                "<header class=\"topbar\"><div><h1>轮抓 Pick 控制台</h1>"
+                f"<p class=\"meta\">{head}</p></div>"
+                "<a href=\"/api/state\" target=\"_blank\">状态 JSON</a></header>",
+                "<section class=\"config panel\"><div class=\"section-title\">LLM 端点配置</div>"
+                "<form id=\"llm-config\"><label>Endpoint"
+                f"<input id=\"llm-endpoint\" value=\"{esc(str(config['base_url']))}\" required></label>"
+                f"<label>Model<input id=\"llm-model\" value=\"{esc(str(config['model']))}\" required></label>"
+                "<label>API key<input id=\"llm-key\" type=\"password\" autocomplete=\"new-password\""
+                " placeholder=\"留空则保留当前值\"></label>"
+                "<button type=\"submit\">保存配置</button><span id=\"config-result\"></span></form>"
+                f"<p class=\"config-meta\">Key: {esc(key_state)}{esc(config_error)}；"
+                f"配置文件: {esc(str(config['path']))}</p></section>",
+            ]
             if self.status and self.status != "PickNext":
                 parts.append(f"<p class=\"status\">状态：{esc(self.status)}</p>")
             if self.status == "PickNext":
                 parts.append(
                     f"<h2>P{self.pack_number + 1} Pick{self.pick_number + 1}"
                     f"　当前包 {len(self.rows)} 张（按强度排序）</h2>")
-                parts.append("<table><tr><th>#</th><th>等级</th><th>牌名</th>"
-                             "<th>社区分</th><th>曲线</th><th>短评</th></tr>")
+                if self.llm_enabled:
+                    state = esc(self.advice_status)
+                    if self.advice_error:
+                        state += f"：{esc(self.advice_error)}"
+                    parts.append(f"<p class=\"advice-status\">推荐状态：{state}</p>")
+                    parts.append("<table><tr><th>#</th><th>等级</th><th>牌名</th>"
+                                 "<th>社区分</th><th>综合</th><th>曲线</th>"
+                                 "<th>推荐理由</th><th>短评</th></tr>")
+                else:
+                    parts.append("<table><tr><th>#</th><th>等级</th><th>牌名</th>"
+                                 "<th>社区分</th><th>曲线</th><th>短评</th></tr>")
                 for i, r in enumerate(self.rows, 1):
                     score = "-" if r["score"] is None else esc(str(r["score"]))
-                    parts.append(
-                        f"<tr><td>{i}</td><td class=\"g\">{esc(r['grade'] or '?')}</td>"
-                        f"<td>{esc(r['label'])}</td><td>{score}</td>"
-                        f"<td>{esc(r['hint'])}</td><td>{esc(r['note'])}</td></tr>")
+                    if self.llm_enabled:
+                        total = ("-" if r["recommendation_score"] is None else
+                                 esc(f"{r['recommendation_score']:.3f}"))
+                        parts.append(
+                            f"<tr><td>{i}</td><td class=\"g\">{esc(r['grade'] or '?')}</td>"
+                            f"<td>{esc(r['label'])}</td><td>{score}</td><td>{total}</td>"
+                            f"<td>{esc(r['hint'])}</td><td>{esc(r['advice_reason'])}</td>"
+                            f"<td>{esc(r['note'])}</td></tr>")
+                    else:
+                        parts.append(
+                            f"<tr><td>{i}</td><td class=\"g\">{esc(r['grade'] or '?')}</td>"
+                            f"<td>{esc(r['label'])}</td><td>{score}</td>"
+                            f"<td>{esc(r['hint'])}</td><td>{esc(r['note'])}</td></tr>")
                 parts.append("</table>")
             total = sum(len(v) for v in self.picked_grades.values())
             parts.append(f"<h2>已抓 {total} 张</h2>")
@@ -1488,6 +1732,9 @@ class DraftPickPanel:
             curve = "　".join(f"{self._slot_label(s)}×{self.picked_curve.get(s, 0)}"
                               for s in (1, 2, 3, 4, 5))
             parts.append(f"<p>曲线：{curve}</p>")
+            signals = "　".join(f"{esc(color)} {value:+.2f}"
+                                for color, value in sorted(self._signals.items())) or "暂无"
+            parts.append(f"<p class=\"signals\">颜色信号：{signals}</p>")
             body = "\n".join(parts)
         return DRAFT_PANEL_HTML.replace("{body}", body)
 
@@ -1497,34 +1744,95 @@ DRAFT_PANEL_HTML = """<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta http-equiv="refresh" content="3">
-<title>轮抓 pick 排名面板</title>
+<title>DeckPooper Draft Console</title>
 <style>
-body { font-family: "Microsoft YaHei", sans-serif; margin: 16px; background: #1b1b1b; color: #ddd; }
-h1 { font-size: 20px; } h2 { font-size: 16px; color: #9cf; }
-.meta { color: #888; } .status { font-size: 18px; color: #fc6; }
-table { border-collapse: collapse; }
-th, td { border: 1px solid #444; padding: 3px 8px; text-align: left; }
-th { background: #333; } td.g { font-weight: bold; color: #9cf; }
+body { font-family: "Microsoft YaHei", sans-serif; margin: 0; background: #11161d; color: #d7dee8; }
+.topbar { display:flex; justify-content:space-between; align-items:center; padding:18px 22px; border-bottom:1px solid #2b3542; }
+.topbar a { color:#8bd5ff; text-decoration:none; font-size:13px; }
+h1 { font-size: 22px; margin:0; color:#f2f6fa; } h2 { font-size: 16px; color: #8bd5ff; margin:18px 0 8px; }
+.meta, .config-meta { color: #8793a1; font-size:13px; margin:5px 0 0; }
+.status { font-size: 18px; color: #ffc857; padding:0 22px; }
+.panel { margin:16px 22px; padding:14px 16px; border:1px solid #2b3542; background:#18202a; border-radius:6px; }
+.section-title { color:#8bd5ff; font-size:14px; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.04em; }
+form { display:flex; flex-wrap:wrap; gap:10px; align-items:end; }
+label { display:flex; flex-direction:column; gap:5px; color:#aeb9c6; font-size:12px; min-width:190px; }
+input { box-sizing:border-box; width:100%; border:1px solid #3a4755; border-radius:4px; background:#0f141a; color:#e5edf5; padding:8px 9px; }
+button { border:1px solid #4a9fca; border-radius:4px; background:#1b6688; color:white; padding:8px 12px; cursor:pointer; }
+#config-result { min-height:18px; color:#8ee6a6; font-size:12px; }
+table { border-collapse: collapse; margin:0 22px; width:calc(100% - 44px); }
+th, td { border: 1px solid #34404d; padding: 7px 9px; text-align: left; }
+th { background: #202b37; color:#aeb9c6; font-size:12px; } td.g { font-weight: bold; color: #8bd5ff; }
+.advice-status { margin:0 22px 10px; color:#ffc857; } .signals { color:#aeb9c6; margin:10px 22px; }
+body > h2, body > p { margin-left:22px; margin-right:22px; }
+@media (max-width: 800px) { .topbar { padding:14px; } .panel { margin:12px 14px; } table { margin:0 14px; width:calc(100% - 28px); font-size:12px; } th,td { padding:5px; } label { min-width:100%; } }
 </style>
 </head>
 <body>
 {body}
+<script>
+const form = document.getElementById('llm-config');
+if (form) form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const result = document.getElementById('config-result');
+  result.textContent = '保存中...';
+  try {
+    const response = await fetch('/api/config', { method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({base_url: document.getElementById('llm-endpoint').value,
+        model: document.getElementById('llm-model').value, api_key: document.getElementById('llm-key').value}) });
+    const data = await response.json();
+    result.textContent = data.ok ? '已保存' : (data.error || '保存失败');
+    if (data.ok) document.getElementById('llm-key').value = '';
+  } catch (error) { result.textContent = '保存失败: ' + error; }
+});
+</script>
 </body>
 </html>
 """
 
 
 def start_draft_panel(panel, port):
-    """pick 排名面板的极简 HTTP 服务（守护线程，页面 meta refresh 3s）。
+    """pick 控制台 HTTP 服务（守护线程，页面 meta refresh 3s）。
     独立实现不复用 advise 监控台（8642），返回 (server, 实际端口)。"""
     class Handler(BaseHTTPRequestHandler):
+        def _send_json(self, status, payload):
+            body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
         def do_GET(self):
+            route = urlparse(self.path).path
+            if route == "/api/state":
+                self._send_json(200, panel.snapshot())
+                return
+            if route == "/api/config":
+                self._send_json(200, panel.snapshot()["llm_config"])
+                return
+            if route not in {"/", "/index.html"}:
+                self._send_json(404, {"ok": False, "error": "not found"})
+                return
             body = panel.render_html().encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
+
+        def do_POST(self):
+            if urlparse(self.path).path != "/api/config":
+                self._send_json(404, {"ok": False, "error": "not found"})
+                return
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                payload = json.loads(self.rfile.read(length).decode("utf-8"))
+                config = panel.update_llm_config(payload)
+            except (ValueError, TypeError, json.JSONDecodeError, UnicodeDecodeError,
+                    AutoToolError, OSError) as exc:
+                self._send_json(400, {"ok": False, "error": str(exc)})
+                return
+            self._send_json(200, {"ok": True, "config": config})
 
         def log_message(self, *args):
             pass  # 静音访问日志
@@ -1569,7 +1877,11 @@ def cmd_draft_watch(args):
     except AutoToolError as exc:
         print(f"[错误] {exc}", file=sys.stderr)
         return 2
-    panel = DraftPickPanel(set_code=args.set)
+    panel = DraftPickPanel(
+        set_code=args.set,
+        llm=getattr(args, "llm", False),
+        llm_config_path=getattr(args, "llm_config", None),
+    )
     if _draft_backscan(args.log, panel):
         print(_draft_console_line(panel) + "（回扫恢复）", file=sys.stderr)
     try:
@@ -1657,6 +1969,10 @@ def build_parser():
                       help="实时 pick 排名面板：tail BotDraftDraftStatus，排名快照出 Web 面板")
     pd_.add_argument("--set", metavar="CODE",
                      help="--watch：系列码覆盖（缺省从 EventName QuickDraft_<CODE>_ 解析）")
+    pd_.add_argument("--llm", action="store_true",
+                     help="--watch：启用八轴 LLM pick 推荐（失败时显示离线并保留机器排名）")
+    pd_.add_argument("--llm-config", metavar="PATH",
+                     help="--watch：LLM 端点配置 JSON 路径（默认 tools/llm_config.json）")
     pd_.add_argument("--port", type=int, default=DRAFT_PANEL_PORT,
                      help="--watch：面板端口（默认 8643，避开 advise 监控台 8642）")
     common(pd_)

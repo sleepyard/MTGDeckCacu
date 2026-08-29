@@ -412,6 +412,27 @@ class TestLlmBackend(unittest.TestCase):
             with self.assertRaises(MAT.AutoToolError):
                 MAT.load_llm_config()
 
+    def test_config_status_masks_key(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "llm.json"
+            path.write_text(json.dumps({"base_url": "https://llm.test/v1",
+                                        "model": "draft-model",
+                                        "api_key": "secret-key"}), encoding="utf-8")
+            status = MAT.llm_config_status(path)
+        self.assertTrue(status["has_api_key"])
+        self.assertEqual(status["api_key_source"], "file")
+        self.assertNotIn("secret-key", json.dumps(status))
+
+    def test_save_config_validates_endpoint_and_preserves_blank_key(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "llm.json"
+            path.write_text(json.dumps({"api_key": "keep-me"}), encoding="utf-8")
+            status = MAT.save_llm_config("https://llm.test/v1", "model-v2", path=path)
+            self.assertEqual(status["model"], "model-v2")
+            self.assertEqual(json.loads(path.read_text(encoding="utf-8"))["api_key"], "keep-me")
+            with self.assertRaises(MAT.AutoToolError):
+                MAT.save_llm_config("not-a-url", "model", path=path)
+
 
 class TestCourseDeck(unittest.TestCase):
     def test_course_deck_stats(self):
@@ -472,6 +493,35 @@ class TestDashboard(unittest.TestCase):
             self.assertEqual(data["fields"]["deck"], "SmokeDeck")
         finally:
             srv.shutdown()
+
+    def test_draft_panel_state_and_config_api_are_local_and_masked(self):
+        import urllib.request as ur
+        with tempfile.TemporaryDirectory() as tmp:
+            config_path = Path(tmp) / "llm.json"
+            panel = MAT.DraftPickPanel(set_code="HOB", llm=True,
+                                       llm_config_path=config_path)
+            srv, port = MAT.start_draft_panel(panel, 0)
+            try:
+                state = json.loads(ur.urlopen(
+                    f"http://127.0.0.1:{port}/api/state", timeout=5
+                ).read().decode("utf-8"))
+                self.assertEqual(state["set_code"], "HOB")
+                self.assertNotIn("api_key", state["llm_config"])
+                request = ur.Request(
+                    f"http://127.0.0.1:{port}/api/config",
+                    data=json.dumps({"base_url": "https://llm.test/v1",
+                                     "model": "draft-model",
+                                     "api_key": "secret-key"}).encode("utf-8"),
+                    headers={"Content-Type": "application/json"}, method="POST")
+                body = ur.urlopen(request, timeout=5).read().decode("utf-8")
+                self.assertNotIn("secret-key", body)
+                self.assertTrue(json.loads(body)["ok"])
+                page = ur.urlopen(f"http://127.0.0.1:{port}/", timeout=5
+                                  ).read().decode("utf-8")
+                self.assertIn("LLM 端点配置", page)
+                self.assertNotIn("secret-key", page)
+            finally:
+                srv.shutdown()
 
 
 class TestHandLabelsCn(unittest.TestCase):
@@ -792,6 +842,55 @@ class TestDraftWatch(unittest.TestCase):
         finally:
             for p in patchers:
                 p.stop()
+
+    def test_panel_llm_advice_reorders_and_records(self):
+        names = {"1": "Alpha Card", "2": "Beta Card"}
+        cmcs = {"1": 2, "2": 3}
+        table = {"Alpha Card": {"grade": "S", "community_score": 9},
+                 "Beta Card": {"grade": "B", "community_score": 6}}
+        patchers = self._patch_cards(names, cmcs, table)
+        for patcher in patchers:
+            patcher.start()
+        try:
+            with mock.patch.object(MAT, "load_llm_config", return_value={"api_key": "k"}), \
+                    mock.patch.object(MAT, "llm_chat", return_value=json.dumps([
+                        {"name": "Alpha Card", "raw_power": 0.1,
+                         "synergy": 0.1, "reason": "保留资源"},
+                        {"name": "Beta Card", "raw_power": 0.9,
+                         "synergy": 0.9, "reason": "协同更高"},
+                    ])), \
+                    mock.patch.object(MAT, "record_draft_advice") as record:
+                panel = MAT.DraftPickPanel(llm=True)
+                panel.feed(self._status(DraftPack=["1", "2"]))
+            self.assertEqual(panel.advice_status, "ok")
+            self.assertEqual(panel.rows[0]["grp_id"], "2")
+            self.assertIn("协同更高", panel.render_html())
+            record.assert_called_once()
+        finally:
+            for patcher in patchers:
+                patcher.stop()
+
+    def test_panel_llm_failure_keeps_machine_rows(self):
+        names = {"1": "Alpha Card", "2": "Beta Card"}
+        cmcs = {"1": 2, "2": 3}
+        table = {"Alpha Card": {"grade": "S"}, "Beta Card": {"grade": "B"}}
+        patchers = self._patch_cards(names, cmcs, table)
+        for patcher in patchers:
+            patcher.start()
+        try:
+            with mock.patch.object(MAT, "load_llm_config",
+                                   side_effect=MAT.AutoToolError("no config")), \
+                    mock.patch.object(MAT, "record_draft_advice"):
+                panel = MAT.DraftPickPanel(llm=True)
+                panel.feed(self._status(DraftPack=["1", "2"]))
+            self.assertEqual(panel.advice_status, "offline")
+            self.assertEqual({row["grp_id"] for row in panel.rows}, {"1", "2"})
+            self.assertTrue(all(row["recommendation_score"] is not None
+                                for row in panel.rows))
+            self.assertIn("LLM", panel.render_html())
+        finally:
+            for patcher in patchers:
+                patcher.stop()
 
     def test_cmd_draft_watch_smoke(self):
         tmp = tempfile.mkdtemp(prefix="mtga_auto_test_")

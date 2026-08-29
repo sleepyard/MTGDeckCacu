@@ -19,7 +19,7 @@ from collections import Counter
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import draft_core as DC  # noqa: E402
+import deck_core as DC  # noqa: E402
 import mtga_log_tool as L  # noqa: E402
 import mtga_draft_tool as D  # noqa: E402
 
