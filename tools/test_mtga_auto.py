@@ -725,6 +725,7 @@ class TestDraftWatch(unittest.TestCase):
     def test_parse_draft_status(self):
         inner = self._status(DraftPack=["103410"])
         self.assertEqual(MAT.parse_draft_status(self._outer(inner)), inner)
+        self.assertEqual(MAT.parse_draft_status({"payload": self._outer(inner)}), inner)
         # 非轮抓载荷 / 坏字符串化 JSON / 缺 DraftStatus 一律 None
         self.assertIsNone(MAT.parse_draft_status({"greToClientEvent": {}}))
         self.assertIsNone(MAT.parse_draft_status({"Payload": "not json"}))

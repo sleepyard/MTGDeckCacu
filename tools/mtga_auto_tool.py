@@ -1408,12 +1408,19 @@ def parse_draft_status(payload):
     """外层载荷 → BotDraftDraftStatus 内层 dict；非轮抓状态返回 None。"""
     if not isinstance(payload, dict):
         return None
+    # ``draft --record`` stores the original outer payload under a lowercase
+    # ``payload`` key. Accept that wrapper for deterministic offline replay.
+    if isinstance(payload.get("payload"), dict):
+        payload = payload["payload"]
     inner = payload.get("Payload")
-    if not isinstance(inner, str) or inner[:1] != "{":
-        return None
-    try:
-        data = json.loads(inner)
-    except (json.JSONDecodeError, ValueError):
+    if isinstance(inner, dict):
+        data = inner
+    elif isinstance(inner, str) and inner[:1] == "{":
+        try:
+            data = json.loads(inner)
+        except (json.JSONDecodeError, ValueError):
+            return None
+    else:
         return None
     if not isinstance(data, dict) or "DraftStatus" not in data:
         return None
