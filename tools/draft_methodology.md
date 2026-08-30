@@ -95,8 +95,8 @@ score = 5.0 + (GIH_WR−0.5)×100 + IWD×50 + (OH_WR−0.5)×15
 
 | 阶段 | 状态 | 用本文哪节 |
 |---|---|---|
-| 0 录样器 `draft --record` | 已完成，等第一场录样 | §5 |
+| 0 录样器 `draft --record` | 已完成，已有 HOB 终态录样并可回放 | §5 |
 | 1 评分表 build-ratings | 已完成（HOB 188/188） | §0、§1 |
 | 纯函数内核 `tools/deck_core.py` | **已完成**（36 例单测）——§2/§4 全部落地 | §2、§3、§4 |
 | 2 DraftTracker（包/pick 解析） | **已完成**（`draft --watch` 的 `DraftPickPanel`，schema 实测定型） | §3、§5 |
-| 3 面板 + LLM pick 推荐 | `draft_advisor.py` 已完成机器六轴 + LLM 两轴 + WASPAS；`mtga_auto_tool.py draft --watch --llm` 已接入并支持离线机器排名，待真实 Quick Draft 验收 | §2 全节 + §4 |
+| 3 面板 + LLM pick 推荐 | `draft_advisor.py` 已完成机器六轴 + LLM 两轴 + WASPAS；`mtga_auto_tool.py draft --watch --llm` 已接入，真实 HOB 录样回放通过，待在线 Quick Draft 验收 | §2 全节 + §4 |
