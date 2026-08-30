@@ -131,10 +131,37 @@ class TestConstructedBuild(unittest.TestCase):
                  if "land" in item.card.get("type_line", "").lower()]
         self.assertEqual(sum(item.count for item in lands), 24)
 
+    def test_flexible_lands_preserve_basic_color_mix(self):
+        flexible = candidate("Mana Confluence", land=True)
+        flexible["type_line"] = "Land"
+        flexible["colors"] = []
+        flexible["color_identity"] = []
+        flexible["oracle_text"] = "{T}: Add one mana of any color."
+        w_spell = CS.ConstructedEntry({"name": "W Spell", "mana_cost": "{W}",
+                                       "type_line": "Creature"}, 1, "M1", "test")
+        u_spell = CS.ConstructedEntry({"name": "U Spell", "mana_cost": "{U}",
+                                       "type_line": "Creature"}, 1, "M1", "test")
+        lands = CS._land_entries([flexible], [], [w_spell, u_spell], 8, False,
+                                 {"W", "U"})
+        by_name = {item.card["name"]: item.count for item in lands}
+        self.assertEqual(by_name.get("Mana Confluence"), 4)
+        self.assertGreater(by_name.get("Plains", 0), 0)
+        self.assertGreater(by_name.get("Island", 0), 0)
+
     def test_core_roles_beat_hate_module(self):
         pack_leader = candidate("Pack Leader")
         pack_leader["oracle_text"] = "Other Dogs you control get +1/+1. Whenever this attacks, prevent all combat damage."
         self.assertEqual(CS._module(pack_leader), "M8")
+
+    def test_transform_back_land_is_not_main_deck_land(self):
+        transform = candidate("Journey", land=True)
+        transform["type_line"] = "Legendary Enchantment // Legendary Land"
+        transform["layout"] = "transform"
+        modal = candidate("Pathway", land=True)
+        modal["type_line"] = "Land // Land"
+        modal["layout"] = "modal_dfc"
+        self.assertFalse(CS._is_land(transform))
+        self.assertTrue(CS._is_land(modal))
 
 
 if __name__ == "__main__":

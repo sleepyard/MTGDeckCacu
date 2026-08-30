@@ -112,7 +112,11 @@ def _type_line(card: Mapping) -> str:
 
 
 def _is_land(card: Mapping) -> bool:
-    return "land" in _type_line(card).lower()
+    type_line = _type_line(card).lower()
+    # Transform DFCs with a land back are spells in the opening deck. Modal
+    # DFCs whose front face is a land remain playable as lands.
+    front = type_line.split(" // ", 1)[0]
+    return "land" in front
 
 
 def _is_basic(card: Mapping) -> bool:
@@ -331,7 +335,9 @@ def _land_entries(candidates: Sequence[Mapping], seed_entries: Sequence[Construc
         if not aligned:
             aligned = any("add {" + color.lower() + "}" in text for color in allowed)
             aligned = aligned or "any color" in text
-        return (not mana_land, not aligned, _name(card))
+        fixing = "any color" in text or "one mana of any color" in text
+        color_span = len(set(_colors(card)) & set(allowed))
+        return (not mana_land, not fixing, not aligned, -color_span, _name(card))
 
     candidate_limit = 12 if brawl else 2
     for card in sorted(available, key=land_key)[:candidate_limit]:
@@ -349,14 +355,20 @@ def _land_entries(candidates: Sequence[Mapping], seed_entries: Sequence[Construc
             str(item.card.get("mana_cost") or item.card.get("cost") or "")))
     desired = deck_core.mana_base(dict(pip_counts), target)
     source_counts = Counter()
+    flexible_sources = 0
     for item in selected:
         produces = item.card.get("produces_colors") or item.card.get("colors") or []
         for color in produces:
             if color in allowed:
                 source_counts[color] += item.count
+        text = str(item.card.get("oracle_text") or "").lower()
+        if "any color" in text or "one mana of any color" in text:
+            flexible_sources += item.count
     basics = []
     remaining = max(0, target - sum(item.count for item in selected))
-    for color, quantity in sorted(desired.items()):
+    basic_targets = (deck_core.mana_base(dict(pip_counts), remaining)
+                     if flexible_sources else desired)
+    for color, quantity in sorted(basic_targets.items()):
         if remaining <= 0:
             break
         add = min(remaining, max(0, quantity - source_counts[color]))

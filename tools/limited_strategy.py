@@ -74,7 +74,9 @@ def _type_line(card: Mapping) -> str:
 
 
 def _is_land(card: Mapping) -> bool:
-    return "land" in _type_line(card).lower()
+    type_line = _type_line(card).lower()
+    front = type_line.split(" // ", 1)[0]
+    return "land" in front
 
 
 def _is_creature(card: Mapping) -> bool:

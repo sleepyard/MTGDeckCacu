@@ -188,7 +188,7 @@ def render_constructed_deck(deck: CS.ConstructedDeck) -> str:
         lines.append("")
     lines.append("Deck")
     entries = sorted(deck.main, key=lambda item: (
-        not ("land" in str(item.card.get("type_line") or "").lower()),
+        not CS._is_land(item.card),
         item.card.get("name") or ""))
     lines.extend(f"{item.count} {item.card['name']}" for item in entries)
     if deck.sideboard:
