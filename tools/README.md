@@ -51,6 +51,9 @@ python tools/deck_pooper.py constructed --format pioneer --seed seeds.txt \
 伪造结果。构筑赛在写入 `--out` 前还会调用 `mtg_tool.py validate`；正式校验失败时
 只保留报告并返回门禁错误码。
 
+部族/主题工具包是人工筛选的可能相关牌集合，不是必选清单。每次系列更新后先更新
+工具包，再从中挑选本次可能用上的牌作为种子或候选；未选牌只作备查，不会自动进入最终牌表。
+
 ## 牌表格式（validate）
 
 MTGO/MTGA 导入兼容：每行 `数量 英文名`；`Deck`/`Sideboard`/`Commander`/`Companion` 块头行切换分区；无块头时主牌后的空行分隔主备。兼容 MTGO 导出尾部 `(SET) 123`。
