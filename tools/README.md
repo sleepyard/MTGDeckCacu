@@ -190,7 +190,7 @@ python tools/mtga_auto_tool.py draft --watch [--set HOB] [--port 8643]
 - `advise --llm` 口径：局面快照由日志精确重建（双方战场/堆叠/坟墓场、我方手牌逐牌附费用+类型+oracle 文本、生命、回合阶段、我方未横置地数与本回合是否已下地、**服务器判定的当前合法动作列表**（actionsAvailableReq，含结构化费用，施放/下地/异能/历险施放——LLM 建议只允许从中选择，费用幻觉的事实锚点；Activate_Mana/FloatMana 噪音已过滤）），oracle 文本走 Scryfall 磁盘缓存、战场牌截断 800 字符（截太短会切掉关键异能——The Great Henge 抓牌触发器、Hunter's Talent 三级抓牌条款两次实测踩坑）；历险/MDFC 子物件（带 parentId 的影子物件）一律排除，不污染战场与手牌计数；grpId 未解析的物件按 superTypes/cardTypes/subtypes 降级渲染（如"未解析 Basic Land Forest #100131"），禁止 LLM 安牌名。**对手手牌只报张数并显式标注"身份未知，禁止假设具体牌"**——服务器未下发的信息模型无从得知，prompt 层强制防脑补。LLM 建议连同完整快照落盘 `tools/auto/llm_advice.jsonl`（含 prompt 字段，供赛后诊断 AI 到底"看到"了什么）。LLM 配置 `tools/llm_config.json`（OpenAI 兼容端点，默认 DeepSeek `deepseek-chat`，可改 `deepseek-reasoner` 换推理强度换延迟；`api_key` 可用环境变量 `DEEPSEEK_API_KEY` 覆盖；该文件已被 .gitignore 排除，**不得提交**）。
 - Windows 控制台中文输出需 `PYTHONIOENCODING=utf-8`（同既有工具坑位）。
 - 轮抓 `draft --watch` 面板口径：启动先回扫日志最后 200KB 恢复当前包状态，抓不到就等下一条；每条 BotDraftDraftStatus 响应更新包号/抓号/当前包/已抓池并在控制台打印 `[draft] P<包>Pick<抓> 包内 N 张 | 已抓 M 张`；排名主键字母等级（S→F，mtga_draft_tool 预生成评分表）、次键社区分，curve_fit（deck_core）作第三参考提示（补 N 费缺口/N 费已溢出）；未评级牌显示 `?` 排最后，grpId 解析失败显示 `<grpId N>`，均不丢牌；DraftStatus 非 PickNext（如 Complete）时面板只显示对应状态。
-- 回归测试：`python tools/test_mtga_auto.py`（47 例，覆盖增量读取/截断、分块 JSON 提取、状态跟踪（含 Bo3 局级隔离/deckMessage 牌表事实源/主阶段 step 清理）、调度口径、快照渲染、LLM 客户端与配置加载、watch/run/draft 录样与 pick 面板状态机（字符串化 Payload 解析/pack-pick 推进/排名渲染）；网络与子进程全部 mock，不触真实 MTGA/LLM）。
+- 回归测试：`python tools/test_mtga_auto.py`（52 例，覆盖增量读取/截断、分块 JSON 提取、状态跟踪（含 Bo3 局级隔离/deckMessage 牌表事实源/主阶段 step 清理）、调度口径、快照渲染、LLM 客户端与配置加载、watch/run/draft 录样与 pick 面板状态机（字符串化 Payload 解析/pack-pick 推进/排名渲染）；网络与子进程全部 mock，不触真实 MTGA/LLM）。
 
 ## 退出码
 

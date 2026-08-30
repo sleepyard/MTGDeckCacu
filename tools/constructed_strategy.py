@@ -62,6 +62,7 @@ class ConstructedDeck:
     valid: bool
     violations: List[str] = field(default_factory=list)
     report: List[str] = field(default_factory=list)
+    companion: List[ConstructedEntry] = field(default_factory=list)
 
 
 def parse_seed_lines(lines: Iterable[str]) -> SeedSet:
@@ -219,8 +220,9 @@ def _seed_requirements(seed: SeedSet, index: Mapping[str, Mapping]) -> Dict[str,
     return dict(required)
 
 
-def _allowed_colors(seed_cards: Iterable[Mapping], commander: Sequence[Mapping]) -> Set[str]:
-    source = list(commander) or list(seed_cards)
+def _allowed_colors(seed_cards: Iterable[Mapping], commander: Sequence[Mapping],
+                    companion: Sequence[Mapping] = ()) -> Set[str]:
+    source = list(commander) or list(seed_cards) or list(companion)
     return {color for card in source for color in _colors(card)}
 
 
@@ -370,6 +372,9 @@ def validate_constructed(deck: ConstructedDeck, seed: SeedSet, platform: Optiona
     brawl = deck.format.lower() in BRAWL_FORMATS
     main_count = sum(item.count for item in deck.main)
     side_count = sum(item.count for item in deck.sideboard)
+    companion_count = sum(item.count for item in deck.companion)
+    if companion_count > 1:
+        violations.append(f"Companion {companion_count} > 1")
     if brawl:
         if len(deck.commander) != 1 or sum(item.count for item in deck.commander) != 1:
             violations.append("Brawl 必须恰好有 1 名指挥官")
@@ -388,14 +393,15 @@ def validate_constructed(deck: ConstructedDeck, seed: SeedSet, platform: Optiona
             violations.append("普通构筑不应包含 Commander 分区")
 
     totals = Counter()
-    for section in (deck.main, deck.sideboard, deck.commander):
+    for section in (deck.main, deck.sideboard, deck.commander, deck.companion):
         for item in section:
             name = _name(item.card)
             totals[name] += item.count
             if not _legal(item.card, deck.format, platform) and not _is_basic(item.card):
                 violations.append(f"{name} 缺少 {deck.format} 合法性或不合法")
     for name, total in totals.items():
-        item = next(item for section in (deck.main, deck.sideboard, deck.commander)
+        item = next(item for section in (deck.main, deck.sideboard, deck.commander,
+                                         deck.companion)
                     for item in section if _name(item.card) == name)
         if not _is_basic(item.card):
             maximum = 1 if brawl else 4
@@ -407,6 +413,9 @@ def validate_constructed(deck: ConstructedDeck, seed: SeedSet, platform: Optiona
     for quantity, name in seed.commander:
         if sum(item.count for item in deck.commander if _name(item.card) == name) < quantity:
             violations.append(f"种子指挥官未完整保留: {name}")
+    for quantity, name in seed.companion:
+        if sum(item.count for item in deck.companion if _name(item.card) == name) < quantity:
+            violations.append(f"Companion seed not preserved: {name}")
     return sorted(set(violations))
 
 
@@ -421,13 +430,16 @@ def build_constructed_deck(candidates: Sequence[Mapping], seed: SeedSet,
     brawl = fmt.lower() in BRAWL_FORMATS
     commander = [_entry(index[name], quantity, "M9", "种子指挥官")
                  for quantity, name in seed.commander]
+    companion = [_entry(index[name], quantity, "M7", "companion seed")
+                 for quantity, name in seed.companion]
     seed_main = [_entry(index[name], quantity, _module(index[name]), "主题种子必留")
                  for quantity, name in seed.main]
     allowed = _allowed_colors([item.card for item in seed_main],
-                              [item.card for item in commander])
+                              [item.card for item in commander],
+                              [item.card for item in companion])
     all_cards = [card for card in candidates if _legal(card, fmt, platform)
                  or _is_basic(card)]
-    missing_seed = [_name(item.card) for item in seed_main + commander
+    missing_seed = [_name(item.card) for item in seed_main + commander + companion
                     if item.card not in all_cards and not _is_basic(item.card)]
     if missing_seed:
         raise ValueError("种子牌不满足目标赛制或平台: " + ", ".join(missing_seed))
@@ -436,7 +448,9 @@ def build_constructed_deck(candidates: Sequence[Mapping], seed: SeedSet,
     land_target = BRAWL_LANDS if brawl else NORMAL_LANDS
     nonland_target = target_size - land_target
     commander_names = {_name(item.card) for item in commander}
-    selection_cards = [card for card in all_cards if _name(card) not in commander_names]
+    companion_names = {_name(item.card) for item in companion}
+    selection_cards = [card for card in all_cards
+                       if _name(card) not in commander_names | companion_names]
     seed_nonlands = [item for item in seed_main if not _is_land(item.card)]
     selected_nonlands, available, modules = _select_nonlands(
         selection_cards, seed_nonlands, nonland_target, brawl, allowed, strategy)
@@ -446,10 +460,14 @@ def build_constructed_deck(candidates: Sequence[Mapping], seed: SeedSet,
     selected_lands = _land_entries(selection_cards, seed_lands, selected_nonlands,
                                    land_target, brawl, allowed)
     main = _group_entries(selected_nonlands + selected_lands)
-    sideboard = _sideboard(all_cards, main + commander,
+    sideboard = _sideboard(all_cards, main + commander + companion,
                            SIDEBOARD_SIZE if bo3 else 0, brawl, allowed, strategy)
     colors = tuple(sorted(allowed))
-    deck = ConstructedDeck(fmt, main, sideboard, commander, dict(modules), colors, True)
+    modules = dict(modules)
+    modules["M7"] = sum(item.count for item in companion)
+    modules["M9"] = sum(item.count for item in commander)
+    deck = ConstructedDeck(fmt, main, sideboard, commander, modules, colors, True,
+                           companion=companion)
     deck.violations = validate_constructed(deck, seed, platform)
     deck.valid = not deck.violations
     deck.report = [

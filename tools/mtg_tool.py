@@ -602,7 +602,10 @@ def cmd_validate(args):
     main = sections["main"]
     sideboard = sections["sideboard"]
     main_count = sum(q for q, _ in main)
-    sb_count = sum(q for q, _ in sideboard) + sum(q for q, _ in sections["companion"])
+    sb_count = sum(q for q, _ in sideboard)
+    companion_count = sum(q for q, _ in sections["companion"])
+    if companion_count > 1:
+        vio(f"Companion {companion_count} > 1")
 
     print(f"[info] 主牌 {main_count} 张，备牌 {sb_count} 张"
           + (f"，指挥官 {sum(q for q, _ in sections['commander'])} 张" if sections["commander"] else "")

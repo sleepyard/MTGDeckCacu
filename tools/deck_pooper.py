@@ -178,6 +178,10 @@ def load_candidates(path: str) -> List[Mapping]:
 
 def render_constructed_deck(deck: CS.ConstructedDeck) -> str:
     lines = []
+    if deck.companion:
+        lines.append("Companion")
+        lines.extend(f"{item.count} {item.card['name']}" for item in deck.companion)
+        lines.append("")
     if deck.commander:
         lines.append("Commander")
         lines.extend(f"{item.count} {item.card['name']}" for item in deck.commander)

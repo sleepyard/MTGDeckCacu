@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import constructed_strategy as CS  # noqa: E402
 
 
-def candidate(name, colors=("G",), module=None, land=False, commander=False):
+def candidate(name, colors=("G",), module=None, land=False, commander=False, companion=False):
     value = {
         "name": name,
         "colors": list(colors),
@@ -25,6 +25,8 @@ def candidate(name, colors=("G",), module=None, land=False, commander=False):
         value["module"] = module
     if commander:
         value["is_commander"] = True
+    if companion:
+        value["is_companion"] = True
     return value
 
 
@@ -93,6 +95,29 @@ class TestConstructedBuild(unittest.TestCase):
         )
         violations = CS.validate_constructed(deck, CS.SeedSet(main=()))
         self.assertTrue(any("Duplicate 总数 5" in item for item in violations))
+
+
+    def test_normal_build_preserves_companion_outside_main(self):
+        pool = normal_pool()
+        companion = candidate("Lutri", colors=("G",), companion=True)
+        pool.append(companion)
+        seed = CS.SeedSet(main=((4, "Seed Payoff"),), companion=((1, "Lutri"),))
+        deck = CS.build_constructed_deck(pool, seed, "pioneer", bo3=True)
+        self.assertTrue(deck.valid, deck.violations)
+        self.assertEqual(sum(item.count for item in deck.companion), 1)
+        self.assertEqual(deck.companion[0].card["name"], "Lutri")
+        self.assertNotIn("Lutri", {item.card["name"] for item in deck.main})
+        self.assertNotIn("Lutri", {item.card["name"] for item in deck.sideboard})
+        self.assertEqual(deck.modules["M7"], 1)
+
+    def test_companion_limit_is_separate_from_sideboard(self):
+        companion = candidate("Lutri", companion=True)
+        deck = CS.ConstructedDeck(
+            "pioneer", [], [], [], {}, ("G",), True,
+            companion=[CS.ConstructedEntry(companion, 2, "M7", "test")],
+        )
+        violations = CS.validate_constructed(deck, CS.SeedSet(main=()))
+        self.assertTrue(any("Companion 2 > 1" in item for item in violations))
 
 
 if __name__ == "__main__":

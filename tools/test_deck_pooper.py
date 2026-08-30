@@ -164,5 +164,13 @@ class TestCommand(unittest.TestCase):
             self.assertFalse(output.exists())
 
 
+    def test_render_constructed_has_companion_section(self):
+        companion = CS.ConstructedEntry({"name": "Lutri"}, 1, "M7", "seed")
+        deck = CS.ConstructedDeck("pioneer", [], [], [], {}, ("G",), True,
+                                  companion=[companion])
+        text = DP.render_constructed_deck(deck)
+        self.assertTrue(text.startswith("Companion\n1 Lutri\n\nDeck\n"))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)
