@@ -66,6 +66,13 @@ class TestClassifyCard(unittest.TestCase):
         self.assertTrue(has_root(tags, "tempo"))
         self.assertTrue(has_root(tags, "control"))
 
+    def test_indestructible_text_is_protection(self):
+        tags = classify_card({
+            "type_line": "Creature - Dog",
+            "oracle_text": "Sacrifice this creature: Another target creature gains indestructible until end of turn.",
+        })
+        self.assertTrue(has_root(tags, "protection"))
+
 
 class TestTagMergingAndScoring(unittest.TestCase):
     def test_ai_only_supplements_uncovered_root(self):

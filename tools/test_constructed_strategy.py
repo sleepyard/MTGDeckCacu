@@ -119,6 +119,23 @@ class TestConstructedBuild(unittest.TestCase):
         violations = CS.validate_constructed(deck, CS.SeedSet(main=()))
         self.assertTrue(any("Companion 2 > 1" in item for item in violations))
 
+    def test_nonbasic_lands_respect_land_target(self):
+        pool = normal_pool()
+        nonbasic = candidate("Temple", land=True)
+        nonbasic["type_line"] = "Land"
+        pool.append(nonbasic)
+        deck = CS.build_constructed_deck(
+            pool, CS.SeedSet(main=((4, "Seed Payoff"),)), "pioneer")
+        self.assertEqual(sum(item.count for item in deck.main), 60)
+        lands = [item for item in deck.main
+                 if "land" in item.card.get("type_line", "").lower()]
+        self.assertEqual(sum(item.count for item in lands), 24)
+
+    def test_core_roles_beat_hate_module(self):
+        pack_leader = candidate("Pack Leader")
+        pack_leader["oracle_text"] = "Other Dogs you control get +1/+1. Whenever this attacks, prevent all combat damage."
+        self.assertEqual(CS._module(pack_leader), "M8")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=1)

@@ -7,6 +7,7 @@
 
 from collections import Counter
 from dataclasses import dataclass, field
+import re
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple
 
 import deck_core
@@ -155,8 +156,6 @@ def _module(card: Mapping) -> str:
         return "M9"
     if _is_land(card) or card.get("layout") in {"modal_dfc", "adventure"}:
         return "M4"
-    if roles.has_root(tags, "hate"):
-        return "M6"
     if roles.has_root(tags, "removal") or roles.has_root(tags, "tempo") or \
             roles.has_root(tags, "control"):
         return "M5"
@@ -168,8 +167,10 @@ def _module(card: Mapping) -> str:
         return "M3"
     if roles.has_root(tags, "protection"):
         return "M8"
-    if roles.has_root(tags, "threat"):
+    if roles.has_root(tags, "threat") or roles.has_root(tags, "aggro"):
         return "M1"
+    if roles.has_root(tags, "hate"):
+        return "M6"
     return ""
 
 
@@ -265,7 +266,8 @@ def _select_nonlands(candidates: Sequence[Mapping], seed_entries: Sequence[Const
                  if not _is_land(card) and not _is_basic(card)
                  and _colors(card).issubset(allowed)
                  and _name(card) not in selected_names]
-    for module in REQUIRED_MODULES + ("M4",):
+    required_order = REQUIRED_MODULES + ("M4",)
+    for position, module in enumerate(required_order):
         _lo, wanted, maximum = MODULE_QUOTAS[module]
         while counts[module] < wanted and sum(item.count for item in selected) < target:
             choices = [card for card in available if _module(card) == module]
@@ -276,6 +278,12 @@ def _select_nonlands(candidates: Sequence[Mapping], seed_entries: Sequence[Const
             capacity = min(_max_copies(card, brawl),
                            max(0, wanted - counts[module]),
                            target - sum(item.count for item in selected))
+            later_minimum = sum(
+                max(0, MODULE_QUOTAS[later][0] - counts[later])
+                for later in required_order[position + 1:]
+            )
+            capacity = min(capacity, max(0, target - sum(item.count for item in selected)
+                            - later_minimum))
             if capacity <= 0:
                 break
             selected.append(_entry(card, capacity, module, f"补足 {module} 配额"))
@@ -316,7 +324,20 @@ def _land_entries(candidates: Sequence[Mapping], seed_entries: Sequence[Construc
     selected_names = {_name(item.card) for item in selected}
     available = [card for card in candidates if _is_land(card) and not _is_basic(card)
                  and _colors(card).issubset(allowed) and _name(card) not in selected_names]
-    for card in sorted(available, key=lambda item: (_module(item) != "M4", _name(item))):
+    def land_key(card):
+        text = str(card.get("oracle_text") or "").lower()
+        mana_land = bool(re.search(r"\{t\}\s*:\s*add", text))
+        aligned = bool(set(_colors(card)) & set(allowed))
+        if not aligned:
+            aligned = any("add {" + color.lower() + "}" in text for color in allowed)
+            aligned = aligned or "any color" in text
+        return (not mana_land, not aligned, _name(card))
+
+    candidate_limit = 12 if brawl else 2
+    for card in sorted(available, key=land_key)[:candidate_limit]:
+        text = str(card.get("oracle_text") or "").lower()
+        if not re.search(r"\{t\}\s*:\s*add", text):
+            continue
         if sum(item.count for item in selected) >= target:
             break
         quantity = min(_max_copies(card, brawl), target - sum(item.count for item in selected))
@@ -334,10 +355,14 @@ def _land_entries(candidates: Sequence[Mapping], seed_entries: Sequence[Construc
             if color in allowed:
                 source_counts[color] += item.count
     basics = []
+    remaining = max(0, target - sum(item.count for item in selected))
     for color, quantity in sorted(desired.items()):
-        add = max(0, quantity - source_counts[color])
+        if remaining <= 0:
+            break
+        add = min(remaining, max(0, quantity - source_counts[color]))
         if add:
             basics.append(_entry(_basic_for_color(color), add, "M4", "补充基础地来源"))
+            remaining -= add
     selected.extend(basics)
     while sum(item.count for item in selected) < target:
         color = sorted(allowed)[0] if allowed else "C"

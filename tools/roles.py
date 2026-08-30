@@ -201,7 +201,7 @@ def classify_card(card: Mapping) -> List[RoleTag]:
         _add(tags, "protection", "hexproof")
     if "ward" in keywords or "ward" in text:
         _add(tags, "protection", "ward")
-    if "indestructible" in keywords:
+    if "indestructible" in keywords or "indestructible" in text:
         _add(tags, "protection", "indestructible")
     if "prevent all combat damage" in text or "fog" in keywords:
         _add(tags, "protection", "fog")
