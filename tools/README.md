@@ -53,6 +53,7 @@ python tools/deck_pooper.py constructed --format pioneer --seed seeds.txt \
 
 部族/主题工具包是人工筛选的可能相关牌集合，不是必选清单。每次系列更新后先更新
 工具包，再从中挑选本次可能用上的牌作为种子或候选；未选牌只作备查，不会自动进入最终牌表。
+版本化实例与模板见 `Toolkits/`，当前狗族实例为 `Toolkits/Dog/toolkit.json`，本次选用子集记录在 `Toolkits/Dog/selected_seed.txt`。
 
 ## 牌表格式（validate）
 

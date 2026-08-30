@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "toolkit_id": "<tribe>-tribal",
+  "name": "<Tribe> tribal toolkit",
+  "tribe": "<Tribe>",
+  "status": "screened",
+  "scope": {
+    "formats": ["explorer"],
+    "platform": "arena",
+    "queue": "bo3"
+  },
+  "snapshot": {
+    "updated_at": "YYYY-MM-DD",
+    "series_cutoff": "YYYY-MM-DD",
+    "series_codes": [],
+    "source_queries": []
+  },
+  "update_policy": "Update this toolkit after every series, supplemental product, or card-face/rules change before selecting cards for a build.",
+  "support_cards": [
+    {
+      "name": "<English name>",
+      "set": "<SET>",
+      "collector_number": "<number>",
+      "role": "<tribal role>",
+      "selection_status": "consider",
+      "note": "<why it may be useful>"
+    }
+  ],
+  "tribe_anchors": [
+    {
+      "name": "<English name>",
+      "selection_status": "consider",
+      "note": "<tribal role or constraint>"
+    }
+  ],
+  "selection": {
+    "selected_seed_file": "selected_seed.txt",
+    "rule": "The builder may select a subset of toolkit entries; unselected entries remain reference-only."
+  }
+}
