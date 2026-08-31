@@ -16,3 +16,6 @@ tools/auto/
 
 # 历史项目源码，仅作参考
 Legacy/
+
+# 本地工具配置，不入库
+.kimi-code/
