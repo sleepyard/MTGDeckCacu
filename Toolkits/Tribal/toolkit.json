@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "toolkit_id": "tribal-generic",
+  "toolkit_type": "tribal",
+  "theme": "tribal",
+  "name": "Generic tribal toolkit",
+  "name_zh": "通用部族工具箱",
+  "status": "screened",
+  "selection_policy": {
+    "default_status": "reference_only",
+    "statuses": {
+      "consider": "备用组件；不会自动进入牌表。",
+      "seed": "只有在显式复制到构筑种子后才作为必留牌。",
+      "candidate": "可供构筑器评分，但仍需人工确认。",
+      "retired": "历史记录；不应进入新的候选池。"
+    },
+    "builder_contract": "构筑器只消费显式传入的种子或候选池；未选条目始终只作备查。"
+  },
+  "scope": {
+    "formats": ["explorer", "pioneer"],
+    "platform": "arena",
+    "queue": "bo3"
+  },
+  "validation": {
+    "checked_at": "2026-08-30",
+    "source": "Scryfall cached card data (exact set/collector lookup)",
+    "formats": {"pioneer": "legal", "explorer": "pioneer alias"},
+    "platforms": ["arena"],
+    "exact_printings_checked": 37,
+    "recheck_on_update": true
+  },
+  "snapshot": {
+    "updated_at": "2026-08-30",
+    "series_cutoff": "2026-08-30",
+    "series_codes": ["M20", "RIX", "KHM", "KLR", "XLN", "NEO", "LCI", "BLB", "FDN", "SPG", "TLA", "ECL", "HOB"],
+    "source_queries": [
+      "f:pioneer game:arena o:\"choose a creature type\"",
+      "f:pioneer game:arena o:\"creatures you control of the chosen type\"",
+      "f:pioneer game:arena o:\"changeling\"",
+      "set/collector exact checks for manually screened tribal support"
+    ],
+    "review_notes": [
+      "The supplied 17 support cards remain optional reference components; this review adds 20 later-set entries.",
+      "The inventory is tribe-agnostic; choose a creature type only when a build explicitly adopts an entry.",
+      "Recheck legality, Arena printings, wording, and creature-subtype rules after every series, supplemental product, or rules/card-face change."
+    ]
+  },
+  "update_policy": "Update this toolkit after every series, supplemental product, or card-face/rules change before selecting cards for a build.",
+  "support_cards": [
+    {"name": "Cavern of Souls", "name_zh": "灵魂洞窟", "set": "LCI", "collector_number": "269", "component_group": "mana_and_fixing", "role": "tribal land", "selection_status": "consider", "note": "Creature spells of the chosen type are uncounterable and the land fixes creature mana."},
+    {"name": "Haunting Voyage", "name_zh": "乱心旅途", "set": "KHM", "collector_number": "98", "component_group": "recursion", "role": "tribal recursion", "selection_status": "consider", "note": "Late-game mass return for the chosen creature type."},
+    {"name": "Rally the Ranks", "name_zh": "集结军伍", "set": "KHM", "collector_number": "20", "component_group": "anthem", "role": "tribal anthem", "selection_status": "consider", "note": "Low-cost global pump for the chosen creature type."},
+    {"name": "Radiant Destiny", "name_zh": "辉煌命运", "set": "RIX", "collector_number": "18", "component_group": "anthem", "role": "tribal anthem", "selection_status": "consider", "note": "Anthem with a possible vigilance payoff."},
+    {"name": "Arcane Adaptation", "name_zh": "玄秘适境", "set": "XLN", "collector_number": "46", "component_group": "type_change", "role": "type-changing enabler", "selection_status": "consider", "note": "Turns non-tribe permanents into the chosen creature type; blue splash required."},
+    {"name": "Reflections of Littjara", "name_zh": "利雅拉映影", "set": "KHM", "collector_number": "73", "component_group": "copy", "role": "tribal copy enabler", "selection_status": "consider", "note": "Copies creature spells of the chosen type; five-mana blue card."},
+    {"name": "Realmwalker", "name_zh": "境域行者", "set": "KHM", "collector_number": "188", "component_group": "card_advantage", "role": "tribal card advantage", "selection_status": "consider", "note": "Creature-type selection enables top-of-library casting."},
+    {"name": "Kolvori, God of Kinship // The Ringhart Crest", "name_zh": "亲缘神蔻沃莉", "set": "KHM", "collector_number": "181", "component_group": "card_advantage", "role": "legendary value", "selection_status": "consider", "note": "Conditional draw and a mana-producing back face; not necessarily a member of the chosen tribe."},
+    {"name": "Metallic Mimic", "name_zh": "金属拟态械", "set": "KLR", "collector_number": "251", "component_group": "counters", "role": "tribal counter enabler", "selection_status": "consider", "note": "Names the chosen type and grows later tribe members."},
+    {"name": "Icon of Ancestry", "name_zh": "先祖绘像", "set": "M20", "collector_number": "229", "component_group": "anthem", "role": "tribal anthem/card selection", "selection_status": "consider", "note": "Names the chosen type for both pump and creature selection."},
+    {"name": "Roaming Throne", "name_zh": "游荡王座", "set": "LCI", "collector_number": "258", "component_group": "trigger_amplification", "role": "trigger amplifier", "selection_status": "consider", "note": "Names the chosen type and doubles relevant triggered abilities."},
+    {"name": "Vanquisher's Banner", "name_zh": "得胜者战旗", "set": "XLN", "collector_number": "251", "component_group": "anthem", "role": "tribal anthem/card draw", "selection_status": "consider", "note": "Names the chosen type for pump and draws on creature casts."},
+    {"name": "Unclaimed Territory", "name_zh": "无主领地", "set": "XLN", "collector_number": "258", "component_group": "mana_and_fixing", "role": "tribal land", "selection_status": "consider", "note": "Fixes creature spells of the chosen type."},
+    {"name": "Secluded Courtyard", "name_zh": "幽僻庭院", "set": "NEO", "collector_number": "275", "component_group": "mana_and_fixing", "role": "tribal land", "selection_status": "consider", "note": "Fixes creature spells and creature abilities of the chosen type."},
+    {"name": "Bloodline Pretender", "name_zh": "血脉顶替客", "set": "KHM", "collector_number": "235", "component_group": "changeling", "role": "changeling", "selection_status": "consider", "note": "Counts as every creature type and grows from later tribe members."},
+    {"name": "Pillar of Origins", "name_zh": "源始雕柱", "set": "XLN", "collector_number": "241", "component_group": "mana_and_fixing", "role": "tribal fixing", "selection_status": "consider", "note": "Names the chosen type and fixes creature spells."},
+    {"name": "Three Tree City", "name_zh": "三树城", "set": "BLB", "collector_number": "260", "component_group": "mana_and_fixing", "role": "tribal land/value", "selection_status": "consider", "note": "Names the chosen type and converts a developed board into colored mana."},
+    {"name": "Barkform Harvester", "set": "BLB", "collector_number": "243", "component_group": "changeling", "role": "changeling utility", "selection_status": "consider", "note": "Changeling body with reach and repeatable graveyard card selection."},
+    {"name": "Patchwork Banner", "set": "BLB", "collector_number": "247", "component_group": "anthem", "role": "tribal anthem/mana", "selection_status": "consider", "note": "Names a creature type, grants +1/+1, and taps for any color."},
+    {"name": "Three Tree Mascot", "set": "BLB", "collector_number": "251", "component_group": "changeling", "role": "changeling fixing", "selection_status": "consider", "note": "Changeling body that provides one mana of any color once each turn."},
+    {"name": "Soulstone Sanctuary", "set": "FDN", "collector_number": "133", "component_group": "mana_and_fixing", "role": "tribal land/value", "selection_status": "consider", "note": "Becomes a vigilant creature with all creature types; entering as a land keeps the slot flexible."},
+    {"name": "Bloodline Bidding", "set": "ECL", "collector_number": "91", "component_group": "recursion", "role": "tribal mass recursion", "selection_status": "consider", "note": "Convoke enables a chosen-type mass return; needs a graveyard and a dense tribe."},
+    {"name": "Changeling Wayfinder", "set": "ECL", "collector_number": "1", "component_group": "changeling", "role": "changeling ramp", "selection_status": "consider", "note": "Changeling body that finds a basic land to hand on entry."},
+    {"name": "Chronicle of Victory", "set": "ECL", "collector_number": "253", "component_group": "anthem", "role": "chosen-type anthem/card draw", "selection_status": "consider", "note": "Four-part payoff: +2/+2, first strike, trample, and draw for chosen-type spells."},
+    {"name": "Crib Swap", "set": "ECL", "collector_number": "11", "component_group": "interaction", "role": "changeling removal", "selection_status": "consider", "note": "Kindred instant with changeling that exiles a creature and leaves a changeling token."},
+    {"name": "Gathering Stone", "set": "ECL", "collector_number": "257", "component_group": "card_advantage", "role": "tribal cost reduction", "selection_status": "consider", "note": "Reduces chosen-type spell costs and checks the top card each upkeep."},
+    {"name": "Selfless Safewright", "set": "ECL", "collector_number": "193", "component_group": "protection", "role": "tribal protection", "selection_status": "consider", "note": "Convoke creature that grants the chosen type hexproof and indestructible for a turn."},
+    {"name": "Stalactite Dagger", "set": "ECL", "collector_number": "261", "component_group": "changeling", "role": "changeling equipment", "selection_status": "consider", "note": "Creates a changeling token and turns the equipped creature into every creature type."},
+    {"name": "Door of Destinies", "set": "SPG", "collector_number": "146", "component_group": "anthem", "role": "scaling chosen-type anthem", "selection_status": "consider", "note": "Grows from casting the named type; slow when played without enough tribal spell density."},
+    {"name": "Firdoch Core", "set": "ECL", "collector_number": "255", "component_group": "mana_and_fixing", "role": "changeling mana", "selection_status": "consider", "note": "Changeling artifact that taps for any color and can become a creature later."},
+    {"name": "Graveshifter", "set": "ECL", "collector_number": "104", "component_group": "recursion", "role": "changeling recursion", "selection_status": "consider", "note": "Changeling creature that returns a creature card from the graveyard to hand."},
+    {"name": "Unbury", "set": "ECL", "collector_number": "123", "component_group": "recursion", "role": "shared-type recursion", "selection_status": "consider", "note": "Flexible single-card or shared-type graveyard recovery."},
+    {"name": "Winnowing", "set": "ECL", "collector_number": "43", "component_group": "interaction", "role": "shared-type sweeper", "selection_status": "consider", "note": "Convoke rewards a concentrated tribe while clearing creatures that do not share its type."},
+    {"name": "Secret Tunnel", "set": "TLA", "collector_number": "278", "component_group": "interaction", "role": "shared-type evasion", "selection_status": "consider", "note": "Makes two creatures that share a type unblockable; requires two suitable attackers."},
+    {"name": "White Lotus Tile", "set": "TLA", "collector_number": "262", "component_group": "mana_and_fixing", "role": "shared-type mana", "selection_status": "consider", "note": "Scales mana production with the largest creature-type group, but enters tapped."},
+    {"name": "Orcrist, Goblin-cleaver", "set": "HOB", "collector_number": "177", "component_group": "token_and_counters", "role": "shared-type treasure", "selection_status": "consider", "note": "Combat damage creates Treasures based on creatures sharing a chosen type."},
+    {"name": "An Unexpected Party // At the Door", "set": "HOB", "collector_number": "29", "component_group": "anthem", "role": "chosen-type adventure anthem", "selection_status": "consider", "note": "The enchantment face grants +2/+2 to the chosen type; the Adventure face creates Dwarf tokens first."}
+  ],
+  "selection": {
+    "selected_seed_file": null,
+    "mtga_import_file": "mtga_import.txt",
+    "mtga_import_semantics": "One copy of every reference entry for direct MTGA import; this is an inventory preview, not a final deck or mandatory seed.",
+    "rule": "The builder may select a subset of toolkit entries; unselected entries remain reference-only."
+  }
+}

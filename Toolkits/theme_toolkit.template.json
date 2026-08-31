@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "toolkit_id": "tribal-generic",
-  "toolkit_type": "tribal",
-  "theme": "tribal",
-  "name": "Generic tribal toolkit",
-  "name_zh": "通用部族工具箱",
+  "toolkit_id": "<theme>",
+  "toolkit_type": "theme",
+  "theme": "<theme>",
+  "name": "<Theme> toolkit",
+  "name_zh": "<主题>工具箱",
   "status": "screened",
   "selection_policy": {
     "default_status": "reference_only",
@@ -44,9 +44,9 @@
       "set": "<SET>",
       "collector_number": "<number>",
       "component_group": "<component group>",
-      "role": "<tribal role>",
+      "role": "<theme role>",
       "selection_status": "consider",
-      "note": "<why it may be useful>"
+      "note": "<why it may be useful and its constraint>"
     }
   ],
   "selection": {
