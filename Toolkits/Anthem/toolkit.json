@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "toolkit_id": "anthem",
+  "toolkit_type": "theme",
+  "theme": "anthem",
+  "name": "Anthem / global pump toolkit",
+  "name_zh": "赞美诗（全局增益）主题工具箱",
+  "status": "screened",
+  "selection_policy": {
+    "default_status": "reference_only",
+    "statuses": {
+      "consider": "备用组件；不会自动进入牌表。",
+      "seed": "只有在显式复制到构筑种子后才作为必留牌。",
+      "candidate": "可供构筑器评分，但仍需人工确认。",
+      "retired": "历史记录；不应进入新的候选池。"
+    },
+    "builder_contract": "构筑器只消费显式传入的种子或候选池；未选条目始终只作备查。"
+  },
+  "scope": {
+    "formats": ["explorer", "pioneer"],
+    "platform": "arena",
+    "queue": "bo3"
+  },
+  "validation": {
+    "checked_at": "2026-08-30",
+    "source": "Scryfall cached card data (exact set/collector lookup)",
+    "formats": {"pioneer": "legal", "explorer": "pioneer alias"},
+    "platforms": ["arena"],
+    "exact_printings_checked": 31,
+    "recheck_on_update": true
+  },
+  "snapshot": {
+    "updated_at": "2026-08-30",
+    "series_cutoff": "2026-08-30",
+    "series_codes": ["M20", "RIX", "KHM", "XLN", "DOM", "ELD", "AKR", "ZNR", "NEO", "KLR", "SIR", "BRR", "FDN", "BLB", "SPG", "EOE", "DSK", "TLA", "ECL", "SOS", "HOB"],
+    "source_queries": [
+      "f:pioneer game:arena o:\"creatures you control get\"",
+      "f:pioneer game:arena o:\"other creatures you control get\"",
+      "f:pioneer game:arena o:\"creatures you control of the chosen type\"",
+      "set/collector exact checks for manually screened anthem support"
+    ],
+    "review_notes": [
+      "Entries cover static anthems, chosen-type lords, token/counter engines, and conditional team pumps.",
+      "This review adds 15 later-set entries through HOB; narrow tribal lords remain reference-only unless the build supplies their creature type.",
+      "A card is not an anthem solely because it is powerful; each entry has a documented board-density or timing constraint.",
+      "Recheck legality, Arena printings, wording, and token/counter rules after every series or rules/card-face change."
+    ]
+  },
+  "update_policy": "Update this toolkit after every series, supplemental product, or card-face/rules change before selecting cards for a build.",
+  "support_cards": [
+    {"name": "Rally the Ranks", "name_zh": "集结军伍", "set": "KHM", "collector_number": "20", "component_group": "tribal_anthem", "role": "chosen-type anthem", "selection_status": "consider", "note": "Two-mana +1/+1 for the named creature type; needs a dense tribe."},
+    {"name": "Radiant Destiny", "name_zh": "辉煌命运", "set": "RIX", "collector_number": "18", "component_group": "tribal_anthem", "role": "chosen-type anthem", "selection_status": "consider", "note": "Adds vigilance after ascend; token count and permanent density matter."},
+    {"name": "Icon of Ancestry", "name_zh": "先祖绘像", "set": "M20", "collector_number": "229", "component_group": "tribal_anthem", "role": "anthem/card selection", "selection_status": "consider", "note": "Provides +1/+1 and late-game creature selection for one named type."},
+    {"name": "Vanquisher's Banner", "name_zh": "得胜者战旗", "set": "XLN", "collector_number": "251", "component_group": "tribal_anthem", "role": "anthem/card draw", "selection_status": "consider", "note": "Five-mana payoff that draws on creature casts of the named type."},
+    {"name": "Adaptive Automaton", "set": "BRR", "collector_number": "1", "component_group": "tribal_anthem", "role": "artifact lord", "selection_status": "consider", "note": "Colorless creature lord; it also becomes the chosen type and is vulnerable as a creature."},
+    {"name": "Banner of Kinship", "set": "FDN", "collector_number": "127", "component_group": "tribal_anthem", "role": "scaling chosen-type anthem", "selection_status": "consider", "note": "Scales with the number of creatures already in play; weak when played before a board develops."},
+    {"name": "Always Watching", "set": "SIR", "collector_number": "10", "component_group": "global_anthem", "role": "nontoken anthem", "selection_status": "consider", "note": "Gives nontoken creatures +1/+1 and vigilance; it does not buff creature tokens."},
+    {"name": "Benalish Marshal", "set": "DOM", "collector_number": "6", "component_group": "global_anthem", "role": "static global anthem", "selection_status": "consider", "note": "Efficient +1/+1 lord, but the triple-white cost constrains mana."},
+    {"name": "Heraldic Banner", "set": "ELD", "collector_number": "222", "component_group": "global_anthem", "role": "color anthem/mana", "selection_status": "consider", "note": "Names a color for +1/+0 and also produces that color; weaker in multicolor boards."},
+    {"name": "The Immortal Sun", "name_zh": "不朽之阳", "set": "RIX", "collector_number": "180", "component_group": "global_anthem", "role": "global anthem/value", "selection_status": "consider", "note": "Six-mana +1/+1 with draw and cost reduction; shuts off all planeswalker loyalty abilities."},
+    {"name": "Weaver of Harmony", "set": "NEO", "collector_number": "213", "component_group": "global_anthem", "role": "enchantment-creature anthem", "selection_status": "consider", "note": "Buffs other enchantment creatures and can copy an enchantment ability; requires the right permanent mix."},
+    {"name": "Angel of Invention", "set": "KLR", "collector_number": "7", "component_group": "global_anthem", "role": "token/creature anthem", "selection_status": "consider", "note": "Fabricate offers a wide board or a large body, while other creatures get +1/+1."},
+    {"name": "Felidar Retreat", "set": "ZNR", "collector_number": "16", "component_group": "token_and_counters", "role": "landfall team pump", "selection_status": "consider", "note": "Landfall chooses a Cat token or team counters/vigilance; needs reliable land drops."},
+    {"name": "Anointed Procession", "set": "AKR", "collector_number": "2", "component_group": "token_and_counters", "role": "token multiplier", "selection_status": "consider", "note": "Doubles tokens rather than buffing creatures; only belongs in a token-producing shell."},
+    {"name": "Trial of Solidarity", "set": "AKR", "collector_number": "42", "component_group": "combat_burst", "role": "temporary team pump", "selection_status": "consider", "note": "Enters with +2/+1 and vigilance; Cartouche support can replay it."},
+    {"name": "The Great Henge", "set": "ELD", "collector_number": "161", "component_group": "token_and_counters", "role": "counter/draw engine", "selection_status": "consider", "note": "Discounted by a large creature and then adds counters, mana, life, and cards; not a standalone early anthem."},
+    {"name": "Patchwork Banner", "set": "BLB", "collector_number": "247", "component_group": "tribal_anthem", "role": "tribal anthem/mana", "selection_status": "consider", "note": "Names a creature type, grants +1/+1, and taps for any color."},
+    {"name": "An Unexpected Party // At the Door", "set": "HOB", "collector_number": "29", "component_group": "tribal_anthem", "role": "chosen-type adventure anthem", "selection_status": "consider", "note": "Enchantment face grants +2/+2 to the chosen type; Adventure face creates Dwarf tokens first."},
+    {"name": "Door of Destinies", "set": "SPG", "collector_number": "146", "component_group": "tribal_anthem", "role": "scaling chosen-type anthem", "selection_status": "consider", "note": "Grows from casting the named type; slow without enough tribal spell density."},
+    {"name": "Chronicle of Victory", "set": "ECL", "collector_number": "253", "component_group": "tribal_anthem", "role": "chosen-type anthem/card draw", "selection_status": "consider", "note": "Grants +2/+2, first strike, trample, and draws on chosen-type spells."},
+    {"name": "Kinbinding", "set": "ECL", "collector_number": "20", "component_group": "token_and_counters", "role": "scaling global anthem", "selection_status": "consider", "note": "Scales with creatures entering this turn and creates a Kithkin token each combat."},
+    {"name": "Elvish Archdruid", "set": "FDN", "collector_number": "219", "component_group": "tribal_anthem", "role": "Elf lord/mana", "selection_status": "consider", "note": "Elf-only +1/+1 plus scalable green mana; requires a dense Elf shell."},
+    {"name": "Dwynen, Gilt-Leaf Daen", "set": "FDN", "collector_number": "217", "component_group": "tribal_anthem", "role": "Elf lord/lifegain", "selection_status": "consider", "note": "Elf-only +1/+1 with an attack-based life payoff; type-specific."},
+    {"name": "Glacier Godmaw", "set": "EOE", "collector_number": "188", "component_group": "combat_burst", "role": "landfall team pump", "selection_status": "consider", "note": "Landfall grants +1/+1, vigilance, and haste to the team; six-mana finisher."},
+    {"name": "Lumen-Class Frigate", "set": "EOE", "collector_number": "25", "component_group": "global_anthem", "role": "station anthem", "selection_status": "consider", "note": "At two charge counters, other creatures get +1/+1; requires a Spacecraft station plan."},
+    {"name": "Comforting Counsel", "set": "SOS", "collector_number": "143", "component_group": "global_anthem", "role": "lifegain scaling anthem", "selection_status": "consider", "note": "Reaches +3/+3 after five life-gain counters; slow and shell-dependent."},
+    {"name": "Fíli the Pathfinder", "set": "HOB", "collector_number": "14", "component_group": "global_anthem", "role": "conditional global anthem/token", "selection_status": "consider", "note": "After storied, grants +1/+1 and makes Dwarf tokens from nontoken Dwarves."},
+    {"name": "The Arkenstone // Seek the Heart", "set": "HOB", "collector_number": "170", "component_group": "global_anthem", "role": "artifact anthem/card draw", "selection_status": "consider", "note": "Artifact face grants +1/+1 and end-step draw; Adventure finds a legendary creature."},
+    {"name": "Suki, Courageous Rescuer", "set": "TLA", "collector_number": "37", "component_group": "global_anthem", "role": "creature anthem/token", "selection_status": "consider", "note": "Other creatures get +1/+0 while permanent-leave events create Ally tokens."},
+    {"name": "Invasion Tactics", "set": "TLA", "collector_number": "183", "component_group": "combat_burst", "role": "Ally burst/card draw", "selection_status": "consider", "note": "Enters with a team +2/+2 burst and draws from Ally combat damage."},
+    {"name": "Leyline of Hope", "set": "DSK", "collector_number": "18", "component_group": "global_anthem", "role": "conditional global anthem", "selection_status": "consider", "note": "Can start in play and reaches +2/+2 after a seven-life advantage; needs a lifegain shell."}
+  ],
+  "selection": {
+    "selected_seed_file": null,
+    "mtga_import_file": "mtga_import.txt",
+    "mtga_import_semantics": "One copy of every reference entry for direct MTGA import; this is an inventory preview, not a final deck or mandatory seed.",
+    "rule": "The builder may select a subset of toolkit entries; unselected entries remain reference-only."
+  }
+}

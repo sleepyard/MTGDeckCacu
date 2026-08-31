@@ -1,0 +1,21 @@
+tools/cache/
+tools/downloads/
+tools/forge/
+tools/jdk/
+tools/llm_config.json
+__pycache__/
+*.pyc
+
+# 本地产出不入库（2026-08-29 起不再跟踪）
+SetReview/
+MatchRecord/
+DeckList/
+AuditReport/
+SimResult/
+tools/auto/
+
+# 历史项目源码，仅作参考
+Legacy/
+
+# 本地工具配置，不入库
+.kimi-code/

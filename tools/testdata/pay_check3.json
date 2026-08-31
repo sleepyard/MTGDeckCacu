@@ -1,0 +1,378 @@
+[
+ {
+  "english": "Craterhoof Behemoth",
+  "chinese": "陨蹄贝西摩斯",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "TDM#138",
+   "JMP#385"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Beast",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Craterhoof Behemoth"
+ },
+ {
+  "english": "Overrun",
+  "chinese": "横行",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FDN#230"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Overrun"
+ },
+ {
+  "english": "Overcome",
+  "chinese": "压袭",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "M20#186",
+   "J25#696"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Overcome"
+ },
+ {
+  "english": "End-Raze Forerunners",
+  "chinese": "灭世劫前锋",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "RNA#124"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Boar",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "End-Raze Forerunners"
+ },
+ {
+  "english": "Surrak and Goreclaw",
+  "chinese": "苏拉克与血爪",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MOM#337"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Creature — Human Bear",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Surrak and Goreclaw"
+ },
+ {
+  "english": "Garruk's Uprising",
+  "chinese": "贾路的反抗",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FDN#220",
+   "M21#186",
+   "WOT#53",
+   "M21#308"
+  ],
+  "layout": "normal",
+  "type_line": "Enchantment",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Garruk's Uprising"
+ },
+ {
+  "english": "Return of the Wildspeaker",
+  "chinese": "召兽使复归",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ELD#172",
+   "TLE#44"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Return of the Wildspeaker"
+ },
+ {
+  "english": "Tyvar, the Pummeler",
+  "chinese": "猛击英杰泰瓦",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DSK#202"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Creature — Elf Warrior",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Tyvar, the Pummeler"
+ },
+ {
+  "english": "Finale of Devastation",
+  "chinese": "幻灭终时",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "WAR#160"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Finale of Devastation"
+ },
+ {
+  "english": "Ghalta, Primal Hunger",
+  "chinese": "始饥戈厄塔",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FDN#222",
+   "JMP#399",
+   "RIX#130",
+   "J25#77",
+   "PANA#7"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Creature — Elder Dinosaur",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Ghalta, Primal Hunger"
+ },
+ {
+  "english": "Ulvenwald Oddity",
+  "chinese": "沃文森异兽",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "VOW#225"
+  ],
+  "layout": "transform",
+  "type_line": "Creature — Beast // Creature — Beast Horror",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Ulvenwald Oddity // Ulvenwald Behemoth"
+ },
+ {
+  "english": "Kodama of the West Tree",
+  "chinese": "西树木灵",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "NEO#199",
+   "J25#78",
+   "NEO#392",
+   "NEO#423"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Creature — Spirit",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Kodama of the West Tree"
+ },
+ {
+  "english": "Toski, Bearer of Secrets",
+  "chinese": "密讯信使托斯奇",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "KHM#197",
+   "SPG#60",
+   "KHM#319"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Creature — Squirrel",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Toski, Bearer of Secrets"
+ },
+ {
+  "english": "Garruk's Harbinger",
+  "chinese": "贾路的开路兽",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "M21#185",
+   "M21#307"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Beast",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Garruk's Harbinger"
+ },
+ {
+  "english": "Preposterous Proportions",
+  "chinese": "浩大无比",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FDN#109"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Preposterous Proportions"
+ },
+ {
+  "english": "Storm the Seedcore",
+  "chinese": "突袭树种核心",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MOM#206"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Storm the Seedcore"
+ },
+ {
+  "english": "Blossoming Tortoise",
+  "chinese": "繁花龟",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "WOE#163"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Turtle",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Blossoming Tortoise"
+ },
+ {
+  "english": "Crawling Sensation",
+  "chinese": "蠕爬异感",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "SIR#191"
+  ],
+  "layout": "normal",
+  "type_line": "Enchantment",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Crawling Sensation"
+ },
+ {
+  "english": "Willow Geist",
+  "chinese": "祟柳游魂",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MID#207"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Treefolk Spirit",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Willow Geist"
+ },
+ {
+  "english": "Colossal Rattlewurm",
+  "chinese": "庞巨响尾亚龙",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "OTJ#159"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Wurm",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Colossal Rattlewurm"
+ }
+]

@@ -1,0 +1,198 @@
+[
+ {
+  "english": "Boseiju, Who Endures",
+  "chinese": "历祚母圣树",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "NEO#266",
+   "NEO#412"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Land",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Boseiju, Who Endures"
+ },
+ {
+  "english": "Sheoldred, the Apocalypse",
+  "chinese": "启示天灾希欧蕊",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DMU#107",
+   "DMU#435",
+   "DMU#290",
+   "DMU#331",
+   "DMU#369"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Creature — Phyrexian Praetor",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Sheoldred, the Apocalypse"
+ },
+ {
+  "english": "Bite Down",
+  "chinese": "一口咬碎",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FDN#212",
+   "DMU#155",
+   "J25#636"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Bite Down"
+ },
+ {
+  "english": "Cosmic Hunger",
+  "chinese": "寰宇饥渴",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MOM#182"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Cosmic Hunger"
+ },
+ {
+  "english": "Master's Rebuke",
+  "chinese": "蛇圣拒斥",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "NEO#202"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Master's Rebuke"
+ },
+ {
+  "english": "Infectious Bite",
+  "chinese": "播疫啮咬",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ONE#172"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Infectious Bite"
+ },
+ {
+  "english": "Blizzard Brawl",
+  "chinese": "暴雪争斗",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "KHM#162"
+  ],
+  "layout": "normal",
+  "type_line": "Snow Sorcery",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Blizzard Brawl"
+ },
+ {
+  "english": "Titanic Brawl",
+  "chinese": "巨身争斗",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "RNA#146"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Titanic Brawl"
+ },
+ {
+  "english": "Khalni Ambush",
+  "chinese": "坎尼伏击",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ZNR#192",
+   "PIO#181"
+  ],
+  "layout": "modal_dfc",
+  "type_line": "Instant // Land",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Khalni Ambush // Khalni Territory"
+ },
+ {
+  "english": "Heroic Intervention",
+  "chinese": "英勇干预",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "M21#188",
+   "MAR#78",
+   "MAR#79",
+   "MAR#80",
+   "TLE#43",
+   "MAR#34",
+   "OMB#34",
+   "LTC#249",
+   "KLR#161"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Heroic Intervention"
+ }
+]

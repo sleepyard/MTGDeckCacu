@@ -1,0 +1,445 @@
+[
+ {
+  "english": "Stitcher's Supplier",
+  "chinese": "拼接师备尸",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "M19#121"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Zombie",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Stitcher's Supplier"
+ },
+ {
+  "english": "Undead Butler",
+  "chinese": "不死管家",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "VOW#133",
+   "PIO#117",
+   "J25#500"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Zombie",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Undead Butler"
+ },
+ {
+  "english": "Nyx Weaver",
+  "chinese": "尼兹蜘蛛",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "JOU#153",
+   "PIO#236"
+  ],
+  "layout": "normal",
+  "type_line": "Enchantment Creature — Spider",
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Nyx Weaver"
+ },
+ {
+  "english": "Eerie Soultender",
+  "chinese": "神秘护魂灵",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DMU#92",
+   "J25#431"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Spirit Cleric",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Eerie Soultender"
+ },
+ {
+  "english": "Corpse Churn",
+  "chinese": "尸体翻搅",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "IKO#81"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Corpse Churn"
+ },
+ {
+  "english": "Crawling Sensation",
+  "chinese": "蠕爬异感",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "SIR#191"
+  ],
+  "layout": "normal",
+  "type_line": "Enchantment",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Crawling Sensation"
+ },
+ {
+  "english": "Glowspore Shaman",
+  "chinese": "辉孢祭师",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "GRN#173"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Elf Shaman",
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Glowspore Shaman"
+ },
+ {
+  "english": "Skull Prophet",
+  "chinese": "占颅先知",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "IKO#206"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Human Druid",
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Skull Prophet"
+ },
+ {
+  "english": "Molt Tender",
+  "chinese": "蜕皮照护师",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DFT#171"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Insect Druid",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Molt Tender"
+ },
+ {
+  "english": "Ooze Patrol",
+  "chinese": "流浆巡卫",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DFT#172"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Ooze",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Ooze Patrol"
+ },
+ {
+  "english": "Blanchwood Prowler",
+  "chinese": "白木游掠灵",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "BRO#172"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Elemental",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Blanchwood Prowler"
+ },
+ {
+  "english": "Dredger's Insight",
+  "chinese": "挖掘客的洞察",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DFT#159"
+  ],
+  "layout": "normal",
+  "type_line": "Enchantment",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Dredger's Insight"
+ },
+ {
+  "english": "Final Parting",
+  "chinese": "生离死别",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DOM#93"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Final Parting"
+ },
+ {
+  "english": "Jarad's Orders",
+  "chinese": "贾雷的号令",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "PIO#390"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Jarad's Orders"
+ },
+ {
+  "english": "In the Presence of Ages",
+  "chinese": "岁月为证",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "LCI#192"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "In the Presence of Ages"
+ },
+ {
+  "english": "Relentless Pursuit",
+  "chinese": "不懈追击",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "THB#195"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Relentless Pursuit"
+ },
+ {
+  "english": "Scout the Borders",
+  "chinese": "探查边境",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "KTK#148"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Scout the Borders"
+ },
+ {
+  "english": "Tapping at the Window",
+  "chinese": "轻敲窗户",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MID#201"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Tapping at the Window"
+ },
+ {
+  "english": "Bitter Revelation",
+  "chinese": "苦涩启示",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "KTK#65"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Bitter Revelation"
+ },
+ {
+  "english": "Commune with Evil",
+  "chinese": "邪恶商谈",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "DSK#87"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Commune with Evil"
+ },
+ {
+  "english": "Resentful Revelation",
+  "chinese": "慨愤真相",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "FIN#114"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Resentful Revelation"
+ },
+ {
+  "english": "Underrealm Lich",
+  "chinese": "地底境巫妖",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "GRN#211"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Zombie Elf Shaman",
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Underrealm Lich"
+ },
+ {
+  "english": "Search for Blex",
+  "chinese": "探寻毕雷兹",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "STX#148"
+  ],
+  "layout": "modal_dfc",
+  "type_line": "Legendary Creature — Pest // Sorcery",
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Blex, Vexing Pest // Search for Blex"
+ },
+ {
+  "english": "Wrenn and Seven",
+  "chinese": "芮恩与七树妖",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MID#208",
+   "MID#278"
+  ],
+  "layout": "normal",
+  "type_line": "Legendary Planeswalker — Wrenn",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Wrenn and Seven"
+ }
+]

@@ -1,0 +1,450 @@
+[
+ {
+  "name": "Argoth, Sanctum of Nature",
+  "oracle_id": "62648946-1708-48f4-ba40-c057563ab11b",
+  "layout": "meld",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "This land enters tapped unless you control a legendary green creature.\n{T}: Add {G}.\n{2}{G}{G}, {T}: Create a 2/2 green Bear creature token, then mill three cards. Activate only as a sorcery.\n(Melds with Titania, Voice of Gaea.)",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "bro",
+  "set_name": "The Brothers' War",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Eden, Seat of the Sanctum",
+  "oracle_id": "84856b92-5ce8-47f3-9a1c-78d6a3e26aca",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land — Town",
+  "oracle_text": "{T}: Add {C}.\n{5}, {T}: Mill two cards. Then you may sacrifice this land. When you do, return another target permanent card from your graveyard to your hand.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "fin",
+  "set_name": "Final Fantasy",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [],
+  "card_faces": []
+ },
+ {
+  "name": "Ipnu Rivulet",
+  "oracle_id": "c17d799f-adc9-4c41-87cf-b243b5ea3be1",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land — Desert",
+  "oracle_text": "{T}: Add {C}.\n{T}, Pay 1 life: Add {U}.\n{1}{U}, {T}, Sacrifice a Desert: Target player mills four cards. (They put the top four cards of their library into their graveyard.)",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "j25",
+  "set_name": "Foundations Jumpstart",
+  "games": [
+   "paper",
+   "arena"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Jidoor, Aristocratic Capital // Overture",
+  "oracle_id": "bd513d9d-5aa2-4860-bd86-8b5d9430f133",
+  "layout": "adventure",
+  "mana_cost": "{4}{U}{U}",
+  "cmc": 0.0,
+  "type_line": "Land — Town // Sorcery — Adventure",
+  "oracle_text": "This land enters tapped.\n{T}: Add {U}.\n//\nTarget opponent mills half their library, rounded down. (Then exile this card. You may play the land later from exile.)",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "not_legal"
+  },
+  "set": "fin",
+  "set_name": "Final Fantasy",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": [
+   {
+    "name": "Jidoor, Aristocratic Capital",
+    "mana_cost": "",
+    "type_line": "Land — Town",
+    "oracle_text": "This land enters tapped.\n{T}: Add {U}.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "Overture",
+    "mana_cost": "{4}{U}{U}",
+    "type_line": "Sorcery — Adventure",
+    "oracle_text": "Target opponent mills half their library, rounded down. (Then exile this card. You may play the land later from exile.)",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ },
+ {
+  "name": "Port of Karfell",
+  "oracle_id": "f500a8a4-6135-448c-9116-bd2695a72229",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "This land enters tapped.\n{T}: Add {U}.\n{3}{U}{B}{B}, {T}, Sacrifice this land: Mill four cards, then return a creature card from your graveyard to the battlefield tapped. (To mill a card, put the top card of your library into your graveyard.)",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "khm",
+  "set_name": "Kaldheim",
+  "games": [
+   "arena",
+   "paper",
+   "mtgo"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B",
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Restless Reef",
+  "oracle_id": "df20f85b-5f81-4ee4-8487-55d90109ac36",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "This land enters tapped.\n{T}: Add {U} or {B}.\n{2}{U}{B}: Until end of turn, this land becomes a 4/4 blue and black Shark creature with deathtouch. It's still a land.\nWhenever this land attacks, target player mills four cards.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "lci",
+  "set_name": "The Lost Caverns of Ixalan",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Mill"
+  ],
+  "color_identity": [
+   "B",
+   "U"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "Takenuma, Abandoned Mire",
+  "oracle_id": "ac2dd694-d2f1-4025-8400-12332bdc882a",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Legendary Land",
+  "oracle_text": "{T}: Add {B}.\nChannel — {3}{B}, Discard this card: Mill three cards, then return a creature or planeswalker card from your graveyard to your hand. This ability costs {1} less to activate for each legendary creature you control.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "not_legal",
+   "future": "not_legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "not_legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "not_legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "neo",
+  "set_name": "Kamigawa: Neon Dynasty",
+  "games": [
+   "paper",
+   "mtgo",
+   "arena"
+  ],
+  "keywords": [
+   "Mill",
+   "Channel"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "card_faces": []
+ },
+ {
+  "name": "The Everflowing Well // The Myriad Pools",
+  "oracle_id": "1f57a9f1-6b95-4395-bdf0-c5289b786ab1",
+  "layout": "transform",
+  "mana_cost": "{2}{U}",
+  "cmc": 3.0,
+  "type_line": "Legendary Artifact // Legendary Artifact Land",
+  "oracle_text": "When The Everflowing Well enters, mill two cards, then draw two cards.\nDescend 8 — At the beginning of your upkeep, if there are eight or more permanent cards in your graveyard, transform The Everflowing Well.\n//\n(Transforms from The Everflowing Well.)\n{T}: Add {U}.\nWhenever you cast a permanent spell using mana produced by The Myriad Pools, up to one other target permanent you control becomes a copy of that spell until end of turn.",
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "legalities": {
+   "standard": "legal",
+   "future": "legal",
+   "historic": "legal",
+   "timeless": "legal",
+   "gladiator": "legal",
+   "pioneer": "legal",
+   "modern": "legal",
+   "legacy": "legal",
+   "pauper": "not_legal",
+   "vintage": "legal",
+   "penny": "legal",
+   "commander": "legal",
+   "oathbreaker": "legal",
+   "standardbrawl": "legal",
+   "brawl": "legal",
+   "competitivebrawl": "legal",
+   "alchemy": "not_legal",
+   "paupercommander": "not_legal",
+   "duel": "legal",
+   "oldschool": "not_legal",
+   "premodern": "not_legal",
+   "predh": "not_legal",
+   "tlr": "legal"
+  },
+  "set": "lci",
+  "set_name": "The Lost Caverns of Ixalan",
+  "games": [
+   "paper",
+   "arena",
+   "mtgo"
+  ],
+  "keywords": [
+   "Transform",
+   "Descend",
+   "Mill"
+  ],
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": [
+   {
+    "name": "The Everflowing Well",
+    "mana_cost": "{2}{U}",
+    "type_line": "Legendary Artifact",
+    "oracle_text": "When The Everflowing Well enters, mill two cards, then draw two cards.\nDescend 8 — At the beginning of your upkeep, if there are eight or more permanent cards in your graveyard, transform The Everflowing Well.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   },
+   {
+    "name": "The Myriad Pools",
+    "mana_cost": "",
+    "type_line": "Legendary Artifact Land",
+    "oracle_text": "(Transforms from The Everflowing Well.)\n{T}: Add {U}.\nWhenever you cast a permanent spell using mana produced by The Myriad Pools, up to one other target permanent you control becomes a copy of that spell until end of turn.",
+    "power": null,
+    "toughness": null,
+    "loyalty": null
+   }
+  ]
+ }
+]

@@ -1,0 +1,193 @@
+[
+ {
+  "english": "Healer of the Glade",
+  "chinese": "林沼疗疾灵",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "M20#176"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Elemental",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Healer of the Glade"
+ },
+ {
+  "english": "Wildgrowth Walker",
+  "chinese": "野生行客",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "XLN#216"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Elemental",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Wildgrowth Walker"
+ },
+ {
+  "english": "Obstinate Baloth",
+  "chinese": "顽强巴洛西",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "BRO#187",
+   "J25#692"
+  ],
+  "layout": "normal",
+  "type_line": "Creature — Beast",
+  "color_identity": [
+   "G"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Obstinate Baloth"
+ },
+ {
+  "english": "Infernal Grasp",
+  "chinese": "炼狱之攫",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MID#107",
+   "MAR#18",
+   "OMB#18",
+   "J25#456",
+   "MID#389"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Infernal Grasp"
+ },
+ {
+  "english": "Bitter Triumph",
+  "chinese": "惨痛胜利",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "LCI#91",
+   "SOA#26"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Bitter Triumph"
+ },
+ {
+  "english": "Long Goodbye",
+  "chinese": "漫长告别",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "MKM#92"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Long Goodbye"
+ },
+ {
+  "english": "Eliminate",
+  "chinese": "涤除",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "M21#97",
+   "STA#30",
+   "STA#93"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Eliminate"
+ },
+ {
+  "english": "Anoint with Affliction",
+  "chinese": "折磨赐圣",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "ONE#81"
+  ],
+  "layout": "normal",
+  "type_line": "Instant",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Anoint with Affliction"
+ },
+ {
+  "english": "Epic Downfall",
+  "chinese": "轰然殒命",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "TLA#96",
+   "ELD#85"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Epic Downfall"
+ },
+ {
+  "english": "Agonizing Remorse",
+  "chinese": "苦痛悔恨",
+  "legal": "legal",
+  "platform": "arena",
+  "platform_ok": true,
+  "platform_prints": [
+   "THB#83",
+   "STA#24",
+   "STA#87"
+  ],
+  "layout": "normal",
+  "type_line": "Sorcery",
+  "color_identity": [
+   "B"
+  ],
+  "notes": [],
+  "ok": true,
+  "scryfall_name": "Agonizing Remorse"
+ }
+]

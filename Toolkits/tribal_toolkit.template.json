@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "toolkit_id": "tribal-generic",
+  "toolkit_type": "tribal",
+  "theme": "tribal",
+  "name": "Generic tribal toolkit",
+  "name_zh": "通用部族工具箱",
+  "status": "screened",
+  "selection_policy": {
+    "default_status": "reference_only",
+    "statuses": {
+      "consider": "备用组件；不会自动进入牌表。",
+      "seed": "只有在显式复制到构筑种子后才作为必留牌。",
+      "candidate": "可供构筑器评分，但仍需人工确认。",
+      "retired": "历史记录；不应进入新的候选池。"
+    },
+    "builder_contract": "构筑器只消费显式传入的种子或候选池；未选条目始终只作备查。"
+  },
+  "scope": {
+    "formats": ["explorer"],
+    "platform": "arena",
+    "queue": "bo3"
+  },
+  "validation": {
+    "checked_at": "YYYY-MM-DD",
+    "source": "<structured card-data source and snapshot>",
+    "formats": {"explorer": "<legal/not_legal/pioneer alias>"},
+    "platforms": ["arena"],
+    "exact_printings_checked": 0,
+    "recheck_on_update": true
+  },
+  "snapshot": {
+    "updated_at": "YYYY-MM-DD",
+    "series_cutoff": "YYYY-MM-DD",
+    "series_codes": [],
+    "source_queries": [],
+    "review_notes": []
+  },
+  "update_policy": "Update this toolkit after every series, supplemental product, or card-face/rules change before selecting cards for a build.",
+  "support_cards": [
+    {
+      "name": "<English name>",
+      "name_zh": "<中文名>",
+      "set": "<SET>",
+      "collector_number": "<number>",
+      "component_group": "<component group>",
+      "role": "<tribal role>",
+      "selection_status": "consider",
+      "note": "<why it may be useful>"
+    }
+  ],
+  "selection": {
+    "selected_seed_file": null,
+    "mtga_import_file": "mtga_import.txt",
+    "mtga_import_semantics": "One copy of every reference entry for direct MTGA import; this is an inventory preview, not a final deck or mandatory seed.",
+    "rule": "The builder may select a subset of toolkit entries; unselected entries remain reference-only."
+  }
+}
