@@ -7,7 +7,7 @@ Subcommands:
   search    按 Scryfall 查询枚举候选牌（全分页 / oracle 去重 / MDFC 展开）
   check     逐牌三重核对：赛制合法性 + 平台可用性 + 中文名
   validate  牌表机器门禁（张数 / 同名上限 / 赛制 / 平台 / 颜色身份）
-  baseline  环境基线：已发售系列列表 + 赛制禁牌表（Markdown 输出）
+  baseline  环境基线：已发售系列列表 + 未发售系列标注（set_type 判定发售即入赛制）+ 赛制禁牌表（Markdown 输出）
 
 通用行为:
   - 所有 HTTP 请求带 User-Agent；Scryfall 请求间隔 >=100ms；
@@ -685,6 +685,13 @@ def cmd_baseline(args):
                 if (s.get("released_at") or "9999") <= args.date and (s.get("card_count") or 0) > 0]
     released.sort(key=lambda s: (s.get("released_at") or "", s.get("code") or ""))
 
+    # 未发售系列单列（历史重灾：Scryfall 对未发售系列所有牌统一返回 not_legal，
+    # legalities 不可作"发售是否入赛制"的依据；须看 set_type：
+    # expansion 且非 digital → 发售即入先驱/摩登等对应赛制）。
+    upcoming = [s for s in all_sets
+                if (s.get("released_at") or "") > args.date and (s.get("card_count") or 0) > 0]
+    upcoming.sort(key=lambda s: (s.get("released_at") or "", s.get("code") or ""))
+
     # 禁牌（explorer 等无 legalities 字段的赛制走别名推导）
     lookup_fmt = FORMAT_LEGALITY_ALIAS.get(args.format.lower(), args.format.lower())
     try:
@@ -713,6 +720,21 @@ def cmd_baseline(args):
         "|---|---|---|",
     ]
     lines += [f"| {s.get('code')} | {s.get('name')} | {s.get('released_at')} |" for s in released]
+    if upcoming:
+        lines += [
+            "",
+            f"### 未发售系列（released_at > {args.date}，共 {len(upcoming)} 个）",
+            "",
+            "> 注意：Scryfall 对未发售系列所有牌统一标 `not_legal`，legalities 不可作判断依据；",
+            "> `set_type=expansion` 且非 digital 的系列发售即入先驱/摩登等对应赛制，可提前纳入候选。",
+            "",
+            "| code | name | released_at | set_type | 发售即入赛制 |",
+            "|---|---|---|---|---|",
+        ]
+        for s in upcoming:
+            joins = "是" if (s.get("set_type") == "expansion" and not s.get("digital")) else "否"
+            lines.append(f"| {s.get('code')} | {s.get('name')} | {s.get('released_at')} "
+                         f"| {s.get('set_type')} | {joins} |")
     lines += [
         "",
         f"### {args.format} 禁牌（{len(banned)} 张，基准日 {args.date}）",
@@ -726,7 +748,8 @@ def cmd_baseline(args):
         ]
     lines += [f"- {zh} / {en}" if zh else f"- {en}（中文名缺失）" for en, zh in zh_banned]
     print("\n".join(lines))
-    print(f"[摘要] 系列 {len(released)} 个，禁牌 {len(banned)} 张，失败项 0", file=sys.stderr)
+    print(f"[摘要] 已发售系列 {len(released)} 个，未发售系列 {len(upcoming)} 个，"
+          f"禁牌 {len(banned)} 张，失败项 0", file=sys.stderr)
     return 0
 
 
@@ -769,7 +792,7 @@ def build_parser():
     add_common(sp)
     sp.set_defaults(func=cmd_validate)
 
-    sp = sub.add_parser("baseline", help="环境基线：已发售系列 + 禁牌表（Markdown）")
+    sp = sub.add_parser("baseline", help="环境基线：已发售系列 + 未发售系列标注 + 禁牌表（Markdown）")
     sp.add_argument("--format", required=True, help="赛制，如 pioneer")
     sp.add_argument("--date", required=True, help="基准日期 YYYY-MM-DD")
     add_common(sp)

@@ -1539,6 +1539,18 @@ class DraftPickPanel:
             self._advice_key = None
         return result
 
+    def retry_advice(self):
+        """清空推荐缓存键并立即重算当前 pick 推荐（面板手动重试入口）。"""
+        with self._lock:
+            if not self.llm_enabled:
+                raise AutoToolError("未启用 --llm，无法重试推荐")
+            if self.status != "PickNext":
+                raise AutoToolError(f"当前状态 {self.status or '未知'}，无可推荐包")
+            self._advice_key = None
+            self._rebuild()
+            return {"advice_status": self.advice_status,
+                    "advice_error": self.advice_error}
+
     def snapshot(self):
         """返回本地 UI/API 使用的可序列化状态，不含任何密钥。"""
         with self._lock:
@@ -1706,7 +1718,9 @@ class DraftPickPanel:
                     state = esc(self.advice_status)
                     if self.advice_error:
                         state += f"：{esc(self.advice_error)}"
-                    parts.append(f"<p class=\"advice-status\">推荐状态：{state}</p>")
+                    parts.append(f"<p class=\"advice-status\">推荐状态：{state} "
+                                 "<button id=\"advice-retry\" type=\"button\">重试推荐</button>"
+                                 "<span id=\"retry-result\"></span></p>")
                     parts.append("<table><tr><th>#</th><th>等级</th><th>牌名</th>"
                                  "<th>社区分</th><th>综合</th><th>曲线</th>"
                                  "<th>推荐理由</th><th>短评</th></tr>")
@@ -1777,6 +1791,18 @@ body > h2, body > p { margin-left:22px; margin-right:22px; }
 <body>
 {body}
 <script>
+const retryBtn = document.getElementById('advice-retry');
+if (retryBtn) retryBtn.addEventListener('click', async () => {
+  const result = document.getElementById('retry-result');
+  retryBtn.disabled = true;
+  result.textContent = '重试中(LLM 调用最长约 60s，页面自动刷新后生效)...';
+  try {
+    const response = await fetch('/api/advice/retry', {method: 'POST'});
+    const data = await response.json();
+    result.textContent = data.ok ? ('状态: ' + data.advice_status) : (data.error || '重试失败');
+  } catch (error) { result.textContent = '重试失败: ' + error; }
+  retryBtn.disabled = false;
+});
 const form = document.getElementById('llm-config');
 if (form) form.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -1828,7 +1854,16 @@ def start_draft_panel(panel, port):
             self.wfile.write(body)
 
         def do_POST(self):
-            if urlparse(self.path).path != "/api/config":
+            route = urlparse(self.path).path
+            if route == "/api/advice/retry":
+                try:
+                    result = panel.retry_advice()
+                except AutoToolError as exc:
+                    self._send_json(400, {"ok": False, "error": str(exc)})
+                    return
+                self._send_json(200, dict({"ok": True}, **result))
+                return
+            if route != "/api/config":
                 self._send_json(404, {"ok": False, "error": "not found"})
                 return
             try:

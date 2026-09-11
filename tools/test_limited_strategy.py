@@ -87,7 +87,7 @@ class TestLimitedBuild(unittest.TestCase):
         pool = [card("Only Card", "G", 2, count=4, cost="{1}{G}")]
         deck = LS.build_limited_deck(pool, CardTable(pool), forced_colors=["G"])
         self.assertEqual(sum(item.count for item in deck.main), 4)
-        self.assertIn("4/24", " ".join(deck.report))
+        self.assertIn("4/25", " ".join(deck.report))  # 默认 41 张 - 16 地 = 25 非地目标
         self.assertFalse(deck.valid)
 
 

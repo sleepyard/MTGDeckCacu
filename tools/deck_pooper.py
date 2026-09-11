@@ -255,6 +255,7 @@ def cmd_limited(args) -> int:
             pool, table=table,
             forced_colors=list(args.colors.upper()) if args.colors else None,
             strategy=args.strategy,
+            deck_size=args.deck_size,
         )
     except (OSError, ValueError, mtg_tool.MtgToolError) as exc:
         print(f"[错误] {exc}", file=sys.stderr)
@@ -339,11 +340,13 @@ def cmd_draft(args) -> int:
 def build_parser():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
-    limited = sub.add_parser("limited", help="从牌池构建限制赛 40 张套牌")
+    limited = sub.add_parser("limited", help="从牌池构建限制赛套牌（默认 41 张/约 17 地）")
     limited.add_argument("--pool", required=True, help="牌池文本或 Complete 录样 JSONL")
     limited.add_argument("--set", required=True, help="评分表系列码，如 HOB")
     limited.add_argument("--colors", help="强制主色，如 GU")
     limited.add_argument("--strategy", choices=LS.STRATEGIES, default="mid")
+    limited.add_argument("--deck-size", type=int, default=LS.LIMITED_DECK_SIZE,
+                         help="套牌总张数（默认 %(default)s，下限 40）")
     limited.add_argument("--out", help="输出 MTGA 牌表路径")
     limited.add_argument("--report", help="输出 Markdown 报告路径")
     limited.add_argument("--explain", action="store_true", help="在牌表尾部写入逐张选牌理由")

@@ -116,7 +116,11 @@ _FALLBACK_PER_HIGH = 0.1
 
 
 def update_signals(signals, pack_remaining, pick_number):
-    """按 ALSA 更新颜色开放度；没有 ALSA 时按高等级牌数量降级。"""
+    """按 ALSA 更新颜色开放度（逐抓累计）；全包无 ALSA 数据时降级为
+    本包高等级牌计数快照——每抓按当前包重算、不跨抓累计，否则每张高
+    等级牌每抓 +0.1 会随抓数单调饱和到 +1，摧毁颜色间区分度。"""
+    if not any(card.get("alsa") is not None for card in pack_remaining):
+        signals.clear()
     for card in pack_remaining:
         colors = card.get("colors") or []
         alsa = card.get("alsa")

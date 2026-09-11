@@ -110,6 +110,19 @@ class TestSignals(unittest.TestCase):
         self.assertAlmostEqual(s["G"], 0.2)   # 两张高等级 ×0.1
         self.assertNotIn("W", s)              # C 不算高等级
 
+    def test_fallback_is_snapshot_not_accumulated(self):
+        s = {}
+        pack = [{"colors": ["R"], "grade": "A"}, {"colors": ["B"], "grade": "B+"}]
+        for pick in (1, 2, 5, 9):
+            DC.update_signals(s, pack, pick_number=pick)
+        # 无 ALSA 时降级为本包计数快照：重复喂同一包不得累计
+        self.assertAlmostEqual(s["R"], 0.1)
+        self.assertAlmostEqual(s["B"], 0.1)
+        # 包内高等级牌被抓走后快照随之消失
+        DC.update_signals(s, [{"colors": ["R"], "grade": "C"}], pick_number=10)
+        self.assertNotIn("B", s)
+        self.assertNotIn("R", s)
+
     def test_clamp(self):
         s = {"U": 0.95}
         for _ in range(3):

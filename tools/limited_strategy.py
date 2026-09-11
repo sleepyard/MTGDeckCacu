@@ -17,7 +17,7 @@ import roles
 COLORS = tuple("WUBRG")
 CURVE_FACTORS = {1.0: 1.0, 0.5: 0.85, 0.1: 0.6}
 STRATEGIES = tuple(deck_core.STRATEGY_TARGETS)
-LIMITED_DECK_SIZE = 40
+LIMITED_DECK_SIZE = 41  # 构筑习惯：41 张牌组（约 17 地），非地下限 40 张规则见方法论文档
 
 
 @dataclass(frozen=True)
@@ -328,10 +328,13 @@ def _sideboard(pool: Iterable[Mapping], main: Sequence[SelectedCard]) -> List[Se
 
 def build_limited_deck(pool: Sequence[Mapping], table=None,
                        forced_colors: Optional[Sequence[str]] = None,
-                       strategy: str = "mid") -> LimitedDeck:
+                       strategy: str = "mid",
+                       deck_size: int = LIMITED_DECK_SIZE) -> LimitedDeck:
     """从已解析牌池构建限制赛套牌，不负责输入/输出文件。"""
     if strategy not in STRATEGIES:
         raise ValueError("strategy 必须是 aggro、mid 或 control")
+    if deck_size < 40:
+        raise ValueError("deck_size 不得低于限制赛下限 40")
     if not pool:
         raise ValueError("牌池为空")
     plan = choose_color_plan(pool, table, forced_colors)
@@ -354,7 +357,7 @@ def build_limited_deck(pool: Sequence[Mapping], table=None,
                         roles.has_root(_tags(card), "mana_development"))
         lands_count = deck_core.land_count(avg_cmc, draw_ramp_count=draw_ramp,
                                            splash_count=len(splash_cards))
-        next_target = LIMITED_DECK_SIZE - lands_count
+        next_target = deck_size - lands_count
         if next_target == target_nonlands:
             break
         target_nonlands = next_target
@@ -393,8 +396,8 @@ def build_limited_deck(pool: Sequence[Mapping], table=None,
     violations = []
     if len(main_copies) != target_nonlands:
         violations.append(f"牌池不足：非地 {len(main_copies)} 张，目标 {target_nonlands} 张")
-    if total_cards != LIMITED_DECK_SIZE:
-        violations.append(f"总张数 {total_cards} != {LIMITED_DECK_SIZE}")
+    if total_cards != deck_size:
+        violations.append(f"总张数 {total_cards} != {deck_size}")
     report.append("门禁: " + ("通过" if not violations else "失败: " + "；".join(violations)))
     return LimitedDeck(
         colors=plan.colors,

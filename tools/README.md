@@ -22,9 +22,11 @@ python tools/mtg_tool.py check "Brineborn Cutthroat" "Brazen Borrower" --format 
 # 3. 牌表机器门禁（主牌≥60、备牌≤15、同名≤4（基本地与牌面"any number of cards named"豁免）、逐牌赛制+平台、可选颜色身份）
 python tools/mtg_tool.py validate deck.txt --format pioneer --bo3 --colors ug
 
-# 4. 环境基线（已发售系列 + 禁牌表，Markdown 可直接粘进报告）
+# 4. 环境基线（已发售系列 + 未发售系列标注 + 禁牌表，Markdown 可直接粘进报告）
 python tools/mtg_tool.py baseline --format pioneer --date 2026-08-08
 ```
+
+- 未发售系列单列一段：Scryfall 对未发售系列所有牌统一标 `not_legal`，legalities 不可作"发售是否入赛制"的依据；`set_type=expansion` 且非 digital 的系列发售即入先驱/摩登等对应赛制，可提前纳入候选。
 
 ---
 
@@ -105,6 +107,19 @@ python tools/forge_tool.py play deck.txt
 - `2` 牌表解析失败
 - `5` 环境缺失（Java / Forge 主 jar 未找到）
 - `6` Forge 进程启动或运行失败
+
+# tools/goldfish_template.py
+
+金鱼蒙特卡洛模拟器模板（融合自外部 mtg-deck-builder v1.4.0 技能包）：自建模拟器对比不同构筑构型的铺场速度 / 累计伤害 / 法术力健康度，补 Forge 实测之前的构型初筛。仅 Python 标准库。
+
+```bash
+# 改文件内 CARDS / LANDS / DECKS 三处后直接运行
+python tools/goldfish_template.py
+```
+
+- 建模规范（文件顶部注释与工作流阶段 3 均有，历史重灾）：每张牌的每个效果都要建模（持续触发逐回合、条件触发条件与效果分别建、减费动态算、免费施放按"看 N 选 1"）；对比"砍 vs 保留"时被对比牌必须在模拟里真的有效果，否则系统性低估保留方。
+- 金鱼是"法术力受限"模型：抓牌/赚牌引擎的分不能被它裁决，必须同时输出 `idle`（空转回合）/ `hand6` / `hand8`（回合末手牌）gas 指标；金鱼分只作"是否掉速"的下限检查，实测反馈优先于模拟分数。
+- 报告必须声明模拟局限（去除、应对干扰无法被金鱼衡量）。
 
 # tools/mtga_log_tool.py
 
@@ -193,7 +208,7 @@ python tools/mtga_auto_tool.py draft --watch [--set HOB] [--port 8643]
 - `advise` 对局结束自动检测：增量载荷出现 finalMatchResult 即播报比分胜负并自动执行 scan+opponent+replay+risk 回收（启动追平的历史载荷不触发，避免重复回收）。
 - `advise --llm` 口径：局面快照由日志精确重建（双方战场/堆叠/坟墓场、我方手牌逐牌附费用+类型+oracle 文本、生命、回合阶段、我方未横置地数与本回合是否已下地、**服务器判定的当前合法动作列表**（actionsAvailableReq，含结构化费用，施放/下地/异能/历险施放——LLM 建议只允许从中选择，费用幻觉的事实锚点；Activate_Mana/FloatMana 噪音已过滤）），oracle 文本走 Scryfall 磁盘缓存、战场牌截断 800 字符（截太短会切掉关键异能——The Great Henge 抓牌触发器、Hunter's Talent 三级抓牌条款两次实测踩坑）；历险/MDFC 子物件（带 parentId 的影子物件）一律排除，不污染战场与手牌计数；grpId 未解析的物件按 superTypes/cardTypes/subtypes 降级渲染（如"未解析 Basic Land Forest #100131"），禁止 LLM 安牌名。**对手手牌只报张数并显式标注"身份未知，禁止假设具体牌"**——服务器未下发的信息模型无从得知，prompt 层强制防脑补。LLM 建议连同完整快照落盘 `tools/auto/llm_advice.jsonl`（含 prompt 字段，供赛后诊断 AI 到底"看到"了什么）。LLM 配置 `tools/llm_config.json`（OpenAI 兼容端点，默认 DeepSeek `deepseek-chat`，可改 `deepseek-reasoner` 换推理强度换延迟；`api_key` 可用环境变量 `DEEPSEEK_API_KEY` 覆盖；该文件已被 .gitignore 排除，**不得提交**）。
 - Windows 控制台中文输出需 `PYTHONIOENCODING=utf-8`（同既有工具坑位）。
-- 轮抓 `draft --watch` 面板口径：启动先回扫日志最后 200KB 恢复当前包状态，抓不到就等下一条；每条 BotDraftDraftStatus 响应更新包号/抓号/当前包/已抓池并在控制台打印 `[draft] P<包>Pick<抓> 包内 N 张 | 已抓 M 张`；排名主键字母等级（S→F，mtga_draft_tool 预生成评分表）、次键社区分，curve_fit（deck_core）作第三参考提示（补 N 费缺口/N 费已溢出）；未评级牌显示 `?` 排最后，grpId 解析失败显示 `<grpId N>`，均不丢牌；DraftStatus 非 PickNext（如 Complete/Completed）时面板只显示对应状态。
+- 轮抓 `draft --watch` 面板口径：启动先回扫日志最后 200KB 恢复当前包状态，抓不到就等下一条；每条 BotDraftDraftStatus 响应更新包号/抓号/当前包/已抓池并在控制台打印 `[draft] P<包>Pick<抓> 包内 N 张 | 已抓 M 张`；排名主键字母等级（S→F，mtga_draft_tool 预生成评分表）、次键社区分，curve_fit（deck_core）作第三参考提示（补 N 费缺口/N 费已溢出）；未评级牌显示 `?` 排最后，grpId 解析失败显示 `<grpId N>`，均不丢牌；DraftStatus 非 PickNext（如 Complete/Completed）时面板只显示对应状态。LLM 推荐状态为 offline 时（单次失败即锁定，下一抓自动重试），可点面板"重试推荐"按钮（POST `/api/advice/retry`）立即重推当前包。
 - 回归测试：`python tools/test_mtga_auto.py`（52 例，覆盖增量读取/截断、分块 JSON 提取、状态跟踪（含 Bo3 局级隔离/deckMessage 牌表事实源/主阶段 step 清理）、调度口径、快照渲染、LLM 客户端与配置加载、watch/run/draft 录样与 pick 面板状态机（字符串化 Payload 解析/pack-pick 推进/排名渲染）；网络与子进程全部 mock，不触真实 MTGA/LLM）。
 
 ## 退出码

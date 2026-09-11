@@ -893,6 +893,38 @@ class TestDraftWatch(unittest.TestCase):
             for patcher in patchers:
                 patcher.stop()
 
+    def test_panel_llm_retry_recovers_offline(self):
+        names = {"1": "Alpha Card", "2": "Beta Card"}
+        cmcs = {"1": 2, "2": 3}
+        table = {"Alpha Card": {"grade": "S"}, "Beta Card": {"grade": "B"}}
+        patchers = self._patch_cards(names, cmcs, table)
+        for patcher in patchers:
+            patcher.start()
+        try:
+            with mock.patch.object(MAT, "load_llm_config", return_value={"api_key": "k"}), \
+                    mock.patch.object(MAT, "llm_chat",
+                                      side_effect=MAT.AutoToolError("timeout")), \
+                    mock.patch.object(MAT, "record_draft_advice"):
+                panel = MAT.DraftPickPanel(llm=True)
+                panel.feed(self._status(DraftPack=["1", "2"]))
+            self.assertEqual(panel.advice_status, "offline")
+            with mock.patch.object(MAT, "load_llm_config", return_value={"api_key": "k"}), \
+                    mock.patch.object(MAT, "llm_chat", return_value=json.dumps([
+                        {"name": "Alpha Card", "raw_power": 0.1,
+                         "synergy": 0.1, "reason": "保留资源"},
+                        {"name": "Beta Card", "raw_power": 0.9,
+                         "synergy": 0.9, "reason": "协同更高"},
+                    ])), \
+                    mock.patch.object(MAT, "record_draft_advice"):
+                result = panel.retry_advice()
+            self.assertEqual(result["advice_status"], "ok")
+            self.assertEqual(panel.advice_status, "ok")
+            self.assertEqual(panel.rows[0]["grp_id"], "2")
+            self.assertIn("advice-retry", panel.render_html())
+        finally:
+            for patcher in patchers:
+                patcher.stop()
+
     def test_cmd_draft_watch_smoke(self):
         tmp = tempfile.mkdtemp(prefix="mtga_auto_test_")
         log = Path(tmp) / "Player.log"
