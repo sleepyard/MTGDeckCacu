@@ -18,6 +18,7 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import mtga_log_tool as MLT  # noqa: E402
 import mtga_auto_tool as MAT  # noqa: E402
+import mtga_draft_tool as MDT  # noqa: E402 brief 钩子补丁边界（顶层反 import MAT，须在 MAT 之后）
 
 TESTDATA = Path(__file__).resolve().parent / "testdata"
 SAMPLE2 = TESTDATA / "mtga_log_sample2.txt"
@@ -720,7 +721,9 @@ class TestDraftWatch(unittest.TestCase):
                 mock.patch.object(MAT, "fetch_chinese_name",
                                   side_effect=lambda n: ((chinese or {}).get(n), None)),
                 mock.patch.object(MAT, "load_card_table",
-                                  return_value=FakeTable())]
+                                  return_value=FakeTable()),
+                mock.patch.object(MDT, "build_brief",
+                                  return_value=("# 简报", ["简报行"]))]
 
     def test_parse_draft_status(self):
         inner = self._status(DraftPack=["103410"])
@@ -924,6 +927,72 @@ class TestDraftWatch(unittest.TestCase):
         finally:
             for patcher in patchers:
                 patcher.stop()
+
+    def test_brief_hook_fires_once_on_set_resolution(self):
+        import io
+        from contextlib import redirect_stderr
+        buf = io.StringIO()
+        with mock.patch.object(MDT, "build_brief",
+                               return_value=("# md", ["速度判定：快"])) as bb:
+            panel = MAT.DraftPickPanel()
+            with redirect_stderr(buf):
+                self.assertTrue(panel.feed(self._status(DraftPack=[])))
+                self.assertTrue(panel.feed(self._status(DraftPack=[])))
+        self.assertEqual(bb.call_count, 1)            # 只打一次
+        self.assertEqual(bb.call_args[0][0], "HOB")   # EventName 解析系列码
+        self.assertEqual(bb.call_args[0][1], "QuickDraft")  # fmt 从事件名推导
+        self.assertIn("[brief] 速度判定：快", buf.getvalue())
+
+    def test_premier_draft_event_name_resolves_set(self):
+        # Premier 队列事件名（PremierDraft_<SET>_<日期>）也要能解析系列码
+        with mock.patch.object(MDT, "build_brief",
+                               return_value=("", [])) as bb:
+            panel = MAT.DraftPickPanel()
+            panel.feed(self._status(EventName="PremierDraft_TDM_20260920"))
+        self.assertEqual(panel.set_code, "TDM")
+        self.assertEqual(bb.call_args[0][1], "PremierDraft")
+
+    def test_brief_hook_failure_warns_once_and_draft_continues(self):
+        import io
+        from contextlib import redirect_stderr
+        buf = io.StringIO()
+        with mock.patch.object(MDT, "build_brief",
+                               side_effect=Exception("无快照")):
+            panel = MAT.DraftPickPanel()
+            with redirect_stderr(buf):
+                self.assertTrue(panel.feed(self._status(DraftPack=[])))
+                self.assertTrue(panel.feed(
+                    self._status(PickNumber=3, DraftPack=[])))
+        self.assertEqual(buf.getvalue().count("环境简报不可用"), 1)  # 只告警一次
+        self.assertIn("无快照", buf.getvalue())
+        self.assertEqual(panel.set_code, "HOB")       # 轮抓主流程不受影响
+        self.assertEqual(panel.pick_number, 3)
+
+    def test_print_brief_explicit_set_path(self):
+        import io
+        from contextlib import redirect_stderr
+        buf = io.StringIO()
+        panel = MAT.DraftPickPanel(set_code="FDN")
+        with mock.patch.object(MDT, "build_brief",
+                               return_value=("# md", ["行1"])) as bb:
+            with redirect_stderr(buf):
+                MAT.print_brief("FDN", panel=panel)   # cmd_draft_watch 进循环前调用
+        self.assertEqual(bb.call_count, 1)
+        self.assertTrue(panel._brief_shown)           # feed 不再重复触发
+        self.assertIn("[brief] 行1", buf.getvalue())
+        with mock.patch.object(MDT, "build_brief") as bb2:
+            panel.feed(self._status(DraftPack=[]))
+        bb2.assert_not_called()
+
+    def test_print_brief_failure_single_warning(self):
+        import io
+        from contextlib import redirect_stderr
+        buf = io.StringIO()
+        with mock.patch.object(MDT, "build_brief",
+                               side_effect=Exception("无网")):
+            with redirect_stderr(buf):
+                MAT.print_brief("FDN")                # 不抛出，只一行告警
+        self.assertEqual(buf.getvalue().count("环境简报不可用"), 1)
 
     def test_cmd_draft_watch_smoke(self):
         tmp = tempfile.mkdtemp(prefix="mtga_auto_test_")

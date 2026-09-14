@@ -1394,7 +1394,8 @@ def cmd_draft_record(args):
 # grpId 字符串)/PickedCards(已抓 grpId 累计)。每条新响应 = 一次状态更新。
 DRAFT_PANEL_PORT = 8643  # 避开 advise 监控台的 8642
 DRAFT_GRADES = list(deck_core.GRADE_EQ)  # S→F 强度序，与 mtga_draft_tool.GRADES 同序
-_DRAFT_SET_RE = re.compile(r"QuickDraft_([A-Z0-9]+)_")
+# Premier 队列事件名为 PremierDraft_<SET>_<日期>（2026-09 实测），与 Quick 同型
+_DRAFT_SET_RE = re.compile(r"(?:Quick|Premier)Draft_([A-Z0-9]+)_")
 
 
 def load_card_table(set_code):
@@ -1402,6 +1403,22 @@ def load_card_table(set_code):
     顶层导入会循环）。无评分表文件返回 None（面板降级为全 "?"）。"""
     import mtga_draft_tool as MDT
     return MDT.load_card_table(set_code)
+
+
+def print_brief(set_code, fmt="PremierDraft", panel=None):
+    """打印一次环境简报（延迟导入 mtga_draft_tool，同 load_card_table 的循环
+    规避）。panel 传入时先置 _brief_shown 保证全程只打一次；任何失败
+    （无网/无快照/无 17Lands）降级为一行告警，绝不抛出影响轮抓主流程。"""
+    if panel is not None:
+        panel._brief_shown = True
+    try:
+        import mtga_draft_tool as MDT
+        _md, summary = MDT.build_brief(set_code, fmt)
+    except Exception as exc:
+        print(f"[brief] 环境简报不可用: {exc}", file=sys.stderr)
+        return
+    for line in summary:
+        print(f"[brief] {line}", file=sys.stderr)
 
 
 def parse_draft_status(payload):
@@ -1455,6 +1472,7 @@ class DraftPickPanel:
         self.advice_error = None
         self.advice_rows = []
         self._advice_key = None
+        self._brief_shown = False
 
     def feed(self, data):
         """喂内层 BotDraftDraftStatus dict；是轮抓状态返回 True，否则 False。"""
@@ -1479,7 +1497,16 @@ class DraftPickPanel:
             if isinstance(data.get("PickedCards"), list):
                 self.picked = [str(g) for g in data["PickedCards"]]
             self._rebuild()
+            self._maybe_show_brief()
         return True
+
+    def _maybe_show_brief(self):
+        """系列代码首次确定时打印一次环境简报（开抓即见）；失败只告警。"""
+        if self._brief_shown or not self.set_code:
+            return
+        fmt = "QuickDraft" if "QuickDraft" in (self.event_name or "") \
+            else "PremierDraft"
+        print_brief(self.set_code, fmt, panel=self)
 
     def _ensure_table(self):
         if not self._table_loaded and self.set_code:
@@ -1924,6 +1951,10 @@ def cmd_draft_watch(args):
         llm=getattr(args, "llm", False),
         llm_config_path=getattr(args, "llm_config", None),
     )
+    if args.set:
+        # 显式 --set：进循环前直接打印一次简报（不等到首个事件）；
+        # print_brief 会置 panel._brief_shown，feed 不再重复
+        print_brief(args.set, panel=panel)
     if _draft_backscan(args.log, panel):
         print(_draft_console_line(panel) + "（回扫恢复）", file=sys.stderr)
     try:

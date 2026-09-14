@@ -381,6 +381,8 @@ SetReview/{SET}_{YYYYMMDD}/
 
 ## 更新节奏
 
+预览期增量批次可用 `tools/set_preview_tool.py` 执行：`init` 建档、`fetch` 抓取并 diff、`rate` 增量评分、`status` / `report` 汇总、`watch` 持续监控；工具只负责数据获取与骨架，评级结论仍按本流程复核。
+
 建议在以下事件触发增量复盘，而不是每次从头重写：
 
 1. 官方预览批次：只评价新增 / 变更牌，并更新受影响机制与原型假说。
