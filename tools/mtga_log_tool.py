@@ -6,7 +6,8 @@
 
 数据落盘：MatchRecord/matches.json（比赛记录，按 matchId 去重）、MatchRecord/decks/（提交牌表）、
 MatchRecord/grp_cache.json（grpId→牌名缓存）、MatchRecord/opponents/（对手已见牌）、
-MatchRecord/replays/（逐回合复盘）、MatchRecord/risk_*.md（风险点归纳）。
+MatchRecord/replays/（逐回合复盘）、MatchRecord/risk_*.md（风险点归纳）、
+MatchRecord/inventory.json（库存快照：通配符/经济/已存套牌并集）。
 仅 Python 标准库（3.7+）。
 """
 
@@ -932,6 +933,156 @@ def cmd_risk(args):
     return 0
 
 
+# ---------------------------------------------------------------- inventory：库存快照
+INVENTORY_JSON = RECORD_DIR / "inventory.json"
+
+
+def _int_field(obj, key):
+    """宽容提取整数字段：缺失或不可解析返回 None。"""
+    try:
+        return int(find_key(obj, key))
+    except (TypeError, ValueError):
+        return None
+
+
+def extract_inventory(payload):
+    """从 StartHook 载荷提取库存字段；无 InventoryInfo 返回 None。"""
+    info = find_key(payload, "InventoryInfo")
+    if not isinstance(info, dict):
+        return None
+    wildcards = {
+        "common": _int_field(info, "WildCardCommons") or 0,
+        "uncommon": _int_field(info, "WildCardUnCommons") or 0,
+        "rare": _int_field(info, "WildCardRares") or 0,
+        "mythic": _int_field(info, "WildCardMythics") or 0,
+    }
+    economy = {}
+    for key, label in (("Gold", "gold"), ("Gems", "gems"),
+                       ("TotalVaultProgress", "vault_progress"),
+                       ("UnopenedPacks", "unopened_packs")):
+        # 经济字段实测不一定嵌在 InventoryInfo 内，宽容地在整个载荷里找
+        value = find_key(payload, key)
+        if value is not None:
+            economy[label] = value
+    return {"wildcards": wildcards, "economy": economy}
+
+
+def _iter_player_decks(payload):
+    """产出 (套牌名, mainDeck 条目列表)；排除 ?=?Loc/ 预组/新手套牌。
+
+    实测部分会话的 StartHook 只回 DeckSummaries 而无完整牌表，此时一套也产不出，
+    由调用方的空结果保护兜底。"""
+    summaries = find_key(payload, "DeckSummaries") or []
+    names = {}
+    fallback = []
+    if isinstance(summaries, list):
+        for s in summaries:
+            if not isinstance(s, dict):
+                continue
+            sid = s.get("deckId") or s.get("id")
+            if sid is not None and s.get("name"):
+                names[sid] = s["name"]
+            if isinstance(s.get("mainDeck"), list):
+                fallback.append(s)
+    decks_obj = find_key(payload, "Decks")
+    if isinstance(decks_obj, dict):
+        deck_iter = list(decks_obj.values())
+    elif isinstance(decks_obj, list):
+        deck_iter = decks_obj
+    else:
+        deck_iter = fallback
+    for deck in deck_iter:
+        if not isinstance(deck, dict):
+            continue
+        name = deck.get("name") or names.get(deck.get("id") or deck.get("deckId")) or "(未命名套牌)"
+        if name.startswith("?=?Loc/"):
+            continue
+        main = deck.get("mainDeck")
+        if not isinstance(main, list) or not main:
+            continue
+        yield name, main
+
+
+def cmd_inventory(args):
+    paths = [args.log]
+    if args.prev:
+        # prev 在前、当前日志在后：取"最后一个"含 InventoryInfo 的载荷时，
+        # 较新的 Player.log 优先于较旧的 Player-prev.log
+        paths.insert(0, str(Path(args.log).with_name("Player-prev.log")))
+    for path in paths:
+        if not Path(path).is_file():
+            print(f"[错误] 日志不存在: {path}", file=sys.stderr)
+            return 2
+    snapshot = None
+    snapshot_ts = ""
+    for path in paths:
+        for payload, _lineno, ts in iter_json_payloads(path):
+            inv = extract_inventory(payload)
+            if inv is not None:
+                snapshot = (payload, inv)
+                snapshot_ts = ts
+    if snapshot is None:
+        print("[错误] 日志中未找到 StartHook/InventoryInfo"
+              "（请确认 MTGA 已开启 Detailed Logs）", file=sys.stderr)
+        return 4
+    payload, inv = snapshot
+    owned = {}  # 牌名（双面牌取正面）→ {"count", "decks"}
+    unknown = 0
+    deck_names = set()
+    for deck_name, main in _iter_player_decks(payload):
+        deck_names.add(deck_name)
+        for entry in main:
+            if isinstance(entry, dict):
+                card_id, qty = entry.get("cardId"), entry.get("quantity", 1)
+            else:
+                card_id, qty = entry, 1
+            card_name = resolve_arena_card(card_id)
+            if card_name is None:
+                unknown += 1
+                continue
+            card_name = card_name.split(" // ")[0]
+            slot = owned.setdefault(card_name, {"count": 0, "decks": []})
+            slot["count"] += qty
+            if deck_name not in slot["decks"]:
+                slot["decks"].append(deck_name)
+    if unknown:
+        print(f"[警告] {unknown} 个 grpId 未能解析为牌名，已计入 unknown_count",
+              file=sys.stderr)
+    # 空结果保护：0 套有效套牌多半是 StartHook 只回了 DeckSummaries，
+    # 此时覆写会把既有良好快照清掉（实测踩过坑）
+    if not deck_names and INVENTORY_JSON.is_file() and INVENTORY_JSON.stat().st_size:
+        print("[警告] 本次解析到 0 套有效套牌（StartHook 可能只含 DeckSummaries），"
+              f"拒绝覆写既有快照 {INVENTORY_JSON}", file=sys.stderr)
+        return 3
+    RECORD_DIR.mkdir(exist_ok=True)
+    data = {
+        "snapshot_time": snapshot_ts or datetime.now().strftime("%Y/%m/%d %H:%M:%S"),
+        "source": "; ".join(str(p) for p in paths),
+        "wildcards": inv["wildcards"],
+        "economy": inv["economy"],
+        "owned": owned,
+        "unknown_count": unknown,
+    }
+    with open(INVENTORY_JSON, "w", encoding="utf-8") as fh:
+        json.dump(data, fh, ensure_ascii=False, indent=2, sort_keys=True)
+    wc = inv["wildcards"]
+    print("| 通配符 | 数量 |")
+    print("|---|---:|")
+    for label, key in (("普通 (Common)", "common"), ("非普通 (Uncommon)", "uncommon"),
+                       ("稀有 (Rare)", "rare"), ("秘稀 (Mythic)", "mythic")):
+        print(f"| {label} | {wc[key]} |")
+    if inv["economy"]:
+        eco = "，".join(f"{k}={v}" for k, v in inv["economy"].items())
+        print(f"\n经济字段：{eco}")
+    total_cards = sum(v["count"] for v in owned.values())
+    print(f"\n拥有 {len(owned)} 种牌 / {total_cards} 张（来自 {len(deck_names)} 套已存套牌）。")
+    if not deck_names:
+        print("\n> 注意：本次 StartHook 未包含完整牌表，套牌数为 0（首次运行，快照已写入）。")
+    print("\n> 数据时效：库存下界=已存套牌并集，合成/开包后需刷新（重启 MTGA 后再跑一次）。")
+    print(f"库存快照 → {INVENTORY_JSON}", file=sys.stderr)
+    return 0
+
+
 # ---------------------------------------------------------------- main
 def build_parser():
     p = argparse.ArgumentParser(description=__doc__,
@@ -968,6 +1119,11 @@ def build_parser():
     g.add_argument("--all", action="store_true", help="聚合日志中所有比赛")
     pk.add_argument("--log", default=str(DEFAULT_LOG), help="Player.log 路径")
     pk.set_defaults(func=cmd_risk)
+
+    pi = sub.add_parser("inventory", help="导出库存快照：通配符/经济/已存套牌并集（Markdown + JSON）")
+    pi.add_argument("--log", default=str(DEFAULT_LOG), help="Player.log 路径")
+    pi.add_argument("--prev", action="store_true", help="同时扫描 Player-prev.log")
+    pi.set_defaults(func=cmd_inventory)
     return p
 
 

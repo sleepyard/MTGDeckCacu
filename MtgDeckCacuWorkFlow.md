@@ -58,6 +58,7 @@
    - **未发售系列合法性判断（历史重灾）**：Scryfall 对**未发售系列的所有牌统一返回 `not_legal`**，`legalities` 字段不可信，不能据此判定"发售不会入赛制"。正确做法：查系列 `set_type`——若 `set_type == "expansion"` 且非 digital，则**发售即入先驱/摩登**（参照已发售且合法的同类型 expansion 系列）。对"已公布牌表但临近发售"的系列单独标注：可纳入候选，但须提醒用户距正式合法还差几天。`mtg_tool.py baseline` 已单列未发售 expansion 段。
 2. 禁牌表：Scryfall 查询 `banned:{format}`（如 `banned:modern`）+ 网络检索最近一次禁牌公告交叉验证。必须区分赛制基础禁牌与平台/队列特例（如仅 MTGA BO1 禁用），记录公告生效日期。普通 Brawl、Standard Brawl 与 Competitive Brawl 是不同合法性 / 禁牌字段和队列，不得互相复用结论。历史上曾被禁但当前已解禁的牌必须以本次基准日状态为准，不能沿用模型记忆。
 3. 环境粗扫：搜索官方公告 / 环境文章，确认主题思路在当前环境的强度定位（娱乐 / 可行 / 主流），只需大方向。
+4. **轴心时效性检查**：阶段 2 枚举若发现当前最优引擎 / 回报与阶段 0 锚点不一致（新机制轴心取代旧轴心），必须先向用户明示"主题轴心可能已迁移"并确认方向再构筑，禁止在旧模型上静默构筑（实测教训：LandsMatter v1 锚定 2023-24 找地+虔诚模型，earthbend 轴完全未进候选池）。
 
 ---
 
@@ -113,6 +114,8 @@ M9 指挥官	Commander-style 赛制的合法指挥官、颜色身份与指挥区
 
 已知坑位清单：
 - PIO（先驱大师赛）2024-12 已登陆 Arena，其独有牌可用（例：云游者梓纱在先驱合法且 Arena 可用）
+- Explorer 牌池以客户端 GetFormats 的 legalSets 为权威：2026-08-13 实测已扩为含 BLB/DSK/FDN/TDM/EOE/TLA/SOS 等全标准系列，勿按"非先驱系列即不可用"的旧印象排除；逐印刷核实时必须是"Arena 有售的那个印刷"的系列 ∈ legalSets（实测教训：Elemental Bond 唯一 Arena 印刷 TLE、Lifecrafter's Bestiary 唯一 Arena 印刷 KLR 均不在 Explorer legalSets）
+- Scryfall 与客户端系列代码存在映射差异（已知 Scryfall `dom` = 客户端 `DAR`），跨源核对系列归属时先换算代码再比对
 - Scryfall `/cards/named` 返回最新印刷，`games` 字段可能误导（需查全部印刷）
 - MDFC / 历险 / 双面牌：Scryfall 顶层 `oracle_text`、`mana_cost`、`power/toughness` 为空，正背面完整文本在 `card_faces[]` 里——核对牌面异能时必须读 `card_faces`，否则会"看不到第二面"（实测踩坑：Beanstalk Giant // Fertile Footsteps、Studious First-Year // Rampant Growth 顶层文本为空）
 - `o:` 短语查询可能假性 404：实测 `o:"whenever a land enters"` 零结果，换 `o:"landfall"` 命中 43 张；同一概念务必准备多种措辞
@@ -143,6 +146,7 @@ M9 指挥官	Commander-style 赛制的合法指挥官、颜色身份与指挥区
    - 逐牌附入选理由；列出"落选候选"及取舍逻辑，便于迭代
    - 主牌必须建立生存预算：按关键回合分别统计可用的阻挡、回血、进场横置 / 税收、点 / 放逐去除、扫场和重建资源，并以真实色源与回合费用校验。备牌不能替代首局的生存能力。
    - 主牌必须给出至少两个独立赢点，说明从稳定场面到致胜的实际转换动作；分别检查它们是否被自身扫场、传奇规则、颜色源、平台限制或主轴依赖抵消。主题资源递增本身不是赢点。
+   - **致胜三问门禁（缺一不得交付）**：穿透（终结手段被小生物填挡怎么办）/ 续航（资源耗尽后靠什么抓牌引擎补充手牌）/ 互动（对对手威胁的响应手段是什么），三问逐条给出牌名级答案，任一空缺必须回到候选池补位。
    - 砍牌/替代理由必须通过可验证门禁：引用的费用与异能须与牌面某一面的原文一致（实测教训：把 Flourishing Bloom-Kin 的伪装费用 {4}{G} 当成全牌费用，误判"5费太慢"）；"上位替代"仅限同费用段、同角色之间的比较
    - 引擎-资源匹配校验：铺地/加速引擎分"牌库找地"与"手牌下地"两类，后者仅当套牌有充足抓牌/手牌地补给时才有效（实测教训：梓纱/依吕夏树灵在零抓牌套牌中异能空转，人工研审判定提升有限）
    - 地源统计必须拆开：`地牌卡位`（真地 + 可当地使用的 MDFC）、`加权地当量`（默认真地 + MDFC×0.75，仅作启发式）、`起手可下地源`、`未横置绿源`、`牌库找地`、`手牌额外下地`。找地牌不得直接加进地当量；Bushwhack 一类"找地到手"是条件地源而非加速。另校验基础地目标数量，避免找地引擎在中盘失效。
@@ -181,7 +185,7 @@ M9 指挥官	Commander-style 赛制的合法指挥官、颜色身份与指挥区
 
 - 自研套牌按主题归档：`DeckList/{赛制}_{色组}_{主题}/`；同一主题的多个构筑方向（如多色组变体）必须收进**同一个主题文件夹**，用子文件夹区分方向（例：`DeckList/Explorer_SlimeAgainstHumanity/{MonoGreen,Golgari,Simic}/`），不得在 DeckList 顶层平铺多个方向目录。
 - 对手 / 环境 meta 测试用例与自研套牌分开存放：统一放 `DeckList/opponents/{赛制}_{色组}_{ archetype }Meta/`（或既有对手目录），不与自研套牌混在同一层级。
-- 每版套牌同名 `.txt`（MTGA 导入格式）+ `.md`（设计文档）成对出现。
+- 每版套牌同名 `.txt`（MTGA 导入格式）+ `.md`（设计文档）成对出现。脚手架 `tools/deck_version.py` 可直接生成：`{Name}V{n}.txt` / `{Name}V{n}.md` 成对、版本 max+1 禁覆盖、附设计文档骨架与基础门禁（主≥60 / 备 0 或 15 / 同名 >4 报警，基本地与 ANY_NUMBER 豁免；警告 exit 2）；含中文参数必须走 `--config params.json` 传参。
 
 牌表格式（MTGO / MTGA 导入兼容）
 
@@ -226,3 +230,10 @@ banned:pioneer date<=2026-08-01                          # 赛制基础禁牌表
 ```
 
 SBWSZ API 端点备忘（2026-09 迁移后）：旧 `/api/v1/card-names/` 已 404；现行逐牌中文名 `GET /api/v1/result?q=<名>&view=1`（`view=1` 才带 `display_name_zh`）、批量 `GET /api/v1/set/<code>/cards/`、单卡详情 `/api/v1/card/{set}/{num}/`、系列列表 `/api/v1/sets/`、完整文档 `/api/v1/openapi.json`。curl 需 `-L`（无尾斜杠路径会 301）；逐牌查询限流凶（300ms+ 间隔，批量走系列端点）；牌名含撇号时用名称片段模糊查。
+
+附：MTGA 库存数据（inventory 子命令）
+
+- 用法：`python tools/mtga_log_tool.py inventory` 解析 Player.log 的 StartHook，提取通配符（WildCardCommons/UnCommons/Rares/Mythics）/ 金币 / 钻石 / Vault / 未开卡包，外加已存套牌并集（排除 `?=?Loc/` 前缀预组）作为"库存下界"，grpId 按牌名合并计数，落盘 `MatchRecord/inventory.json`，stdout 输出 Markdown 摘要。仅作构筑时"手上已有什么牌"的数据来源说明。
+- 空结果保护：StartHook 的 Decks 可能为空（部分会话只回 DeckSummaries 无完整牌表）——此时解析到 0 套牌且既有 `inventory.json` 非空则拒绝覆写（退出码 3）；日志中无 StartHook 退出码 4。
+- 时效性：库存下界是快照不是实时数据——合成 / 开包 / 删改套牌后必须重跑 `inventory` 刷新，不得沿用旧快照做库存结论。
+- grpId 兜底：Scryfall 查不到 arena_id 时，用 `tools/mtga_db_tool.py <CardDatabase.mtga路径> [grpId ...]` 直查客户端 SQLite 卡库反查英文牌名 / 系列 / 编号 / 稀有度（用法见 `tools/README.md`）。

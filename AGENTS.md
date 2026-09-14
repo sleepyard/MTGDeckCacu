@@ -5,8 +5,11 @@
 This is a Python-first MTG deck research and testing toolkit. The executable modules are in `tools/`:
 
 - `mtg_tool.py` provides Scryfall/MTGCH search, legality checks, validation, and baselines.
+- `set_preview_tool.py` tracks new-set preview seasons: incremental Scryfall snapshots, per-batch diffs, and preview-period limited ratings.
 - `forge_tool.py` converts decks and runs Forge simulations.
-- `mtga_log_tool.py` and `mtga_auto_tool.py` analyze MTGA logs and provide live advice.
+- `mtga_log_tool.py` and `mtga_auto_tool.py` analyze MTGA logs and provide live advice; `mtga_log_tool.py` also provides `inventory` (StartHook wildcard/currency/pack snapshot plus the union of saved decks, written to `MatchRecord/inventory.json`); `mtga_draft_tool.py` is the draft cockpit (17Lands anchors, direct-first with shiqidi proxy fallback, LLM pick advice) and provides `regress` (rating-vs-17Lands regression) and `brief` (pre-draft format environment brief, also auto-printed when `draft --watch` starts).
+- `mtga_db_tool.py` queries the MTGA client SQLite card database (grpId → English name/set/number/rarity) as a fallback when Scryfall has no arena_id.
+- `deck_version.py` scaffolds versioned deck deliveries under `DeckList/{format}_{colors}_{theme}/` (paired `.txt`/`.md`, max+1 versioning, no overwrite) with basic gate checks; pass Chinese text via `--config params.json`.
 - `deck_core.py` contains the shared deterministic kernel; `roles.py` contains pure role tagging; `limited_strategy.py` and `constructed_strategy.py` contain deck selection; `draft_advisor.py` contains draft scoring; `deck_pooper.py` is the thin CLI layer.
 - `draft_*.py` contains draft evaluation and legacy prototype workflows.
 - `tools/test_*.py` are regression tests; `tools/testdata/` contains JSON and log fixtures.
@@ -23,6 +26,8 @@ python tools/mtg_tool.py validate <deck.txt> --format pioneer --bo3
 python tools/mtg_tool.py check "Card Name" --format pioneer --platform arena
 python tools/forge_tool.py sim <deck-a.txt> <deck-b.txt> --games 20
 python tools/mtga_log_tool.py scan
+python tools/mtga_log_tool.py inventory
+python tools/deck_version.py --config params.json
 python tools/deck_pooper.py limited --pool pool.txt --set HOB --strategy mid --out deck.txt --report report.md
 python tools/deck_pooper.py draft --watch --set HOB --llm --port 8643
 python tools/deck_pooper.py constructed --format pioneer --seed seeds.txt --candidates result.json --bo3 --out deck.txt --report report.md

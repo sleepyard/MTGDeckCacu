@@ -1,0 +1,14 @@
+[UnityCrossThreadLogger]4/25/2026 6:00:05 PM: StartHook
+{
+  "InventoryInfo": {
+    "WildCardCommons": 5,
+    "WildCardUnCommons": 4,
+    "WildCardRares": 1,
+    "WildCardMythics": 0,
+    "Gold": 900
+  },
+  "DeckSummaries": [
+    { "deckId": "deck-001", "name": "Gruul Test Deck" },
+    { "deckId": "deck-002", "name": "?=?Loc/Decks/Welcome/MonoG" }
+  ]
+}

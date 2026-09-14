@@ -150,6 +150,9 @@ python tools/mtga_log_tool.py replay [--match-id X]
 
 # 6. 我方风险点归纳（缺地/调度/卡手，写 MatchRecord/risk_*.md）
 python tools/mtga_log_tool.py risk [--match-id X | --all]
+
+# 7. 库存快照（StartHook：通配符/金币/钻石/Vault/未开卡包 + 已存套牌并集，写 MatchRecord/inventory.json）
+python tools/mtga_log_tool.py inventory
 ```
 
 - 默认日志路径 `%USERPROFILE%\AppData\LocalLow\Wizards of the Coast\MTGA\Player.log`，`--log` 可覆盖。
@@ -157,13 +160,15 @@ python tools/mtga_log_tool.py risk [--match-id X | --all]
 - 本家识别：比赛结果按 AuthenticateResponse 的 `screenName`（seat 1 可能是对手）；对局内座位按 ConnectResp 的 `systemSeatIds` **按场绑定**——ConnectResp 每场一条、紧跟该场开局消息之前，取最近一条的座位绑定到该场（取全日志最后一条会把后续场次的座位错套到前面的比赛上）。
 - 三件套口径：`opponent` 只聚合对手**公开可见**物件（进场/堆叠/展示），是"已见牌集合"不是完整牌表；类型列取 Scryfall 印刷类型（type_line），对局内物件类型会被复制/变形改写——不一致时以"（复制/变形：X）"标注，印刷类型才计入类型总计（实测教训：Spark Double 复制鹏洛客后物件类型变 Planeswalker，直接采信会误判套牌属性）；`replay` 是事件重建不是录屏，回合内事件**按施放者归属**——非当前回合方的瞬时/闪出响应标注"对方响应："/"我方响应："（物件不可见时回退当前回合方），ZoneTransfer 未知 category 在文末原样计数；调度次数**按开局手牌数推断**（伦敦调度后手牌 = 7 − 调度次数，取首个 turnInfo 帧之前的最小快照；`players[].mulliganCount` 多数场次缺字段不用），无快照显示"未知"不静默当 0；`risk` 只做事实归纳与阈值标记，不出改动建议。
 - grpId→牌名/牌面数据落盘缓存 `MatchRecord/grp_cache.json`；查不到的（新牌/token）显示 `<grpId N>`，不丢弃。
+- `inventory` 口径：已存套牌取并集作"库存下界"，排除 `?=?Loc/` 前缀预组，grpId 按牌名合并计数，stdout 输出 Markdown 摘要；StartHook 可能只回 DeckSummaries 无完整牌表——此时解析到 0 套牌且既有 `inventory.json` 非空则拒绝覆写（退出码 3）；日志无 StartHook 退出码 4。库存快照有时效性，合成 / 开包 / 删改套牌后需重跑刷新。
 - 回归用合成样本：`tools/testdata/mtga_log_sample.txt`（scan）与 `mtga_log_sample2.txt`（三件套）。
 
 ## 退出码
 
 - `0` 成功（含"无新比赛"）
 - `2` 日志不存在 / 读取失败
-- `4` 无比赛记录（report 无数据可聚合）
+- `3` inventory 空结果保护拒绝覆写（StartHook 只回 DeckSummaries、0 套牌且既有 inventory.json 非空）
+- `4` 无比赛记录（report 无数据可聚合）/ 日志无 StartHook（inventory）
 
 # tools/mtga_auto_tool.py
 
@@ -241,3 +246,37 @@ python tools/mtga_draft_tool.py ratings --set FDN [--format QuickDraft] [--refre
 - 限制赛策略：`tools/limited_strategy.py` 负责颜色方案、splash、曲线感知选牌、动态地数与报告数据；`tools/roles.py` 负责九根角色标签和 AI 标签五折合并，均无 I/O。
 - 轮抓推荐：`tools/draft_advisor.py` 负责机器六轴与 LLM 两轴，`deck_pooper.py draft` 只转发到 `mtga_auto_tool.py`，LLM 失败时显式显示 offline 并保留机器排名。
 - 构筑赛策略：`tools/constructed_strategy.py` 按 M1-M9 模块配额保留种子并补位，支持普通 60/15 与 Brawl 1+99；候选缺少目标赛制合法性时门禁失败。
+
+# tools/mtga_db_tool.py
+
+MTGA 客户端卡库直查：读取客户端 SQLite 卡库（`Raw_CardDatabase_*.mtga`），自动嗅探表 / 列结构，按 grpId 反查英文牌名 / 系列 / 编号 / 稀有度，作 Scryfall 查不到 arena_id 时的兜底数据源。仅 Python 标准库。
+
+```bash
+# 1. 按 grpId 反查牌名 / 系列 / 编号 / 稀有度
+python tools/mtga_db_tool.py "C:\path\to\Raw_CardDatabase_xxx.mtga" 12345 67890
+
+# 2. 无 grpId 时列出库内表名（用于嗅探结构）
+python tools/mtga_db_tool.py "C:\path\to\Raw_CardDatabase_xxx.mtga"
+```
+
+# tools/deck_version.py
+
+版本化交付脚手架：按 `--format --colors --theme` 生成 `DeckList/{format}_{colors}_{theme}/` 目录与 `{Name}V{n}.txt` + `{Name}V{n}.md` 成对文件（版本 max+1、禁覆盖），并生成设计文档骨架；基础门禁：主牌 ≥60、备牌 0 或 15、同名 >4 报警（基本地与牌面 ANY_NUMBER 豁免）。仅 Python 标准库。
+
+```bash
+# 1. 参数直传（纯英文 / 数字参数）
+python tools/deck_version.py --format explorer --colors ug --theme Flash \
+    --deck-file deck.txt --notes "初稿"
+
+# 2. 在既有方向子文件夹内续版本
+python tools/deck_version.py --dir DeckList/Explorer_SlimeAgainstHumanity/Golgari \
+    --deck-file deck.txt
+
+# 3. 含中文参数必须走 JSON 传参（控制台编码坑位）
+python tools/deck_version.py --config params.json
+```
+
+## 退出码
+
+- `0` 成功
+- `2` 门禁警告（仍写盘，需人工确认警告项）

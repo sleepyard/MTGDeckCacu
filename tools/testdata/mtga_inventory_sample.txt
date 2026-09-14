@@ -1,0 +1,42 @@
+Mono path[0] = 'D:/SteamLibrary/steamapps/common/MTGA/MTGA_Data/Managed'
+[UnityCrossThreadLogger]4/25/2026 6:00:00 PM: Client.SceneChange {"fromSceneName":"None","toSceneName":"Home","initiator":"System"}
+Some noise line without any payload
+[UnityCrossThreadLogger]4/25/2026 6:00:05 PM: StartHook
+{
+  "InventoryInfo": {
+    "WildCardCommons": 12,
+    "WildCardUnCommons": 7,
+    "WildCardRares": 3,
+    "WildCardMythics": 2,
+    "Gold": 12345,
+    "Gems": 500,
+    "TotalVaultProgress": 45,
+    "UnopenedPacks": { "DMU": 2, "BRO": 1 }
+  },
+  "DeckSummaries": [
+    { "deckId": "deck-001", "name": "Gruul Test Deck" },
+    { "deckId": "deck-002", "name": "?=?Loc/Decks/Welcome/MonoG" }
+  ],
+  "Decks": [
+    {
+      "id": "deck-001",
+      "name": "Gruul Test Deck",
+      "mainDeck": [
+        { "cardId": 1001, "quantity": 4 },
+        { "cardId": 1002, "quantity": 2 },
+        { "cardId": 2001, "quantity": 3 },
+        { "cardId": 4001, "quantity": 1 }
+      ],
+      "sideboard": []
+    },
+    {
+      "id": "deck-002",
+      "name": "?=?Loc/Decks/Welcome/MonoG",
+      "mainDeck": [
+        { "cardId": 3001, "quantity": 24 }
+      ],
+      "sideboard": []
+    }
+  ]
+}
+[UnityCrossThreadLogger]4/25/2026 6:05:00 PM: Idle noise

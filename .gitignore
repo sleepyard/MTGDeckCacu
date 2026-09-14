@@ -24,3 +24,5 @@ Legacy/
 tools/testdata/*
 !tools/testdata/mtga_log_sample.txt
 !tools/testdata/mtga_log_sample2.txt
+!tools/testdata/mtga_inventory_sample.txt
+!tools/testdata/mtga_inventory_summary_only.txt
