@@ -145,6 +145,8 @@ def render_deck(deck: LS.LimitedDeck) -> str:
         lines.append(f"{entry.count} {entry.card['name']}")
     for color, quantity in sorted(deck.lands.items()):
         lines.append(f"{quantity} {basic[color]}")
+    for entry in deck.nonbasic_lands:
+        lines.append(f"{entry.count} {entry.card['name']}")
     if deck.sideboard:
         lines.extend(["", "Sideboard"])
         for entry in sorted(deck.sideboard, key=lambda item: item.card.get("name") or ""):
@@ -340,7 +342,7 @@ def cmd_draft(args) -> int:
 def build_parser():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
-    limited = sub.add_parser("limited", help="从牌池构建限制赛套牌（默认 41 张/约 17 地）")
+    limited = sub.add_parser("limited", help="从牌池构建限制赛套牌（默认 40 张/约 17 地）")
     limited.add_argument("--pool", required=True, help="牌池文本或 Complete 录样 JSONL")
     limited.add_argument("--set", required=True, help="评分表系列码，如 HOB")
     limited.add_argument("--colors", help="强制主色，如 GU")
@@ -370,7 +372,7 @@ def build_parser():
     mode.add_argument("--watch", action="store_true", help="实时 pick 面板")
     draft.add_argument("--set", dest="set_code", help="系列码，如 HOB")
     draft.add_argument("--port", type=int, default=None, help="面板端口")
-    draft.add_argument("--llm", action="store_true", help="启用八轴 LLM 推荐")
+    draft.add_argument("--llm", action="store_true", help="启用九轴 LLM 推荐")
     draft.add_argument("--llm-config", metavar="PATH", help="LLM 端点配置 JSON 路径")
     draft.add_argument("--log", help="Player.log 路径")
     draft.add_argument("--poll", type=float, help="轮询间隔秒")

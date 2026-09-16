@@ -87,8 +87,39 @@ class TestLimitedBuild(unittest.TestCase):
         pool = [card("Only Card", "G", 2, count=4, cost="{1}{G}")]
         deck = LS.build_limited_deck(pool, CardTable(pool), forced_colors=["G"])
         self.assertEqual(sum(item.count for item in deck.main), 4)
-        self.assertIn("4/25", " ".join(deck.report))  # 默认 41 张 - 16 地 = 25 非地目标
+        self.assertIn("4/24", " ".join(deck.report))  # 默认 40 张 - 16 地 = 24 非地目标
         self.assertFalse(deck.valid)
+
+    def test_nonbasic_land_occupies_land_slot(self):
+        pool = [
+            card("Green Bear", "G", 2, grade="B", count=25, cost="{1}{G}"),
+            card("Goblin-town", [], 0, grade="C", cost="",
+                 type_line="Land", color_identity=["B", "R"]),
+            card("Offcolor Utility", [], 0, grade="B", cost="",
+                 type_line="Land", color_identity=["U"]),
+        ]
+        deck = LS.build_limited_deck(pool, CardTable(pool), forced_colors=["G"])
+        self.assertFalse(deck.nonbasic_lands)
+        self.assertNotIn("Goblin-town", [item.card["name"] for item in deck.main])
+        side_names = [item.card["name"] for item in deck.sideboard]
+        self.assertIn("Goblin-town", side_names)
+        self.assertIn("Offcolor Utility", side_names)
+
+    def test_fitting_nonbasic_land_takes_land_slot(self):
+        pool = [
+            card("Black Bear", "B", 2, grade="B", count=25, cost="{1}{B}"),
+            card("Goblin-town", [], 0, grade="C", cost="",
+                 type_line="Land", color_identity=["B", "R"]),
+        ]
+        deck = LS.build_limited_deck(pool, CardTable(pool), forced_colors=["B", "R"])
+        self.assertEqual([item.card["name"] for item in deck.nonbasic_lands],
+                         ["Goblin-town"])
+        total_lands = sum(deck.lands.values()) + sum(
+            item.count for item in deck.nonbasic_lands)
+        self.assertEqual(total_lands, 40 - sum(item.count for item in deck.main))
+        self.assertNotIn("Goblin-town",
+                         [item.card["name"] for item in deck.sideboard])
+        self.assertTrue(deck.valid)
 
 
 if __name__ == "__main__":

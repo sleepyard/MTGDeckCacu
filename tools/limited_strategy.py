@@ -17,7 +17,7 @@ import roles
 COLORS = tuple("WUBRG")
 CURVE_FACTORS = {1.0: 1.0, 0.5: 0.85, 0.1: 0.6}
 STRATEGIES = tuple(deck_core.STRATEGY_TARGETS)
-LIMITED_DECK_SIZE = 41  # 构筑习惯：41 张牌组（约 17 地），非地下限 40 张规则见方法论文档
+LIMITED_DECK_SIZE = 40  # 限制赛下限 40 张（默认约 17 地）
 
 
 @dataclass(frozen=True)
@@ -54,6 +54,7 @@ class LimitedDeck:
     depth_ok: bool
     depth_note: str
     land_check: Tuple[float, float, bool]
+    nonbasic_lands: List[SelectedCard] = field(default_factory=list)
     cuts: List[str] = field(default_factory=list)
     report: List[str] = field(default_factory=list)
     valid: bool = True
@@ -77,6 +78,16 @@ def _is_land(card: Mapping) -> bool:
     type_line = _type_line(card).lower()
     front = type_line.split(" // ", 1)[0]
     return "land" in front
+
+
+def _is_basic(card: Mapping) -> bool:
+    return "basic" in _type_line(card).lower()
+
+
+def _land_playable(card: Mapping, colors: Sequence[str]) -> bool:
+    """非基本地按 color_identity（缺省退化为 colors）判定是否契合主色；无色恒可进。"""
+    identity = {str(value).upper() for value in (card.get("color_identity") or _colors(card))}
+    return not identity or identity.issubset(set(colors))
 
 
 def _is_creature(card: Mapping) -> bool:
@@ -314,9 +325,13 @@ def _select_nonlands(pool: Iterable[Mapping], plan: ColorPlan, table,
     return _group(selected), available, decisions
 
 
-def _sideboard(pool: Iterable[Mapping], main: Sequence[SelectedCard]) -> List[SelectedCard]:
-    remaining = Counter(_name(card) for card in _copies(pool) if not _is_land(card))
+def _sideboard(pool: Iterable[Mapping], main: Sequence[SelectedCard],
+               nonbasic_main: Sequence[SelectedCard] = ()) -> List[SelectedCard]:
+    remaining = Counter(_name(card) for card in _copies(pool)
+                        if not _is_land(card) or not _is_basic(card))
     for selection in main:
+        remaining[_name(selection.card)] -= selection.count
+    for selection in nonbasic_main:
         remaining[_name(selection.card)] -= selection.count
     result = []
     by_name = {_name(card): card for card in _copies(pool)}
@@ -366,10 +381,21 @@ def build_limited_deck(pool: Sequence[Mapping], table=None,
         pip_counts.update(deck_core.parse_mana_pips(
             str(card.get("cost") or card.get("mana_cost") or "")))
     splash_colors = sorted({color for card in splash_cards for color in _colors(card)} - set(plan.colors))
-    lands = deck_core.mana_base(dict(pip_counts), lands_count, splash_colors=splash_colors)
+    fit_colors = set(plan.colors) | set(splash_colors)
+    nonbasic_pool = [card for card in _copies(pool)
+                     if _is_land(card) and not _is_basic(card)
+                     and _land_playable(card, fit_colors)]
+    nonbasic_pool.sort(key=lambda card: (-_score(card, table), _name(card)))
+    # 非基本地占地位自动进主，但至少为每个主色保留 1 张基本地
+    keep = max(0, lands_count - max(1, len(plan.colors)))
+    nonbasic_main = _group(SelectedCard(card, 1, _score(card, table), "非基本地占地位")
+                           for card in nonbasic_pool[:keep])
+    nonbasic_count = sum(selection.count for selection in nonbasic_main)
+    lands = deck_core.mana_base(dict(pip_counts), lands_count - nonbasic_count,
+                                splash_colors=splash_colors)
     curve = dict(Counter(deck_core.cmc_slot(_cmc(card)) for card in main_copies))
     risk = deck_core.land_check(lands_count)
-    sideboard = _sideboard(pool, main)
+    sideboard = _sideboard(pool, main, nonbasic_main)
 
     cuts = []
     if _available:
@@ -388,11 +414,14 @@ def build_limited_deck(pool: Sequence[Mapping], table=None,
         "曲线: " + " ".join(f"{slot}费×{curve.get(slot, 0)}" for slot in range(1, 6))
         + f" → {deck_core.curve_rating(curve)[0]}",
         "法术力: " + (" / ".join(f"{color}{count}" for color, count in sorted(lands.items())) or "无有色 pip"),
+        "非基本地: " + ("、".join(f"{_name(selection.card)} ×{selection.count}"
+                                for selection in nonbasic_main) + "（占地位）"
+                       if nonbasic_main else "无"),
         f"爆地/卡地自检: 第3回合≥2地 {risk[0]:.1%}，第5回合≥4地 {risk[1]:.1%}，"
         f"{'通过' if risk[2] else '未通过'}",
         "淘汰: " + ("；".join(cuts) if cuts else "无"),
     ]
-    total_cards = len(main_copies) + sum(lands.values())
+    total_cards = len(main_copies) + sum(lands.values()) + nonbasic_count
     violations = []
     if len(main_copies) != target_nonlands:
         violations.append(f"牌池不足：非地 {len(main_copies)} 张，目标 {target_nonlands} 张")
@@ -404,6 +433,7 @@ def build_limited_deck(pool: Sequence[Mapping], table=None,
         strategy=strategy,
         splash=[selection for selection in main if selection.reason == "splash 准入"],
         main=main,
+        nonbasic_lands=nonbasic_main,
         lands=lands,
         sideboard=sideboard,
         curve=curve,
