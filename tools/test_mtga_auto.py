@@ -391,6 +391,31 @@ class TestLlmBackend(unittest.TestCase):
                 MAT.llm_chat({"base_url": "https://x", "model": "m",
                               "api_key": "k"}, [])
 
+    def test_llm_chat_response_format_written_into_body(self):
+        payload = json.dumps(
+            {"choices": [{"message": {"content": "{}"}}]}).encode("utf-8")
+        resp = mock.Mock()
+        resp.read.return_value = payload
+        ctx = mock.Mock()
+        ctx.__enter__ = mock.Mock(return_value=resp)
+        ctx.__exit__ = mock.Mock(return_value=False)
+        captured = {}
+
+        def fake_urlopen(req, timeout=None):
+            captured["body"] = json.loads(req.data.decode("utf-8"))
+            return ctx
+
+        cfg = {"base_url": "https://x", "model": "m", "api_key": "k"}
+        with mock.patch.object(MAT.urllib.request, "urlopen",
+                               side_effect=fake_urlopen):
+            MAT.llm_chat(cfg, [])  # 默认不带 response_format（对局建议等不变）
+        self.assertNotIn("response_format", captured["body"])
+        with mock.patch.object(MAT.urllib.request, "urlopen",
+                               side_effect=fake_urlopen):
+            MAT.llm_chat(cfg, [], response_format={"type": "json_object"})
+        self.assertEqual(captured["body"]["response_format"],
+                         {"type": "json_object"})
+
     def test_load_config_env_override(self):
         import tempfile
         with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False,
@@ -722,6 +747,8 @@ class TestDraftWatch(unittest.TestCase):
                                   side_effect=lambda n: ((chinese or {}).get(n), None)),
                 mock.patch.object(MAT, "load_card_table",
                                   return_value=FakeTable()),
+                mock.patch.object(MDT, "load_ratings",
+                                  return_value=(None, None)),  # 17Lands 默认无数据
                 mock.patch.object(MDT, "build_brief",
                                   return_value=("# 简报", ["简报行"]))]
 
@@ -927,6 +954,104 @@ class TestDraftWatch(unittest.TestCase):
         finally:
             for patcher in patchers:
                 patcher.stop()
+
+    @staticmethod
+    def _fake_ratings(by_name):
+        """最小 Ratings 替身：只带 by_name 映射（条目含 gih_wr/alsa）。"""
+        ratings = mock.Mock()
+        ratings.by_name = by_name
+        return ratings
+
+    def test_panel_gih_column_and_meta_rows(self):
+        names = {"1": "Alpha Card", "2": "Beta Card"}
+        cmcs = {"1": 2, "2": 3}
+        table = {"Alpha Card": {"grade": "S", "community_score": 9},
+                 "Beta Card": {"grade": "B", "community_score": 6}}
+        patchers = self._patch_cards(names, cmcs, table)
+        for p in patchers:
+            p.start()
+        ratings = self._fake_ratings(
+            {"Alpha Card": {"gih_wr": 55.8, "alsa": 3.5},
+             "Beta Card": {"gih_wr": None, "alsa": None}})  # 无数据不收
+        try:
+            with mock.patch.object(MDT, "load_ratings",
+                                   return_value=(ratings, 0.5)) as lr:
+                panel = MAT.DraftPickPanel()
+                panel.feed(self._status(DraftPack=["1", "2"]))
+            rows = {row["grp_id"]: row for row in panel.rows}
+            self.assertEqual(rows["1"]["gih_wr"], 55.8)
+            self.assertIsNone(rows["2"]["gih_wr"])
+            lr.assert_called_once_with("HOB", "QuickDraft")  # fmt 从事件名推导
+            page = panel.render_html()
+            self.assertIn("<th>GIH</th>", page)
+            self.assertIn("<td>55.8</td>", page)
+            self.assertIn("<td>-</td>", page)   # 无 GIH 数据显示 -
+            self._assert_html_balanced(page)
+        finally:
+            for p in patchers:
+                p.stop()
+
+    def test_panel_meta_injected_into_advice(self):
+        names = {"1": "Alpha Card", "2": "Beta Card"}
+        cmcs = {"1": 2, "2": 3}
+        table = {"Alpha Card": {"grade": "S"}, "Beta Card": {"grade": "B"}}
+        patchers = self._patch_cards(names, cmcs, table)
+        for p in patchers:
+            p.start()
+        ratings = self._fake_ratings(
+            {"Alpha Card": {"gih_wr": 60.0, "alsa": 2.0},
+             "Beta Card": {"gih_wr": 50.0, "alsa": None}})
+        try:
+            with mock.patch.object(MDT, "load_ratings",
+                                   return_value=(ratings, 0.5)), \
+                    mock.patch.object(MAT.DRAFT_ADVISOR, "recommend_pick",
+                                      return_value=MAT.DRAFT_ADVISOR.AdviceResult(
+                                          (), "ok")) as rec, \
+                    mock.patch.object(MAT, "record_draft_advice"):
+                panel = MAT.DraftPickPanel(llm=True)
+                panel.feed(self._status(DraftPack=["1", "2"]))
+            cards = {c["name"]: c for c in rec.call_args[0][0]}
+            self.assertEqual(cards["Alpha Card"]["alsa"], 2.0)
+            self.assertEqual(cards["Alpha Card"]["gih_wr"], 60.0)
+            # gih_norm：系列 min/max 50/60 线性归一
+            self.assertAlmostEqual(cards["Alpha Card"]["gih_norm"], 1.0)
+            self.assertAlmostEqual(cards["Beta Card"]["gih_norm"], 0.0)
+            self.assertEqual(cards["Beta Card"]["gih_wr"], 50.0)
+            self.assertIsNone(cards["Beta Card"]["alsa"])
+        finally:
+            for p in patchers:
+                p.stop()
+
+    def test_ensure_meta_failure_degrades_without_raising(self):
+        names = {"1": "Alpha Card"}
+        patchers = self._patch_cards(names, {"1": 2},
+                                     {"Alpha Card": {"grade": "B"}})
+        for p in patchers:
+            p.start()
+        try:
+            with mock.patch.object(MDT, "load_ratings",
+                                   side_effect=Exception("无网")):
+                panel = MAT.DraftPickPanel()
+                panel.feed(self._status(DraftPack=["1"]))
+            self.assertIsNone(panel.rows[0]["gih_wr"])     # 降级为空映射
+            self.assertIn("<th>GIH</th>", panel.render_html())  # 渲染不抛
+            with mock.patch.object(MDT, "load_ratings") as lr:
+                panel.feed(self._status(PickNumber=1, DraftPack=["1"]))
+            lr.assert_not_called()  # 失败结果按 (set, fmt) 缓存，不反复打网络
+        finally:
+            for p in patchers:
+                p.stop()
+
+    def test_llm_request_forces_json_object_mode(self):
+        """面板 pick 推荐必须透传 response_format=json_object（防空体/散文解析失败）。"""
+        with mock.patch.object(MAT, "load_llm_config",
+                               return_value={"api_key": "k"}), \
+                mock.patch.object(MAT, "llm_chat",
+                                  return_value='{"picks": []}') as chat:
+            panel = MAT.DraftPickPanel(llm=True)
+            panel._llm_request("prompt")
+        self.assertEqual(chat.call_args[1].get("response_format"),
+                         {"type": "json_object"})
 
     def test_brief_hook_fires_once_on_set_resolution(self):
         import io

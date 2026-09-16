@@ -213,8 +213,8 @@ python tools/mtga_auto_tool.py draft --watch [--set HOB] [--port 8643]
 - `advise` 对局结束自动检测：增量载荷出现 finalMatchResult 即播报比分胜负并自动执行 scan+opponent+replay+risk 回收（启动追平的历史载荷不触发，避免重复回收）。
 - `advise --llm` 口径：局面快照由日志精确重建（双方战场/堆叠/坟墓场、我方手牌逐牌附费用+类型+oracle 文本、生命、回合阶段、我方未横置地数与本回合是否已下地、**服务器判定的当前合法动作列表**（actionsAvailableReq，含结构化费用，施放/下地/异能/历险施放——LLM 建议只允许从中选择，费用幻觉的事实锚点；Activate_Mana/FloatMana 噪音已过滤）），oracle 文本走 Scryfall 磁盘缓存、战场牌截断 800 字符（截太短会切掉关键异能——The Great Henge 抓牌触发器、Hunter's Talent 三级抓牌条款两次实测踩坑）；历险/MDFC 子物件（带 parentId 的影子物件）一律排除，不污染战场与手牌计数；grpId 未解析的物件按 superTypes/cardTypes/subtypes 降级渲染（如"未解析 Basic Land Forest #100131"），禁止 LLM 安牌名。**对手手牌只报张数并显式标注"身份未知，禁止假设具体牌"**——服务器未下发的信息模型无从得知，prompt 层强制防脑补。LLM 建议连同完整快照落盘 `tools/auto/llm_advice.jsonl`（含 prompt 字段，供赛后诊断 AI 到底"看到"了什么）。LLM 配置 `tools/llm_config.json`（OpenAI 兼容端点，默认 DeepSeek `deepseek-chat`，可改 `deepseek-reasoner` 换推理强度换延迟；`api_key` 可用环境变量 `DEEPSEEK_API_KEY` 覆盖；该文件已被 .gitignore 排除，**不得提交**）。
 - Windows 控制台中文输出需 `PYTHONIOENCODING=utf-8`（同既有工具坑位）。
-- 轮抓 `draft --watch` 面板口径：启动先回扫日志最后 200KB 恢复当前包状态，抓不到就等下一条；每条 BotDraftDraftStatus 响应更新包号/抓号/当前包/已抓池并在控制台打印 `[draft] P<包>Pick<抓> 包内 N 张 | 已抓 M 张`；排名主键字母等级（S→F，mtga_draft_tool 预生成评分表）、次键社区分，curve_fit（deck_core）作第三参考提示（补 N 费缺口/N 费已溢出）；未评级牌显示 `?` 排最后，grpId 解析失败显示 `<grpId N>`，均不丢牌；DraftStatus 非 PickNext（如 Complete/Completed）时面板只显示对应状态。LLM 推荐状态为 offline 时（单次失败即锁定，下一抓自动重试），可点面板"重试推荐"按钮（POST `/api/advice/retry`）立即重推当前包。
-- 回归测试：`python tools/test_mtga_auto.py`（52 例，覆盖增量读取/截断、分块 JSON 提取、状态跟踪（含 Bo3 局级隔离/deckMessage 牌表事实源/主阶段 step 清理）、调度口径、快照渲染、LLM 客户端与配置加载、watch/run/draft 录样与 pick 面板状态机（字符串化 Payload 解析/pack-pick 推进/排名渲染）；网络与子进程全部 mock，不触真实 MTGA/LLM）。
+- 轮抓 `draft --watch` 面板口径：启动先回扫日志最后 200KB 恢复当前包状态，抓不到就等下一条；每条 BotDraftDraftStatus 响应更新包号/抓号/当前包/已抓池并在控制台打印 `[draft] P<包>Pick<抓> 包内 N 张 | 已抓 M 张`；排名主键字母等级（S→F，mtga_draft_tool 预生成评分表）、次键社区分，curve_fit（deck_core）作第三参考提示（补 N 费缺口/N 费已溢出）；未评级牌显示 `?` 排最后，grpId 解析失败显示 `<grpId N>`，均不丢牌；DraftStatus 非 PickNext（如 Complete/Completed）时面板只显示对应状态。17Lands 数据（`load_ratings`，Quick/Premier 按 EventName 推导）已进入推荐：signal 轴按真实 ALSA 判定颜色开放（无 ALSA 时降级为本包高等级牌计数快照），LLM 离线 raw_power 锚点按 0.6 等级 + 0.4 GIH 归一化（deck_core.gih_anchor，按系列非空 GIH WR 的 min/max 线性归一到 0..1）混合，LLM prompt 行附 `gih_wr_pct` 百分比，面板两套表在"社区分"后加 GIH 列（无数据显示 `-`）；17Lands 不可用（无网/无缓存/无系列码）时锚点退回纯等级、signal 轴退回等级锚点、GIH 列全 `-`，只告警不阻断轮抓。推荐为九轴 WASPAS（新增确定性 color_fit 主色契合轴：已抓有色 ≥5 张后，牌色 ⊆ 计数前二主色 1.0 / 有交集 0.5 / 完全脱色 0.15 / 无色 0.6 / 方向未明 0.5；权重见 draft_methodology.md §2），离线理由附「贴合主色/脱离主色」。pick 推荐 prompt 已瘦身（oracle_text 截 300 字符、已抓牌池改摘要 JSON：colors/curve/key_cards 封顶 10，并要求脱色牌 synergy ≤0.3），调用强制 `response_format=json_object`（`parse_llm_scores` 兼容裸数组与 {"picks": [...]} 两种顶层形态，防 2026-09 实测的空体解析失败）。LLM 推荐状态为 offline 时（单次失败即锁定，下一抓自动重试），可点面板"重试推荐"按钮（POST `/api/advice/retry`）立即重推当前包。
+- 回归测试：`python tools/test_mtga_auto.py`（63 例，覆盖增量读取/截断、分块 JSON 提取、状态跟踪（含 Bo3 局级隔离/deckMessage 牌表事实源/主阶段 step 清理）、调度口径、快照渲染、LLM 客户端与配置加载（含 response_format 透传）、watch/run/draft 录样与 pick 面板状态机（字符串化 Payload 解析/pack-pick 推进/排名渲染/17Lands GIH-ALSA 注入与失败降级/json_object 强制）；网络与子进程全部 mock，不触真实 MTGA/LLM）。
 
 ## 退出码
 
@@ -241,10 +241,10 @@ python tools/mtga_draft_tool.py ratings --set FDN [--format QuickDraft] [--refre
 - 评分表口径：字母等级 S/A/A-/B+/B/B-/C+/C/C-/D/F + ≤40 字中文短评 + 社区分（Draftsim 0-10，有则附）；输入 = Scryfall 集合 JSON（自动找 `SetReview/<SET>_*/data/scryfall_*.json`）+ 社区评分明细（`tools/cache/draft_ratings/<SET>_draftsim.json`）+ 系列环境摘要；分批（25 张/批）调 LLM，逐批落盘 `tools/cache/draft_ratings/<SET>.json`，中断重跑自动续评；LLM 漏评的牌给占位，`--refresh` 重评。
 - 数据时效注记：17Lands `card_ratings` 公共端点与 S3 公开桶均已关闭（2026-08 实测 NEO/BLB/ECL 等历史系列也全 0），本地预生成表是当前唯一锚点源。
 - 回归测试：`python tools/test_mtga_draft.py`（10 例，Ratings/缓存降级/评分表生成与合并，网络与 LLM 全 mock）。
-- 设计先验：`tools/draft_methodology.md`（评分公式 / 8 轴 WASPAS pick 内核 / 信号读取 / 组牌骨架数字，沉淀自旧项目 MTGCacu 限制赛代码与教学笔记）。
-- 纯函数内核：`tools/deck_core.py`——WASPAS 八轴综合（机器轴：曲线契合/颜色开放度/信号/调色/去除/稀有度；LLM 只出 RawPower/Synergy）、信号读取（ALSA 顺位比较，无 ALSA 降级为高等级牌计数）、组牌骨架（动态地数/曲线评级/颜色深度/splash 准入/法术力配比/爆地卡地自检）。无 I/O，回归 `python tools/test_draft_core.py`。
+- 设计先验：`tools/draft_methodology.md`（评分公式 / 9 轴 WASPAS pick 内核 / 信号读取 / 组牌骨架数字，沉淀自旧项目 MTGCacu 限制赛代码与教学笔记）。
+- 纯函数内核：`tools/deck_core.py`——WASPAS 九轴综合（机器轴：曲线契合/主色契合/颜色开放度/信号/调色/去除/稀有度；LLM 只出 RawPower/Synergy）、信号读取（ALSA 顺位比较，无 ALSA 降级为高等级牌计数）、组牌骨架（动态地数/曲线评级/颜色深度/splash 准入/法术力配比/爆地卡地自检）。无 I/O，回归 `python tools/test_draft_core.py`。
 - 限制赛策略：`tools/limited_strategy.py` 负责颜色方案、splash、曲线感知选牌、动态地数与报告数据；`tools/roles.py` 负责九根角色标签和 AI 标签五折合并，均无 I/O。
-- 轮抓推荐：`tools/draft_advisor.py` 负责机器六轴与 LLM 两轴，`deck_pooper.py draft` 只转发到 `mtga_auto_tool.py`，LLM 失败时显式显示 offline 并保留机器排名。
+- 轮抓推荐：`tools/draft_advisor.py` 负责机器七轴与 LLM 两轴，`deck_pooper.py draft` 只转发到 `mtga_auto_tool.py`，LLM 失败时显式显示 offline 并保留机器排名。
 - 构筑赛策略：`tools/constructed_strategy.py` 按 M1-M9 模块配额保留种子并补位，支持普通 60/15 与 Brawl 1+99；候选缺少目标赛制合法性时门禁失败。
 
 # tools/mtga_db_tool.py

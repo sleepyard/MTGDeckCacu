@@ -23,12 +23,21 @@ def grade_eq(grade):
     return GRADE_EQ.get((grade or "").strip(), 0.525)
 
 
-# ---------------------------------------------------------------- 八轴 WASPAS
+def gih_anchor(wr, lo, hi):
+    """17Lands GIH WR 线性归一化到 0..1（clamp）；lo==hi 无区分度时返回 0.5。
+    0-1 小数与百分比同型适用（lo/hi 取自同一批数据，量纲相约）。"""
+    if lo == hi:
+        return 0.5
+    return max(0.0, min(1.0, (wr - lo) / (hi - lo)))
+
+
+# ---------------------------------------------------------------- 九轴 WASPAS
 AXES = {
-    "raw_power": 0.25,
-    "synergy": 0.20,
+    "raw_power": 0.20,
+    "synergy": 0.15,
     "curve_fit": 0.15,
-    "color_openness": 0.15,
+    "color_fit": 0.15,
+    "color_openness": 0.10,
     "signal": 0.10,
     "fixer": 0.05,
     "removal": 0.05,
@@ -151,6 +160,31 @@ def color_openness_score(signals, card_colors):
         return 0.5
     values = [signals.get(color, 0.0) for color in card_colors]
     return (sum(values) / len(values) + 1.0) / 2.0
+
+
+COLOR_FIT_MAIN_COLORS = 2       # 主色取已抓颜色计数前二
+_COLOR_FIT_NEUTRAL_PICKS = 5    # 已抓有色计数低于此值视为方向未明
+
+
+def color_fit_score(card_colors, picked_color_counts):
+    """候选牌与已抓牌池主色的契合度（0..1，确定性轴，不依赖 LLM 纪律）。
+
+    已抓有色计数（双色牌双色各计一次，近似牌数）少于 5 → 0.5（方向未明，中性）；
+    无色牌 → 0.6；牌色 ⊆ 主色 → 1.0；与主色有交集但不全含 → 0.5；
+    完全脱色 → 0.15。主色并列时按 WUBRG 序取前者，保证确定性。"""
+    if sum(picked_color_counts.get(c, 0) for c in "WUBRG") < _COLOR_FIT_NEUTRAL_PICKS:
+        return 0.5
+    if not card_colors:
+        return 0.6
+    ranked = sorted("WUBRG", key=lambda c: (-picked_color_counts.get(c, 0),
+                                            "WUBRG".index(c)))
+    main = set(ranked[:COLOR_FIT_MAIN_COLORS])
+    colors = set(card_colors)
+    if colors <= main:
+        return 1.0
+    if colors & main:
+        return 0.5
+    return 0.15
 
 
 # ---------------------------------------------------------------- 组牌骨架

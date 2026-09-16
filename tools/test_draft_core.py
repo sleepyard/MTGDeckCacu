@@ -22,6 +22,53 @@ class TestGradeEq(unittest.TestCase):
         self.assertEqual(DC.grade_eq("X"), 0.525)
 
 
+class TestGihAnchor(unittest.TestCase):
+    def test_linear_mapping(self):
+        self.assertAlmostEqual(DC.gih_anchor(0.5, 0.4, 0.6), 0.5)  # 区间中点 → 0.5
+        self.assertAlmostEqual(DC.gih_anchor(0.6, 0.4, 0.6), 1.0)
+        self.assertAlmostEqual(DC.gih_anchor(0.4, 0.4, 0.6), 0.0)
+
+    def test_clamp_out_of_range(self):
+        self.assertEqual(DC.gih_anchor(0.9, 0.4, 0.6), 1.0)
+        self.assertEqual(DC.gih_anchor(0.1, 0.4, 0.6), 0.0)
+
+    def test_degenerate_range_returns_half(self):
+        self.assertEqual(DC.gih_anchor(0.55, 0.55, 0.55), 0.5)  # lo==hi 无区分度
+
+    def test_percentage_scale_equivalent(self):
+        # 百分比量纲与 0-1 小数同型（lo/hi 同批数据，量纲相约）
+        self.assertAlmostEqual(DC.gih_anchor(55.0, 40.0, 60.0),
+                               DC.gih_anchor(0.55, 0.40, 0.60))
+
+
+class TestColorFit(unittest.TestCase):
+    def test_neutral_before_five_colored_picks(self):
+        self.assertEqual(DC.color_fit_score(["G"], {"G": 2, "U": 2}), 0.5)
+        self.assertEqual(DC.color_fit_score(["R"], {}), 0.5)
+
+    def test_subset_of_main_colors(self):
+        counts = {"G": 4, "U": 3}
+        self.assertEqual(DC.color_fit_score(["G"], counts), 1.0)
+        self.assertEqual(DC.color_fit_score(["G", "U"], counts), 1.0)
+
+    def test_partial_overlap(self):
+        self.assertEqual(DC.color_fit_score(["G", "R"], {"G": 4, "U": 3}), 0.5)
+
+    def test_off_color(self):
+        self.assertEqual(DC.color_fit_score(["R"], {"G": 4, "U": 3}), 0.15)
+        self.assertEqual(DC.color_fit_score(["R", "B"], {"G": 4, "U": 3}), 0.15)
+
+    def test_colorless(self):
+        self.assertEqual(DC.color_fit_score([], {"G": 4, "U": 3}), 0.6)
+
+    def test_tie_break_wubrg_order(self):
+        # G/U/B 并列 3：主色取 WUBRG 序前二（U、B），G 让位 → 脱色
+        counts = {"G": 3, "U": 3, "B": 3}
+        self.assertEqual(DC.color_fit_score(["U"], counts), 1.0)
+        self.assertEqual(DC.color_fit_score(["B"], counts), 1.0)
+        self.assertEqual(DC.color_fit_score(["G"], counts), 0.15)
+
+
 class TestWaspas(unittest.TestCase):
     def test_weights_sum_to_one(self):
         self.assertAlmostEqual(sum(DC.AXES.values()), 1.0)

@@ -261,6 +261,32 @@ def resolve_arena_card(arena_id):
         return None
 
 
+def _ci_get(obj, key):
+    """大小写不敏感的字典取值；obj 不是 dict 或没有该键返回 None。"""
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if isinstance(k, str) and k.lower() == key.lower():
+                return v
+    return None
+
+
+def _iter_course_decks(payload, depth=0):
+    """产出 (事件名, courseDeck dict)。实测日志键为大写驼峰
+    （CourseDeck/MainDeck/Sideboard，事件名在父对象 InternalEventName），
+    全部走大小写不敏感取值。"""
+    if depth > 12:
+        return
+    if isinstance(payload, dict):
+        course = _ci_get(payload, "courseDeck")
+        if isinstance(course, dict) and _ci_get(course, "mainDeck"):
+            yield _ci_get(payload, "internalEventName") or "unnamed", course
+        for value in payload.values():
+            yield from _iter_course_decks(value, depth + 1)
+    elif isinstance(payload, list):
+        for value in payload:
+            yield from _iter_course_decks(value, depth + 1)
+
+
 def cmd_decks(args):
     path = args.log
     if not Path(path).is_file():
@@ -268,11 +294,8 @@ def cmd_decks(args):
         return 2
     decks = {}
     for payload, _lineno, ts in iter_json_payloads(path):
-        course = find_key(payload, "courseDeck")
-        if not isinstance(course, dict) or not course.get("mainDeck"):
-            continue
-        name = course.get("name") or "unnamed"
-        decks[name] = course
+        for name, course in _iter_course_decks(payload):
+            decks[name] = course
     if not decks:
         print("日志中未找到提交牌表（CourseDeck）", file=sys.stderr)
         return 0
@@ -281,7 +304,8 @@ def cmd_decks(args):
     for name, course in decks.items():
         lines, sb_lines = [], []
         for target, entries in (("main", lines), ("sideboard", sb_lines)):
-            for entry in course.get("mainDeck" if target == "main" else "sideboard") or []:
+            for entry in _ci_get(course, "mainDeck" if target == "main"
+                                 else "sideboard") or []:
                 card_name = resolve_arena_card(entry.get("cardId"))
                 if card_name is None:
                     unresolved += 1

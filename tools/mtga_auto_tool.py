@@ -36,7 +36,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from mtg_tool import MtgToolError, fetch_chinese_name, parse_deckfile, scryfall_get  # noqa: E402
 import mtga_log_tool as MLT  # noqa: E402
 import deck_core  # noqa: E402  纯函数内核（无 I/O、无反向依赖，可顶层导入）
-import draft_advisor as DRAFT_ADVISOR  # noqa: E402  轮抓八轴推荐（纯函数）
+import draft_advisor as DRAFT_ADVISOR  # noqa: E402  轮抓九轴推荐（纯函数）
 
 LOG_TOOL = Path(__file__).resolve().parent / "mtga_log_tool.py"
 DEFAULT_LOG = MLT.DEFAULT_LOG
@@ -633,11 +633,14 @@ def save_llm_config(base_url, model, api_key=None, path=None):
     return llm_config_status(config_path)
 
 
-def llm_chat(cfg, messages, timeout=60):
-    """OpenAI 兼容 /chat/completions 调用；失败抛 AutoToolError。"""
+def llm_chat(cfg, messages, timeout=60, response_format=None):
+    """OpenAI 兼容 /chat/completions 调用；失败抛 AutoToolError。
+    response_format（如 {"type": "json_object"}）非 None 时写入请求体。"""
     url = cfg["base_url"].rstrip("/") + "/chat/completions"
-    body = json.dumps({"model": cfg["model"], "messages": messages,
-                       "temperature": 0.2}).encode("utf-8")
+    payload = {"model": cfg["model"], "messages": messages, "temperature": 0.2}
+    if response_format is not None:
+        payload["response_format"] = response_format
+    body = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(url, data=body, headers={
         "Content-Type": "application/json",
         "Authorization": f"Bearer {cfg['api_key']}",
@@ -1465,6 +1468,8 @@ class DraftPickPanel:
         self.picked_curve = {}   # 已抓曲线：slot → 张数
         self._table = None
         self._table_loaded = False
+        self._meta = {"gih_wr": {}, "gih_norm": {}, "alsa": {}}  # 17Lands 锚点
+        self._meta_key = None    # 已加载的 (set_code, fmt)
         self._info_cache = {}    # grpId → name/cn/确定性卡牌元数据
         self._signals = {}
         self._signal_key = None
@@ -1514,6 +1519,45 @@ class DraftPickPanel:
             self._table_loaded = True
         return self._table
 
+    def _ensure_meta(self):
+        """17Lands 锚点（GIH WR/ALSA）惰性加载，按 (set_code, fmt) 缓存——
+        set_code 由日志 EventName 后补解析时键变化自动重载。任何失败
+        （无网/无缓存/无 set_code）降级为空映射并缓存，绝不抛出。"""
+        fmt = "QuickDraft" if "QuickDraft" in (self.event_name or "") \
+            else "PremierDraft"
+        key = (self.set_code, fmt)
+        if key == self._meta_key:
+            return self._meta
+        meta = {"gih_wr": {}, "gih_norm": {}, "alsa": {}}
+        try:
+            if self.set_code:
+                import mtga_draft_tool as MDT  # 同 load_card_table 的循环导入规避
+                ratings, _age = MDT.load_ratings(self.set_code, fmt)
+                by_name = ratings.by_name if ratings else {}
+                wrs = [entry["gih_wr"] for entry in by_name.values()
+                       if entry.get("gih_wr") is not None]
+                lo, hi = (min(wrs), max(wrs)) if wrs else (0.0, 0.0)
+                for name, entry in by_name.items():
+                    wr = entry.get("gih_wr")
+                    if wr is not None:
+                        meta["gih_wr"][name] = wr
+                        meta["gih_norm"][name] = deck_core.gih_anchor(wr, lo, hi)
+                    if entry.get("alsa") is not None:
+                        meta["alsa"][name] = entry["alsa"]
+        except Exception as exc:
+            print(f"[draft] 17Lands 锚点不可用: {exc}", file=sys.stderr)
+            meta = {"gih_wr": {}, "gih_norm": {}, "alsa": {}}
+        self._meta = meta
+        self._meta_key = key
+        return meta
+
+    def _meta_for(self, name):
+        """牌名 → (gih_wr 百分比, gih_norm, alsa)；查不到全 None。"""
+        meta = self._ensure_meta()
+        key = (name or "").split(" // ")[0]  # 双面/历险牌按主面名对齐
+        return (meta["gih_wr"].get(key), meta["gih_norm"].get(key),
+                meta["alsa"].get(key))
+
     def _card_info(self, grp_id):
         """grpId → {name, cn, cmc}（进程内缓存；name 走 grp 磁盘缓存，
         cn/cmc 走 HTTP 磁盘缓存；解析失败给 None，渲染降级 <grpId N>）。"""
@@ -1552,7 +1596,9 @@ class DraftPickPanel:
 
     def _llm_request(self, prompt):
         cfg = load_llm_config(self.llm_config_path)
-        return llm_chat(cfg, [{"role": "user", "content": prompt}], timeout=60)
+        # 强制 json_object 模式：防止空体/散文响应导致的解析失败（实测踩坑）
+        return llm_chat(cfg, [{"role": "user", "content": prompt}], timeout=60,
+                        response_format={"type": "json_object"})
 
     def update_llm_config(self, values):
         if not isinstance(values, dict):
@@ -1601,7 +1647,7 @@ class DraftPickPanel:
             }
 
     def _apply_advice(self, rows, counts, table):
-        """在显式 --llm 时生成一次当前 pick 的八轴推荐并重排可解析牌。"""
+        """在显式 --llm 时生成一次当前 pick 的九轴推荐并重排可解析牌。"""
         if not self.llm_enabled:
             return rows
         state_key = (self.pack_number, self.pick_number, tuple(self.pack))
@@ -1615,10 +1661,14 @@ class DraftPickPanel:
                 info = self._info_cache.get(row["grp_id"], {})
                 if not info.get("name"):
                     continue
+                gih_wr, gih_norm, alsa = self._meta_for(info["name"])
                 card = dict(info)
                 card.update({"name": info["name"], "grade": row["grade"],
                              "community_score": row["score"], "note": row["note"],
-                             "grp_id": row["grp_id"]})
+                             "grp_id": row["grp_id"], "alsa": alsa,
+                             "gih_norm": gih_norm})
+                if gih_wr is not None:
+                    card["gih_wr"] = gih_wr  # 百分比浮点，build_prompt 展示用
                 cards.append(card)
             if not cards:
                 self.advice_status = "offline"
@@ -1629,7 +1679,8 @@ class DraftPickPanel:
 
             if state_key != self._signal_key:
                 signal_cards = [{"colors": card.get("colors") or [],
-                                 "grade": card.get("grade") or ""}
+                                 "grade": card.get("grade") or "",
+                                 "alsa": card.get("alsa")}
                                 for card in cards]
                 deck_core.update_signals(self._signals, signal_cards,
                                          self.pick_number + 1)
@@ -1691,8 +1742,10 @@ class DraftPickPanel:
                     hint = f"补{label}缺口"
                 elif fit <= 0.1:
                     hint = f"{label}已溢出"
+            gih_wr = self._meta_for(info["name"])[0]
             rows.append({"grp_id": gid, "label": self._card_label(gid, info),
                          "grade": grade, "score": entry.get("community_score"),
+                         "gih_wr": round(gih_wr, 1) if gih_wr is not None else None,
                          "note": entry.get("note") or "", "hint": hint})
         if self.llm_enabled and self.status == "PickNext":
             rows = self._apply_advice(rows, counts, table)
@@ -1749,25 +1802,28 @@ class DraftPickPanel:
                                  "<button id=\"advice-retry\" type=\"button\">重试推荐</button>"
                                  "<span id=\"retry-result\"></span></p>")
                     parts.append("<table><tr><th>#</th><th>等级</th><th>牌名</th>"
-                                 "<th>社区分</th><th>综合</th><th>曲线</th>"
+                                 "<th>社区分</th><th>GIH</th><th>综合</th><th>曲线</th>"
                                  "<th>推荐理由</th><th>短评</th></tr>")
                 else:
                     parts.append("<table><tr><th>#</th><th>等级</th><th>牌名</th>"
-                                 "<th>社区分</th><th>曲线</th><th>短评</th></tr>")
+                                 "<th>社区分</th><th>GIH</th><th>曲线</th><th>短评</th></tr>")
                 for i, r in enumerate(self.rows, 1):
                     score = "-" if r["score"] is None else esc(str(r["score"]))
+                    gih = ("-" if r.get("gih_wr") is None else
+                           esc(f"{r['gih_wr']:.1f}"))
                     if self.llm_enabled:
                         total = ("-" if r["recommendation_score"] is None else
                                  esc(f"{r['recommendation_score']:.3f}"))
                         parts.append(
                             f"<tr><td>{i}</td><td class=\"g\">{esc(r['grade'] or '?')}</td>"
-                            f"<td>{esc(r['label'])}</td><td>{score}</td><td>{total}</td>"
+                            f"<td>{esc(r['label'])}</td><td>{score}</td><td>{gih}</td>"
+                            f"<td>{total}</td>"
                             f"<td>{esc(r['hint'])}</td><td>{esc(r['advice_reason'])}</td>"
                             f"<td>{esc(r['note'])}</td></tr>")
                     else:
                         parts.append(
                             f"<tr><td>{i}</td><td class=\"g\">{esc(r['grade'] or '?')}</td>"
-                            f"<td>{esc(r['label'])}</td><td>{score}</td>"
+                            f"<td>{esc(r['label'])}</td><td>{score}</td><td>{gih}</td>"
                             f"<td>{esc(r['hint'])}</td><td>{esc(r['note'])}</td></tr>")
                 parts.append("</table>")
             total = sum(len(v) for v in self.picked_grades.values())
@@ -2043,7 +2099,7 @@ def build_parser():
     pd_.add_argument("--set", metavar="CODE",
                      help="--watch：系列码覆盖（缺省从 EventName QuickDraft_<CODE>_ 解析）")
     pd_.add_argument("--llm", action="store_true",
-                     help="--watch：启用八轴 LLM pick 推荐（失败时显示离线并保留机器排名）")
+                     help="--watch：启用九轴 LLM pick 推荐（失败时显示离线并保留机器排名）")
     pd_.add_argument("--llm-config", metavar="PATH",
                      help="--watch：LLM 端点配置 JSON 路径（默认 tools/llm_config.json）")
     pd_.add_argument("--port", type=int, default=DRAFT_PANEL_PORT,
