@@ -196,7 +196,7 @@ def parse_sim_output(text, deck_names):
 def cmd_sim(args):
     try:
         java = find_java()
-        jar = Path(args.jar) if args.jar else find_forge_jar()
+        jar = Path(args.jar).resolve() if args.jar else find_forge_jar()
         if not jar.is_file():
             raise ForgeToolError(f"Forge 主 jar 不存在: {jar}")
     except ForgeToolError as exc:
@@ -236,7 +236,8 @@ def cmd_sim(args):
     print(f"[info] 执行: {' '.join(cmd)}", file=sys.stderr)
     started = time.strftime("%Y-%m-%d %H:%M:%S")
     try:
-        proc = subprocess.run(cmd, cwd=args.cwd, capture_output=True, timeout=None)
+        proc = subprocess.run(cmd, cwd=str(Path(args.cwd).resolve()),
+                              capture_output=True, timeout=None)
         output = proc.stdout.decode("utf-8", errors="replace") \
             + "\n--- stderr ---\n" + proc.stderr.decode("utf-8", errors="replace")
     except OSError as exc:
