@@ -1151,5 +1151,53 @@ class TestDraftWatch(unittest.TestCase):
             shutil.rmtree(tmp, ignore_errors=True)
 
 
+class TestCardOracleOffline(unittest.TestCase):
+    """card_oracle(allow_network=False)：pilot 实时路径禁网络，缓存未命中立即回退。"""
+
+    def setUp(self):
+        MAT._oracle_mem.clear()
+
+    def tearDown(self):
+        MAT._oracle_mem.clear()
+
+    def test_offline_miss_falls_back_locally(self):
+        calls = []
+
+        def fake_scryfall(path, params=None, offline=False):
+            calls.append(offline)
+            if offline:
+                from mtg_tool import HttpError
+                raise HttpError("offline 模式缓存未命中")
+            return {"name": "ShouldNotReach", "type_line": "Creature"}
+
+        with mock.patch.object(MAT, "scryfall_get", side_effect=fake_scryfall), \
+             mock.patch.object(MAT.MLT, "resolve_grp_card", return_value="LocalName"):
+            info = MAT.card_oracle(999998, allow_network=False)
+        self.assertEqual(calls, [True])          # 以 offline=True 打到缓存层
+        self.assertEqual(info["name"], "LocalName")   # 本地 MTGA 卡库回退
+        self.assertEqual(info["oracle_text"], "")
+
+    def test_offline_hit_returns_full_info(self):
+        def fake_scryfall(path, params=None, offline=False):
+            return {"name": "Cached Bear", "mana_cost": "{1}{G}",
+                    "type_line": "Creature — Bear", "oracle_text": "Trample"}
+
+        with mock.patch.object(MAT, "scryfall_get", side_effect=fake_scryfall):
+            info = MAT.card_oracle(999997, allow_network=False)
+        self.assertEqual(info["name"], "Cached Bear")
+        self.assertEqual(info["oracle_text"], "Trample")
+
+    def test_network_allowed_by_default(self):
+        calls = []
+
+        def fake_scryfall(path, params=None, offline=False):
+            calls.append(offline)
+            return {"name": "X", "type_line": "Creature"}
+
+        with mock.patch.object(MAT, "scryfall_get", side_effect=fake_scryfall):
+            MAT.card_oracle(999996)
+        self.assertEqual(calls, [False])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

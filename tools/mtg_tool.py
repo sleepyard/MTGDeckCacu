@@ -99,17 +99,22 @@ def _is_retryable(status):
     return status == 429 or status >= 500
 
 
-def http_get_json(url, service, params=None, use_cache=True, timeout=30):
+def http_get_json(url, service, params=None, use_cache=True, timeout=30,
+                  offline=False):
     """GET JSON：缓存 -> 节流 -> UA 请求 -> 429/5xx 指数退避重试。
 
     返回 (http_status, payload)。2xx/4xx 确定性响应（含 404）会被缓存；
-    429/5xx 最终失败不缓存（避免旧失败永久命中）。"""
+    429/5xx 最终失败不缓存（避免旧失败永久命中）。
+    offline=True 时只读磁盘缓存，未命中直接抛 HttpError（pilot 等实时
+    循环用——一张未缓存的牌不能阻塞 31s 重试）。"""
     params = params or {}
     cpath = _cache_path(service, "GET", url, params)
     if use_cache and os.path.exists(cpath):
         with open(cpath, "r", encoding="utf-8") as fh:
             entry = json.load(fh)
         return entry["http_status"], entry["payload"]
+    if offline:
+        raise HttpError(f"offline 模式缓存未命中: {url}")
 
     full_url = url + ("?" + urllib.parse.urlencode(params) if params else "")
     attempt = 0
@@ -176,9 +181,11 @@ def http_get_json(url, service, params=None, use_cache=True, timeout=30):
 
 
 # ---------------------------------------------------------------- Scryfall 辅助
-def scryfall_get(path, params=None, use_cache=True):
-    """Scryfall GET；4xx error 对象抛 QuerySyntaxError，其余 4xx/5xx 抛 HttpError。"""
-    status, payload = http_get_json(SCRYFALL_BASE + path, "scryfall", params, use_cache)
+def scryfall_get(path, params=None, use_cache=True, offline=False):
+    """Scryfall GET；4xx error 对象抛 QuerySyntaxError，其余 4xx/5xx 抛 HttpError。
+    offline=True 只读磁盘缓存（透传 http_get_json）。"""
+    status, payload = http_get_json(SCRYFALL_BASE + path, "scryfall", params,
+                                    use_cache, offline=offline)
     if status >= 400:
         if isinstance(payload, dict) and payload.get("object") == "error":
             raise QuerySyntaxError(

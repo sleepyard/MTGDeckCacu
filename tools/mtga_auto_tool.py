@@ -304,16 +304,18 @@ class LiveGameTracker:
 _oracle_mem = {}
 
 
-def card_oracle(grp_id):
+def card_oracle(grp_id, allow_network=True):
     """grpId → {"name","mana_cost","type_line","oracle_text"}（MDFC 拼接双面）。
-    走 mtg_tool 的 Scryfall HTTP 磁盘缓存，重复查询零网络成本；失败回退只有牌名。"""
+    走 mtg_tool 的 Scryfall HTTP 磁盘缓存，重复查询零网络成本；失败回退只有牌名。
+    allow_network=False 时只读磁盘缓存（pilot 实时循环用：未缓存牌立即回退，
+    不在战斗决策路径上阻塞网络重试）。"""
     if grp_id is None:
         return None
     if grp_id in _oracle_mem:
         return _oracle_mem[grp_id]
     info = None
     try:
-        card = scryfall_get(f"/cards/arena/{grp_id}")
+        card = scryfall_get(f"/cards/arena/{grp_id}", offline=not allow_network)
         if card.get("card_faces"):
             faces = card["card_faces"]
             info = {
