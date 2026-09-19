@@ -9,6 +9,7 @@
 """
 
 import argparse
+import json
 import os
 import re
 import shutil
@@ -25,6 +26,12 @@ REPO_ROOT = TOOLS_DIR.parent
 FORGE_DIR = TOOLS_DIR / "forge"
 SIMDECKS_DIR = FORGE_DIR / "simdecks"
 RESULT_DIR = REPO_ROOT / "SimResult"
+FORGE_SRC_DIR = REPO_ROOT / "Ref" / "forge"
+FORGE_SRC_URL = "https://github.com/Card-Forge/forge.git"
+TRACK_STATE_JSON = TOOLS_DIR / "cache" / "forge_upstream_state.json"
+# 与 AI 行为/人格/sim 相关的上游路径，track 报告单独高亮
+AI_WATCH_PATHS = ("forge-ai", "forge-gui/res/ai",
+                  "forge-gui-desktop/src/main/java/forge/view/SimulateMatch.java")
 
 AI_CAVEAT = ("Forge AI 口径：快攻/中速表现尚可，控制一般，组合技严重失真；"
              "未实现的牌无法导入。本结果仅为 AI 对局样本，不等于真人对局胜率。")
@@ -285,6 +292,91 @@ def cmd_sim(args):
     return 0
 
 
+# ---------------------------------------------------------------- track
+def _git(src_dir, *args):
+    proc = subprocess.run(["git", "-C", str(src_dir), *args],
+                          capture_output=True, text=True,
+                          encoding="utf-8", errors="replace")
+    if proc.returncode != 0:
+        raise ForgeToolError(f"git {' '.join(args)} 失败: {proc.stderr.strip()[:200]}")
+    return proc.stdout.strip()
+
+
+def _is_ancestor(src_dir, old, new):
+    proc = subprocess.run(["git", "-C", str(src_dir), "merge-base",
+                           "--is-ancestor", old, new], capture_output=True)
+    return proc.returncode == 0
+
+
+def cmd_track(args):
+    """跟踪 Card-Forge/forge 上游 master：报告新提交（高亮 AI 相关），记状态。"""
+    src = Path(args.src)
+    if not (src / ".git").exists():
+        if not args.clone:
+            print(f"[错误] 上游源码不存在: {src}"
+                  f"（加 --clone 浅克隆 {FORGE_SRC_URL}）", file=sys.stderr)
+            return 5
+        src.parent.mkdir(parents=True, exist_ok=True)
+        if subprocess.run(["git", "clone", "--depth", "200", "--single-branch",
+                           FORGE_SRC_URL, str(src)]).returncode != 0:
+            print("[错误] 克隆失败", file=sys.stderr)
+            return 6
+    try:
+        print("[info] 拉取上游 master ...", file=sys.stderr)
+        _git(src, "fetch", "--depth", "200", "origin", "master")
+        head = _git(src, "rev-parse", "origin/master")
+    except ForgeToolError as exc:
+        print(f"[错误] {exc}", file=sys.stderr)
+        return 6
+
+    state = {}
+    if TRACK_STATE_JSON.is_file():
+        try:
+            state = json.loads(TRACK_STATE_JSON.read_text(encoding="utf-8"))
+        except ValueError:
+            state = {}
+    last = state.get("last_head")
+
+    if last == head:
+        print(f"[track] 无更新（HEAD {head[:10]}）")
+    else:
+        rng = None
+        if last and _is_ancestor(src, last, head):
+            rng = f"{last}..{head}"
+        elif last:
+            print("[track] 注意：上次记录的提交不在浅克隆历史内，仅列最近 20 条")
+        log_args = ["log", "--oneline", "--no-decorate", rng or "-20"]
+        commits = _git(src, *log_args).splitlines()
+        print(f"[track] {'新提交' if rng else '最近提交'}（{len(commits)} 条）：")
+        for line in commits:
+            print("  " + line)
+        ai_log = _git(src, *(log_args + ["--", *AI_WATCH_PATHS]))
+        if ai_log:
+            print("[track] 其中触及 AI/人格/sim 的提交：")
+            for line in ai_log.splitlines():
+                print("  * " + line)
+
+    sim_src = src / "forge-gui-desktop/src/main/java/forge/view/SimulateMatch.java"
+    if sim_src.is_file():
+        text = sim_src.read_text(encoding="utf-8", errors="replace")
+        support = 'params.get("a")' in text
+        print(f"[track] 上游 sim 按座位 AI 人格（-a 参数）：{'已支持' if support else '未支持'}")
+
+    if args.pull:
+        try:
+            _git(src, "merge", "--ff-only", "origin/master")
+            print("[track] 工作区已快进同步")
+        except ForgeToolError as exc:
+            print(f"[错误] {exc}", file=sys.stderr)
+            return 6
+
+    TRACK_STATE_JSON.parent.mkdir(parents=True, exist_ok=True)
+    TRACK_STATE_JSON.write_text(json.dumps(
+        {"last_head": head, "checked_at": time.strftime("%Y-%m-%d %H:%M:%S")},
+        ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return 0
+
+
 # ---------------------------------------------------------------- play
 def cmd_play(args):
     if not FORGE_DIR.is_dir():
@@ -343,6 +435,12 @@ def build_parser():
     pp = sub.add_parser("play", help="启动 Forge GUI 人工试玩")
     pp.add_argument("deckfile", nargs="?", help="可选：先转换为 .dck 供编辑器导入")
     pp.set_defaults(func=cmd_play)
+
+    pt = sub.add_parser("track", help="跟踪 Card-Forge/forge 上游更新（Ref/forge 源码克隆）")
+    pt.add_argument("--src", default=str(FORGE_SRC_DIR), help="上游源码目录")
+    pt.add_argument("--clone", action="store_true", help="源码不存在时浅克隆（--depth 200）")
+    pt.add_argument("--pull", action="store_true", help="报告后快进同步工作区")
+    pt.set_defaults(func=cmd_track)
     return p
 
 
