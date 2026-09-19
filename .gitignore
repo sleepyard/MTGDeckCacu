@@ -2,6 +2,7 @@ tools/cache/
 tools/downloads/
 tools/forge/
 tools/jdk/
+tools/maven/
 tools/llm_config.json
 __pycache__/
 *.pyc

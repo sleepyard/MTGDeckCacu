@@ -196,7 +196,9 @@ def parse_sim_output(text, deck_names):
 def cmd_sim(args):
     try:
         java = find_java()
-        jar = find_forge_jar()
+        jar = Path(args.jar) if args.jar else find_forge_jar()
+        if not jar.is_file():
+            raise ForgeToolError(f"Forge 主 jar 不存在: {jar}")
     except ForgeToolError as exc:
         print(f"[错误] {exc}", file=sys.stderr)
         return 5
@@ -217,6 +219,10 @@ def cmd_sim(args):
 
     cmd = [java, "-Dfile.encoding=UTF-8", "-jar", str(jar), "sim",
            "-d", decks[0].name, decks[1].name]
+    if args.ai:
+        cmd += ["-a", args.ai[0], args.ai[1]]
+    if args.seed is not None:
+        cmd += ["-s", str(args.seed)]
     if args.matches:
         cmd += ["-m", str(args.matches)]
     else:
@@ -230,7 +236,7 @@ def cmd_sim(args):
     print(f"[info] 执行: {' '.join(cmd)}", file=sys.stderr)
     started = time.strftime("%Y-%m-%d %H:%M:%S")
     try:
-        proc = subprocess.run(cmd, cwd=str(FORGE_DIR), capture_output=True, timeout=None)
+        proc = subprocess.run(cmd, cwd=args.cwd, capture_output=True, timeout=None)
         output = proc.stdout.decode("utf-8", errors="replace") \
             + "\n--- stderr ---\n" + proc.stderr.decode("utf-8", errors="replace")
     except OSError as exc:
@@ -427,6 +433,13 @@ def build_parser():
                     choices=["constructed", "brawl", "commander"])
     ps.add_argument("--clock", type=int, default=120, help="单局最长秒数，超时判平（默认 120）")
     ps.add_argument("--quiet", action="store_true", help="静默模式，仅输出结果")
+    ps.add_argument("--jar", help="自定义 Forge 主 jar（默认 tools/forge 下自动定位；"
+                                  "源码构建产物在 Ref/forge/forge-gui-desktop/target/）")
+    ps.add_argument("--cwd", default=str(FORGE_DIR),
+                    help="Forge 工作目录（需含 res/；源码构建用 Ref/forge/forge-gui）")
+    ps.add_argument("--ai", nargs=2, metavar=("AI_A", "AI_B"),
+                    help="按座位指定 AI 人格档案名（需含 -a 参数的新版构建）")
+    ps.add_argument("--seed", type=int, help="随机种子（需含 -s 参数的新版构建）")
     ps.add_argument("--outdir", default=None,
                     help="报告/日志输出目录（默认 SimResult/；实测报告约定写入被测套牌的 DeckList 目录，"
                          "如 DeckList/Explorer_SlimeAgainstHumanity/Golgari/sim/）")
