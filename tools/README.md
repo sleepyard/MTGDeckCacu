@@ -280,3 +280,42 @@ python tools/deck_version.py --config params.json
 
 - `0` 成功
 - `2` 门禁警告（仍写盘，需人工确认警告项）
+
+# tools/rot_audit.py
+
+标准轮替存活审计：判定牌表在下一次轮替后还剩多少张可用。判定不用 `f:standard`（Scryfall 合法性按 oracle 算，促销印会显示 legal 但救不了牌），按 `set_type ∈ {core, expansion}` 且非 digital 且 `released_at` ≥ 轮替后最旧系列（内置本轮参数：轮替日 2027-02-02，cutoff = FDN 2024-11-15）。仅 Python 标准库。
+
+```bash
+# 1. 逐张审计一份牌表（报主牌 x/60、备牌 y/15 存活）
+python tools/rot_audit.py deck deck.txt
+
+# 2. 审计指定牌
+python tools/rot_audit.py card "Lightning Strike" "Monstrous Rage"
+```
+
+# tools/cn_audit.py
+
+中文牌名审计门禁：抓出「英文名正确、中文名手写编造」的牌。从交付 md 中抽出中文牌名候选（表格区硬判定 + 括号清单软候选），逐个反查 mtgch，并与文件内英文牌名交叉比对识别「撞名」；限流（error）与查无此牌（none）分开建模。结果缓存侧车 `tools/cache/_cn_audit_cache.json`（gitignored）。依赖 curl。
+
+```bash
+# 1. 主门禁：审计交付文件（编造译名 exit 1；侧车 <文件>.cnignore 可豁免有意展示的旧错译）
+python tools/cn_audit.py check report.md
+
+# 2. 批量反查中文名 / 批量取官方中文名 / 查系列官方中文名
+python tools/cn_audit.py zh names_zh.txt
+python tools/cn_audit.py en names_en.txt
+python tools/cn_audit.py set FRA
+```
+
+# tools/newbie/（标准新手系列工具组）
+
+标准赛制低造价新手系列（6 副 BO1 套牌，见 `DeckList/Standard_*`）的专属工具，共 31 个纯标准库脚本：造价核算（`deck_cost.py` 造价签名 / 物质点预算、`mtga_cost.py`、`pack_points.py`）、逐套牌金鱼模拟器（`sim_black.py` / `sim_blue.py` / `sim_green.py` / `sim_red_blind.py` / `sim_dual.py` / `sim_white.py` / `sim_mono_white.py` / `sim_blue_spells.py`）、轴线扫描（`*_axis_scan.py`、`axis_layers.py`）与地数扫描（`land_sweep.py`）。共享数据快照在 `tools/data/`（gitignored，约 21MB；rarity_map / std_prints / metagame 等），脚本经 `../data` 相对路径引用。来源与命令对照见 `AuditReport/NewbieSeries/合并说明_20260925.md`。
+
+```bash
+# 1. 造价签名一览（brief）/ 单表全口径（sig）
+python tools/newbie/deck_cost.py brief DeckList/Standard_MonoBlack_CheapThreatDrain/deck_mono_black.txt
+python tools/newbie/deck_cost.py sig <牌表…>
+
+# 2. 金鱼模拟（例：单黑 1000 局，公平均杀基准 4.16）
+python tools/newbie/sim_black.py 1000 DeckList/Standard_MonoBlack_CheapThreatDrain/deck_mono_black.txt
+```
