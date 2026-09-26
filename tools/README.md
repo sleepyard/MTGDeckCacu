@@ -284,10 +284,11 @@ python tools/deck_version.py --config params.json
 
 # tools/deck_image.py
 
-牌表网格图生成：把 MTGA 导入格式牌表渲染成 Untapped.gg 风格卡牌网格图。版式对齐 Untapped 模板：每种牌一格、格顶叠放 N 条名牌条（N=张数，每条 ~20px 深色底，左牌名右彩色法术力费字母，>4 张拆多格）；主牌区列优先、每列 4 格、类别分组（生物/鹏洛客/瞬间/法术/结界/神器/地，组内按费升序）连续填充不强制换列；主牌/备牌上方各有 "Main Deck (60)" / "Sideboard (15)" 分节标头，备牌右侧独立列（>8 种双列）。顶部标题栏 ≤3 行：左标题右副标题、类型统计（如 "26 Creatures 10 Instants 1 Sorcery 23 Lands"）、造价行（deck_cost 口径，基本地不计；物质点全量含普通/非普通并括注金位预算点，形如 `造价 4r8u25c ｜ 物质点 63.7（金位 20.4/上限 40.8）｜ PP核心 22.2 包 ｜ PP全量 75.0 包`，数据缺失整行省略；窄画布时统计与造价合并换行、绝不出界）。卡图优先简中（zhs）印刷（Scryfall `cards/search` `!"<牌名>" lang:zhs` unique=prints 取首个带图结果，双面牌取正面），查不到回退英文；中文图缓存键加 `zhs_` 前缀，统存 `tools/cache/card_images/`（gitignored），复用 mtg_tool 的查询缓存与节流。依赖 Pillow（惰性导入，缺失时退出码 3）。
+牌表网格图生成：把 MTGA 导入格式牌表渲染成 Untapped.gg 风格卡牌网格图（默认中文界面，`--lang en` 切英文）。版式对齐 Untapped 模板：渐变顶栏 + 颜色身份圆点 + 战绩徽标；每种牌一格、格顶叠放 N 条名牌条（N=张数，左牌名右彩色法术力费圆角徽章，>4 张拆多格）；主牌区列优先、每列 4 格（最多 5 列）、类别分组连续填充；主牌/备牌各有 "主牌 · 60 张" / "备牌 · 15 张" 分节标头（带分区线），备牌右侧独立列（>8 种双列）；动态列宽（总宽 ≤1600px）。类型统计中文化（如 "26 生物 · 10 瞬间 · 23 地"），造价行同 deck_cost 口径（基本地不计；物质点全量含普通/非普通并括注金位预算点，数据缺失整行省略）。卡图优先简中（zhs）印刷、名牌同步显示 printed_name（Scryfall `cards/search` `!"<牌名>" lang:zhs` unique=prints，双面牌取正面），查不到回退英文；中文图缓存键加 `zhs_` 前缀，统存 `tools/cache/card_images/`（gitignored），复用 mtg_tool 的查询缓存与节流。依赖 Pillow（惰性导入，缺失时退出码 3）。
 
 ```bash
 python tools/deck_image.py deck.txt --title "标题" --subtitle "副标题" --out deck.png
+python tools/deck_image.py deck.txt --author 作者 --format standard --record 7-0 --lang en
 ```
 
 # tools/rot_audit.py
