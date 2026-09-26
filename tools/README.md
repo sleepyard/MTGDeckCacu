@@ -284,7 +284,7 @@ python tools/deck_version.py --config params.json
 
 # tools/deck_image.py
 
-牌表网格图生成：把 MTGA 导入格式牌表渲染成 Untapped.gg 风格卡牌网格图（主牌按类别分组另起一行、组内按费升序；格顶标签条左 "xN" 右法术力费；备牌右侧列，>8 种双列；标题栏含类型统计与造价行——签名/物质点/PP核心/PP全量，deck_cost 口径，数据缺失自动省略）。卡图取 Scryfall `image_uris.normal`（双面牌取正面），下载缓存到 `tools/cache/card_images/`（gitignored），复用 mtg_tool 的查询缓存与节流。依赖 Pillow（惰性导入，缺失时退出码 3）。
+牌表网格图生成：把 MTGA 导入格式牌表渲染成 Untapped.gg 风格卡牌网格图。版式对齐 Untapped 模板：每种牌一格、格顶叠放 N 条名牌条（N=张数，每条 ~20px 深色底，左牌名右彩色法术力费字母，>4 张拆多格）；主牌区列优先、每列 4 格、类别分组（生物/鹏洛客/瞬间/法术/结界/神器/地，组内按费升序）连续填充不强制换列；主牌/备牌上方各有 "Main Deck (60)" / "Sideboard (15)" 分节标头，备牌右侧独立列（>8 种双列）。顶部标题栏 ≤3 行：左标题右副标题、类型统计（如 "26 Creatures 10 Instants 1 Sorcery 23 Lands"）、造价行（deck_cost 口径，基本地不计；物质点全量含普通/非普通并括注金位预算点，形如 `造价 4r8u25c ｜ 物质点 63.7（金位 20.4/上限 40.8）｜ PP核心 22.2 包 ｜ PP全量 75.0 包`，数据缺失整行省略；窄画布时统计与造价合并换行、绝不出界）。卡图优先简中（zhs）印刷（Scryfall `cards/search` `!"<牌名>" lang:zhs` unique=prints 取首个带图结果，双面牌取正面），查不到回退英文；中文图缓存键加 `zhs_` 前缀，统存 `tools/cache/card_images/`（gitignored），复用 mtg_tool 的查询缓存与节流。依赖 Pillow（惰性导入，缺失时退出码 3）。
 
 ```bash
 python tools/deck_image.py deck.txt --title "标题" --subtitle "副标题" --out deck.png
