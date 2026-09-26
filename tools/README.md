@@ -100,6 +100,7 @@ python tools/forge_tool.py play deck.txt
 - Windows 下 sim 必须走 `java -jar` 才有控制台输出（`forge.exe` 只写日志文件）；companion 分区无 Forge 对应结构，转换时会警告并跳过。
 - sim 的 `-d` 只从 Forge 用户档案目录读牌（Windows 为 `%APPDATA%\Forge\decks\constructed\`；`-D` 自定义目录仅锦标赛模式 `-t` 生效），脚本会自动把 .dck 写入该目录——副作用是 GUI 选牌界面也能直接看到这套牌。
 - `forge.exe` 包装器只认系统 Java（注册表/PATH），没有系统 JRE 时弹 "requires a Java Runtime Environment 17"；`play` 因此复刻 `forge.cmd` 的官方 JVM 参数（`-Xmx4096m -Dio.netty.tryReflectionSetAccessible=true -Dfile.encoding=UTF-8`）直接用便携 JDK 启动。同理不要手动双击 `forge.exe` / `forge-adventure.exe`（后者是像素风"冒险模式"RPG，同样需要系统 Java），一律走 `forge_tool.py play`。
+- 新系列（如 FRA）在发布版牌库中不存在时，用 Ref/forge 源码构建的 SNAPSHOT jar：`--jar Ref/forge/forge-gui-desktop/target/forge-gui-desktop-2.0.15-SNAPSHOT-jar-with-dependencies.jar --cwd Ref/forge/forge-gui`。该 jar 不内嵌 cardsfolder，牌库按 cwd 下的 `res/` 加载——不配 `--cwd` 会回退读 tools/forge 的旧牌库造成缺牌（冒烟记录见 `AuditReport/FRA_NewbieSeries/进度.md`）。上游新牌实现用 `forge_tool.py track` 跟踪。
 
 ## 退出码
 
@@ -280,6 +281,14 @@ python tools/deck_version.py --config params.json
 
 - `0` 成功
 - `2` 门禁警告（仍写盘，需人工确认警告项）
+
+# tools/deck_image.py
+
+牌表网格图生成：把 MTGA 导入格式牌表渲染成 Untapped.gg 风格卡牌网格图（主牌按法术力值升序、地去重靠后，左上角 "xN" 数量徽标，备牌右侧单列，顶部标题栏含类型统计）。卡图取 Scryfall `image_uris.normal`（双面牌取正面），下载缓存到 `tools/cache/card_images/`（gitignored），复用 mtg_tool 的查询缓存与节流。依赖 Pillow（惰性导入，缺失时退出码 3）。
+
+```bash
+python tools/deck_image.py deck.txt --title "标题" --subtitle "副标题" --out deck.png
+```
 
 # tools/rot_audit.py
 

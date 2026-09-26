@@ -6,7 +6,8 @@ This is a Python-first MTG deck research and testing toolkit. The executable mod
 
 - `mtg_tool.py` provides Scryfall/MTGCH search, legality checks, validation, and baselines.
 - `set_preview_tool.py` tracks new-set preview seasons: incremental Scryfall snapshots, per-batch diffs, and preview-period limited ratings.
-- `forge_tool.py` converts decks, runs Forge simulations, and tracks upstream Card-Forge/forge updates (`track`, clone at `Ref/forge`).
+- `forge_tool.py` converts decks, runs Forge simulations, and tracks upstream Card-Forge/forge updates (`track`, clone at `Ref/forge`). For sets newer than the release jar's card DB (e.g. FRA), pass the source-built snapshot jar plus the source `res/` as working directory: `--jar Ref/forge/forge-gui-desktop/target/forge-gui-desktop-2.0.15-SNAPSHOT-jar-with-dependencies.jar --cwd Ref/forge/forge-gui`.
+- `deck_image.py` renders a decklist (MTGA import format) into an Untapped.gg-style card grid image (Scryfall art cached under `tools/cache/card_images/`; Pillow lazily imported).
 - `mtga_log_tool.py` and `mtga_auto_tool.py` analyze MTGA logs and provide live advice; `mtga_log_tool.py` also provides `inventory` (StartHook wildcard/currency/pack snapshot plus the union of saved decks, written to `MatchRecord/inventory.json`); `mtga_draft_tool.py` is the draft cockpit (17Lands anchors, direct-first with shiqidi proxy fallback, LLM pick advice) and provides `regress` (rating-vs-17Lands regression) and `brief` (pre-draft format environment brief, also auto-printed when `draft --watch` starts).
 - `mtga_db_tool.py` queries the MTGA client SQLite card database (grpId → English name/set/number/rarity) as a fallback when Scryfall has no arena_id.
 - `deck_version.py` scaffolds versioned deck deliveries under `DeckList/{format}_{colors}_{theme}/` (paired `.txt`/`.md`, max+1 versioning, no overwrite) with basic gate checks; pass Chinese text via `--config params.json`.
