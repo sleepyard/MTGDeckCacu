@@ -309,6 +309,21 @@ def _identity(colors):
     return [color for color in IDENTITY_ORDER if color in color_set]
 
 
+def _pack_stacks(items, stack_size=MAX_BARS):
+    """按牌表顺序把牌张实例连续打包，每堆最多 ``stack_size`` 张。
+
+    Untapped 的堆不是“每种牌一个格子”：一堆的最后一张可以和下一种牌
+    连续出现，因此例如 3 张 A 后的 3 张 B 会形成 [A,A,A,B]、[B,B]。
+    """
+    if stack_size < 1:
+        raise ValueError("stack_size must be positive")
+    instances = []
+    for quantity, name in items:
+        instances.extend([name] * max(0, int(quantity)))
+    return [instances[offset:offset + stack_size]
+            for offset in range(0, len(instances), stack_size)]
+
+
 def render(main, side, title, subtitle, out, author="", format_name="", record="", language="zh"):
     """渲染牌表；旧的五参数调用仍然有效。"""
     Image, ImageDraw, ImageFont = _load_pil()
@@ -374,19 +389,10 @@ def render(main, side, title, subtitle, out, author="", format_name="", record="
         identities.update(info[name][5])
     entries.sort(key=lambda entry: (GROUP_ORDER.get(entry[1], 99), entry[0], entry[3]))
 
-    def split_cells(items):
-        cells = []
-        for quantity, name in items:
-            while quantity > MAX_BARS:
-                cells.append((name, MAX_BARS))
-                quantity -= MAX_BARS
-            cells.append((name, quantity))
-        return cells
-
-    main_cells = split_cells([(quantity, name) for _cmc, _bucket, quantity, name in entries])
-    side_cells = split_cells(side)
-    main_cols = min(MAIN_COLS, max(1, len(main_cells)))
-    side_cols = min(2, max(1, math.ceil(len(side_cells) / SIDE_COL_CELLS))) if side_cells else 0
+    main_stacks = _pack_stacks([(quantity, name) for _cmc, _bucket, quantity, name in entries])
+    side_stacks = _pack_stacks(side)
+    main_cols = min(MAIN_COLS, max(1, len(main_stacks)))
+    side_cols = min(2, max(1, math.ceil(len(side_stacks) / SIDE_COL_CELLS))) if side_stacks else 0
     total_cols = main_cols + side_cols
     gap = max(8, min(12, round(GAP * max(0.8, 6.0 / max(6, total_cols)))))
     tile_w = min(TILE_W, max(MIN_TILE_W,
@@ -394,14 +400,14 @@ def render(main, side, title, subtitle, out, author="", format_name="", record="
     tile_h = max(228, round(tile_w * CARD_RATIO))
     slice_h = max(20, round(tile_h * SLICE_RATIO))
 
-    def cell_h(bars):
-        """格高 = (N-1)×切片高 + tile_h。"""
-        return (bars - 1) * slice_h + tile_h
+    def cell_h(stack):
+        """堆高 = (N-1)×切片高 + 完整卡图高。"""
+        return max(1, len(stack) - 1) * slice_h + tile_h
 
     # 主牌区：固定 5 列、行优先填充，行高 = 该行最高格高
-    main_rows = math.ceil(len(main_cells) / main_cols)
-    main_row_hs = [max(cell_h(bars) for _n, bars in
-                       main_cells[r * main_cols:(r + 1) * main_cols])
+    main_rows = math.ceil(len(main_stacks) / main_cols)
+    main_row_hs = [max(cell_h(stack) for stack in
+                       main_stacks[r * main_cols:(r + 1) * main_cols])
                    for r in range(main_rows)]
     main_ys, _acc = [], 0
     for row_h in main_row_hs:
@@ -410,15 +416,15 @@ def render(main, side, title, subtitle, out, author="", format_name="", record="
     main_h = _acc - gap if main_row_hs else 0
     # 备牌区：右侧独立列（每列 ≤8 格），格高同样随副本数变化
     side_ys, side_h = [], 0
-    if side_cells:
+    if side_stacks:
         for col in range(side_cols):
-            chunk = side_cells[col * SIDE_COL_CELLS:(col + 1) * SIDE_COL_CELLS]
-            side_h = max(side_h, sum(cell_h(bars) for _n, bars in chunk)
+            chunk = side_stacks[col * SIDE_COL_CELLS:(col + 1) * SIDE_COL_CELLS]
+            side_h = max(side_h, sum(cell_h(stack) for stack in chunk)
                          + gap * max(0, len(chunk) - 1))
-        for j, (_n, _bars) in enumerate(side_cells):
+        for j, _stack in enumerate(side_stacks):
             col, r = divmod(j, SIDE_COL_CELLS)
-            chunk = side_cells[col * SIDE_COL_CELLS:col * SIDE_COL_CELLS + r]
-            side_ys.append(sum(cell_h(b) for _nn, b in chunk) + gap * r)
+            chunk = side_stacks[col * SIDE_COL_CELLS:col * SIDE_COL_CELLS + r]
+            side_ys.append(sum(cell_h(stack) for stack in chunk) + gap * r)
     body_h = max(main_h, side_h)
     main_w = main_cols * tile_w + (main_cols - 1) * gap
     side_w = side_cols * tile_w + (side_cols - 1) * gap if side_cols else 0
@@ -499,42 +505,44 @@ def render(main, side, title, subtitle, out, author="", format_name="", record="
     resampling = getattr(getattr(Image, "Resampling", Image), "LANCZOS",
                          getattr(Image, "LANCZOS", 1))
 
-    def draw_cell(x0, y0, name, bars):
-        """叠卡范式：副本 1..N-1 各贡献一条卡图顶部切片，第 N 张为完整卡图。"""
-        _type_line, _cmc, _mana, image_path, display_name, _colors = info[name]
-        if image_path:
-            with Image.open(image_path) as source:
-                src = source.convert("RGB")
-                full = src.resize((tile_w, tile_h), resampling)
-                slc = src.crop((0, 0, src.size[0], max(1, round(src.size[1] * SLICE_RATIO))))
-                slc = slc.resize((tile_w, slice_h), resampling)
-            for index in range(bars - 1):
-                sy = y0 + index * slice_h
-                canvas.paste(slc, (x0, sy))
-                draw.rectangle((x0, sy + slice_h - 2, x0 + tile_w, sy + slice_h),
-                               fill=(10, 11, 14))
-            canvas.paste(full, (x0, y0 + (bars - 1) * slice_h))
-        else:
-            total_h = cell_h(bars)
-            draw.rectangle((x0, y0, x0 + tile_w, y0 + total_h), fill=(36, 39, 44),
-                           outline=C_LINE)
-            draw.text((x0 + 8, y0 + total_h // 2), display_name, font=f_stat,
-                      fill=(155, 160, 166))
+    def draw_cell(x0, y0, stack):
+        """渲染一堆牌：前 N-1 张只露出顶部切片，最后一张完整显示。"""
+        for index, name in enumerate(stack):
+            _type_line, _cmc, _mana, image_path, display_name, _colors = info[name]
+            card_y = y0 + index * slice_h
+            if image_path:
+                with Image.open(image_path) as source:
+                    src = source.convert("RGB")
+                    if index < len(stack) - 1:
+                        slc = src.crop((0, 0, src.size[0],
+                                       max(1, round(src.size[1] * SLICE_RATIO))))
+                        slc = slc.resize((tile_w, slice_h), resampling)
+                        canvas.paste(slc, (x0, card_y))
+                        draw.rectangle((x0, card_y + slice_h - 2, x0 + tile_w, card_y + slice_h),
+                                       fill=(10, 11, 14))
+                    else:
+                        canvas.paste(src.resize((tile_w, tile_h), resampling), (x0, card_y))
+            else:
+                card_h = slice_h if index < len(stack) - 1 else tile_h
+                draw.rectangle((x0, card_y, x0 + tile_w, card_y + card_h), fill=(36, 39, 44),
+                               outline=C_LINE)
+                draw.text((x0 + 8, card_y + max(4, card_h // 2)), display_name,
+                          font=f_stat, fill=(155, 160, 166))
 
-    for index, (name, bars) in enumerate(main_cells):
+    for index, stack in enumerate(main_stacks):
         row, column = divmod(index, main_cols)
-        draw_cell(MARGIN + column * (tile_w + gap), body_y + main_ys[row], name, bars)
-    for index, (name, bars) in enumerate(side_cells):
+        draw_cell(MARGIN + column * (tile_w + gap), body_y + main_ys[row], stack)
+    for index, stack in enumerate(side_stacks):
         column = index // SIDE_COL_CELLS
-        draw_cell(side_x + column * (tile_w + gap), body_y + side_ys[index], name, bars)
+        draw_cell(side_x + column * (tile_w + gap), body_y + side_ys[index], stack)
 
     footer_y = body_y + body_h + 6
     draw.text((MARGIN, footer_y), _ellipsize(draw, footer, f_footer, width - 2 * MARGIN),
               font=f_footer, fill=(123, 129, 138))
     canvas.save(out)
-    print("[完成] %s（主 %d / 备 %d，主 %d 格 %d 列 %d 行%s）" %
-          (out, total, sum(quantity for quantity, _name in side), len(main_cells), main_cols,
-           main_rows, "，备 %d 格 %d 列" % (len(side_cells), side_cols) if side_cols else ""))
+    print("[完成] %s（主 %d / 备 %d，主 %d 堆 %d 列 %d 行%s）" %
+          (out, total, sum(quantity for quantity, _name in side), len(main_stacks), main_cols,
+           main_rows, "，备 %d 堆 %d 列" % (len(side_stacks), side_cols) if side_cols else ""))
     zh_names = sorted(zh_hits["mtgch"] | zh_hits["scryfall"])
     print("[卡图] 简中命中 %d/%d 种（mtgch %d / scryfall %d）: %s" %
           (len(zh_names), len(info), len(zh_hits["mtgch"]), len(zh_hits["scryfall"]),
