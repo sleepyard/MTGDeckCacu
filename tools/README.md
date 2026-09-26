@@ -284,7 +284,7 @@ python tools/deck_version.py --config params.json
 
 # tools/deck_image.py
 
-牌表网格图生成：把 MTGA 导入格式牌表渲染成 Untapped.gg 风格卡牌网格图（主牌按法术力值升序、地去重靠后，左上角 "xN" 数量徽标，备牌右侧单列，顶部标题栏含类型统计）。卡图取 Scryfall `image_uris.normal`（双面牌取正面），下载缓存到 `tools/cache/card_images/`（gitignored），复用 mtg_tool 的查询缓存与节流。依赖 Pillow（惰性导入，缺失时退出码 3）。
+牌表网格图生成：把 MTGA 导入格式牌表渲染成 Untapped.gg 风格卡牌网格图（主牌按类别分组另起一行、组内按费升序；格顶标签条左 "xN" 右法术力费；备牌右侧列，>8 种双列；标题栏含类型统计与造价行——签名/物质点/PP核心/PP全量，deck_cost 口径，数据缺失自动省略）。卡图取 Scryfall `image_uris.normal`（双面牌取正面），下载缓存到 `tools/cache/card_images/`（gitignored），复用 mtg_tool 的查询缓存与节流。依赖 Pillow（惰性导入，缺失时退出码 3）。
 
 ```bash
 python tools/deck_image.py deck.txt --title "标题" --subtitle "副标题" --out deck.png
