@@ -7,10 +7,25 @@
   python tools/deck_image.py <牌表.txt> [--out 输出.png] [--title 标题]
       [--subtitle 副标题] [--author 作者] [--format 赛制] [--record 战绩]
 
-卡图优先使用 Scryfall 的简中印刷版本，并缓存到 ``tools/cache/card_images``。
-版式参考 Untapped.gg：重复牌使用卡图顶部名牌条表达数量，主牌和备牌分区显示，
-顶部提供中文标题、颜色身份、类型统计和造价信息。Pillow 采用惰性导入，方便其余
-牌表工具在无图像依赖的环境中使用。
+版式对齐 Untapped.gg 牌表图模板：
+  - 每格（stack）= 卡图顶部切片的叠放 + 底部一张完整卡图：副本 1..N-1 各贡献一条
+    切片（卡图顶部 12.5% 高度，含牌框边 + 名牌栏 + 一线牌画边缘），切片紧邻叠放、
+    底部留 2px 深色缝模拟牌堆阴影；第 N 张为完整卡图。格高 = (N-1)×切片高 + tile_h，
+    >4 张仍拆多格（4/4/3）。切片直接用卡图本身（简中图则名牌中文），不再绘文字。
+  - 主牌区固定 5 列 stack（不足 5 列按实际），每行 5 格、行数 = ceil(格数/5)，
+    行高 = 该行最高格高；类别分组顺序与组内 cmc 升序不变（连续填充不强制换行）。
+    备牌区维持右侧独立列（每列 ≤8 格）。总宽 ≤1600，列宽动态缩放。
+  - 主牌/备牌分区标头，顶部中文标题、颜色身份、类型统计与造价行（deck_cost 口径，
+    基本地不计，数据缺失整行省略）。
+
+卡图简中优先，三级来源：
+  1. MTGCH（主源，覆盖含未发售新牌）：mtgch.com/api/v1/result?q=<牌名>&view=1，
+     display_name 精确匹配（双面牌按正面名）取 image_url（webp）与 display_name_zh；
+  2. Scryfall zhs（回退 1）：cards/search !"<牌名>" lang:zhs unique=prints；
+  3. 英文卡图（回退 2）。
+  缓存到 tools/cache/card_images/（按真实扩展名 .webp/.jpg/.png 存，Image.open 自适应；
+  命中统计区分来源）。display_name_zh 用于无图占位。查询走 mtg_tool 的磁盘缓存、
+  节流与重试。Pillow 惰性导入，缺失时退出码 3。
 """
 
 import argparse
@@ -19,6 +34,7 @@ import os
 import re
 import sys
 import time
+import urllib.parse
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -39,6 +55,8 @@ MAX_OUTPUT_W = 1600
 MIN_TILE_W = 164
 MAX_BARS = 4
 BAR_H = 20                         # 兼容旧脚本导入；实际按 tile_h 动态缩放
+SLICE_RATIO = 0.125                # 叠卡切片 = 卡图顶部 12.5% 高度（实测观感最佳）
+MAIN_COLS = 5                      # 主牌区固定 5 列 stack（不足按实际）
 COL_CELLS = 4
 SIDE_COL_CELLS = 8
 GAP = 10
@@ -175,6 +193,37 @@ def zhs_image_url(name):
     return zhs_card_info(name)[0]
 
 
+def mtgch_card_info(name):
+    """MTGCH 简中图（主源）：返回 (image_url, display_name_zh)；查不到/失败返回 (None, None)。
+
+    匹配逻辑同 mtg_tool.fetch_chinese_name：display_name 精确匹配优先
+    （双面/历险牌允许按正面名匹配），否则取首条。"""
+    try:
+        status, payload = mtg_tool.http_get_json(
+            mtg_tool.MTGCH_BASE + "/api/v1/result", "mtgch",
+            {"q": name, "view": 1}, True)
+    except Exception:
+        return None, None
+    if status >= 400 or not isinstance(payload, dict):
+        return None, None
+    items = payload.get("items") or []
+    if not items:
+        return None, None
+    target = name.strip().lower()
+    front = target.split(" // ")[0]
+    chosen = None
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        disp = str(item.get("display_name") or "").strip().lower()
+        if disp == target or disp == front:
+            chosen = item
+            break
+    if chosen is None:
+        chosen = items[0] if isinstance(items[0], dict) else {}
+    return chosen.get("image_url") or None, chosen.get("display_name_zh") or None
+
+
 def _cache_key(name):
     """把中英文牌名变成跨平台稳定的缓存文件名。"""
     key = re.sub(r"[^\w.-]+", "_", name, flags=re.UNICODE).strip("._")
@@ -182,13 +231,22 @@ def _cache_key(name):
 
 
 def fetch_image(url, key):
+    """下载缓存卡图；按 URL 真实扩展名存（.webp/.jpg/.png），Image.open 自适应解码。
+    兼容旧缓存：历史上一律存成 <key>.png（内容可能是 JPEG），命中则直接复用。"""
     os.makedirs(CACHE_DIR, exist_ok=True)
-    path = os.path.join(CACHE_DIR, key + ".png")
-    if not os.path.exists(path):
-        req = urllib.request.Request(url, headers={"User-Agent": UA})
-        with urllib.request.urlopen(req, timeout=30) as response, open(path, "wb") as output:
-            output.write(response.read())
-        time.sleep(0.1)
+    ext = os.path.splitext(urllib.parse.urlparse(url).path)[1].lower()
+    if ext not in (".png", ".jpg", ".jpeg", ".webp"):
+        ext = ".png"
+    path = os.path.join(CACHE_DIR, key + ext)
+    if os.path.exists(path):
+        return path
+    legacy = os.path.join(CACHE_DIR, key + ".png")
+    if os.path.exists(legacy):
+        return legacy
+    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    with urllib.request.urlopen(req, timeout=30) as response, open(path, "wb") as output:
+        output.write(response.read())
+    time.sleep(0.1)
     return path
 
 
@@ -268,26 +326,38 @@ def render(main, side, title, subtitle, out, author="", format_name="", record="
     f_footer = _font(ImageFont, 12)
     f_probe = _font(ImageFont, 17)
 
-    fails, zhs_hits = [], set()
+    fails = []
+    zh_hits = {"mtgch": set(), "scryfall": set()}
     counts, info, identities, entries = {}, {}, set(), []
 
     def lookup(name):
+        """三级卡图源：MTGCH 简中 → Scryfall zhs → 英文；某级下载失败顺延下一级。"""
         en_url, type_line, cmc, mana = card_info(name)
         colors = _CARD_COLOR_CACHE.get(name, ())
-        zhs_url, printed_name = zhs_card_info(name)
-        image_url = zhs_url or en_url
-        key = ("zhs_" if zhs_url else "") + _cache_key(name)
-        image_path = None
-        if image_url:
+        zh_name, source, image_path = None, None, None
+        for fetcher, prefix, tag in ((mtgch_card_info, "mtgch_", "mtgch"),
+                                     (zhs_card_info, "zhs_", "scryfall")):
+            url, zh = fetcher(name)
+            if not url:
+                continue
+            if zh and zh_name is None:
+                zh_name = zh
             try:
-                image_path = fetch_image(image_url, key)
+                image_path = fetch_image(url, prefix + _cache_key(name))
+                source = tag
+                break
             except Exception as exc:
-                print("[警告] 卡图下载失败 %s: %s" % (name, exc), file=sys.stderr)
+                print("[警告] 卡图下载失败 %s（%s）: %s" % (name, tag, exc), file=sys.stderr)
+        if image_path is None and en_url:
+            try:
+                image_path = fetch_image(en_url, _cache_key(name))
+            except Exception as exc:
+                print("[警告] 卡图下载失败 %s（英文）: %s" % (name, exc), file=sys.stderr)
         if image_path is None:
             fails.append(name)
-        if zhs_url:
-            zhs_hits.add(name)
-        display_name = printed_name if printed_name and not english else name
+        elif source:
+            zh_hits[source].add(name)
+        display_name = zh_name if zh_name and not english else name
         return type_line, cmc, mana, image_path, display_name, tuple(colors)
 
     for quantity, name in main:
@@ -315,22 +385,45 @@ def render(main, side, title, subtitle, out, author="", format_name="", record="
 
     main_cells = split_cells([(quantity, name) for _cmc, _bucket, quantity, name in entries])
     side_cells = split_cells(side)
-    main_cols = min(5, max(1, math.ceil(len(main_cells) / 4)))
-    side_cols = min(2, max(1, math.ceil(len(side_cells) / 8))) if side_cells else 0
+    main_cols = min(MAIN_COLS, max(1, len(main_cells)))
+    side_cols = min(2, max(1, math.ceil(len(side_cells) / SIDE_COL_CELLS))) if side_cells else 0
     total_cols = main_cols + side_cols
     gap = max(8, min(12, round(GAP * max(0.8, 6.0 / max(6, total_cols)))))
     tile_w = min(TILE_W, max(MIN_TILE_W,
                              (MAX_OUTPUT_W - 2 * MARGIN - gap * max(0, total_cols - 1)) // total_cols))
     tile_h = max(228, round(tile_w * CARD_RATIO))
+    slice_h = max(20, round(tile_h * SLICE_RATIO))
+
+    def cell_h(bars):
+        """格高 = (N-1)×切片高 + tile_h。"""
+        return (bars - 1) * slice_h + tile_h
+
+    # 主牌区：固定 5 列、行优先填充，行高 = 该行最高格高
+    main_rows = math.ceil(len(main_cells) / main_cols)
+    main_row_hs = [max(cell_h(bars) for _n, bars in
+                       main_cells[r * main_cols:(r + 1) * main_cols])
+                   for r in range(main_rows)]
+    main_ys, _acc = [], 0
+    for row_h in main_row_hs:
+        main_ys.append(_acc)
+        _acc += row_h + gap
+    main_h = _acc - gap if main_row_hs else 0
+    # 备牌区：右侧独立列（每列 ≤8 格），格高同样随副本数变化
+    side_ys, side_h = [], 0
+    if side_cells:
+        for col in range(side_cols):
+            chunk = side_cells[col * SIDE_COL_CELLS:(col + 1) * SIDE_COL_CELLS]
+            side_h = max(side_h, sum(cell_h(bars) for _n, bars in chunk)
+                         + gap * max(0, len(chunk) - 1))
+        for j, (_n, _bars) in enumerate(side_cells):
+            col, r = divmod(j, SIDE_COL_CELLS)
+            chunk = side_cells[col * SIDE_COL_CELLS:col * SIDE_COL_CELLS + r]
+            side_ys.append(sum(cell_h(b) for _nn, b in chunk) + gap * r)
+    body_h = max(main_h, side_h)
     main_w = main_cols * tile_w + (main_cols - 1) * gap
     side_w = side_cols * tile_w + (side_cols - 1) * gap if side_cols else 0
     side_x = MARGIN + main_w + gap if side_cols else 0
     width = side_x + side_w + MARGIN if side_cols else main_w + 2 * MARGIN
-    main_rows = math.ceil(len(main_cells) / main_cols)
-    side_rows = math.ceil(len(side_cells) / side_cols) if side_cells else 0
-    main_h = main_rows * tile_h + max(0, main_rows - 1) * gap
-    side_h = side_rows * tile_h + max(0, side_rows - 1) * gap if side_rows else 0
-    body_h = max(main_h, side_h)
 
     probe = ImageDraw.Draw(Image.new("RGB", (8, 8)))
     available = width - 2 * MARGIN
@@ -403,65 +496,49 @@ def render(main, side, title, subtitle, out, author="", format_name="", record="
         section_heading(side_x, side_w, "%s · %d %s" %
                         (section_side, sum(quantity for quantity, _name in side), card_unit))
 
-    bar_h = max(16, round(tile_h * 0.059))
-    bar_font = _font(ImageFont, max(11, min(15, round(tile_w * 0.061))))
-    pip_font = _font(ImageFont, max(10, min(14, round(tile_w * 0.057))), bold=True)
-
-    def mana_width(mana):
-        return sum(max(13, draw.textlength(pip, font=pip_font)) + 4
-                   for pip in re.findall(r"\{([^}]*)\}", mana or ""))
-
-    def draw_mana(x_right, y0, mana):
-        pips = re.findall(r"\{([^}]*)\}", mana or "")
-        x0 = x_right - mana_width(mana)
-        pip_h = max(13, bar_h - 4)
-        for pip in pips:
-            pip_w = max(13, draw.textlength(pip, font=pip_font))
-            fill = PIP_COLORS.get(pip.upper(), (190, 190, 190))
-            draw.rounded_rectangle((x0, y0 + 2, x0 + pip_w, y0 + 2 + pip_h), radius=4, fill=fill)
-            draw.text((x0 + (pip_w - draw.textlength(pip, font=pip_font)) / 2, y0 + 2),
-                      pip, font=pip_font, fill=(20, 23, 27))
-            x0 += pip_w + 4
+    resampling = getattr(getattr(Image, "Resampling", Image), "LANCZOS",
+                         getattr(Image, "LANCZOS", 1))
 
     def draw_cell(x0, y0, name, bars):
-        _type_line, _cmc, mana, image_path, display_name, _colors = info[name]
+        """叠卡范式：副本 1..N-1 各贡献一条卡图顶部切片，第 N 张为完整卡图。"""
+        _type_line, _cmc, _mana, image_path, display_name, _colors = info[name]
         if image_path:
             with Image.open(image_path) as source:
-                resampling = getattr(getattr(Image, "Resampling", Image), "LANCZOS",
-                                     getattr(Image, "LANCZOS", 1))
-                tile = source.convert("RGB").resize((tile_w, tile_h), resampling)
-            canvas.paste(tile, (x0, y0))
+                src = source.convert("RGB")
+                full = src.resize((tile_w, tile_h), resampling)
+                slc = src.crop((0, 0, src.size[0], max(1, round(src.size[1] * SLICE_RATIO))))
+                slc = slc.resize((tile_w, slice_h), resampling)
+            for index in range(bars - 1):
+                sy = y0 + index * slice_h
+                canvas.paste(slc, (x0, sy))
+                draw.rectangle((x0, sy + slice_h - 2, x0 + tile_w, sy + slice_h),
+                               fill=(10, 11, 14))
+            canvas.paste(full, (x0, y0 + (bars - 1) * slice_h))
         else:
-            draw.rectangle((x0, y0, x0 + tile_w, y0 + tile_h), fill=(36, 39, 44), outline=C_LINE)
-            draw.text((x0 + 8, y0 + tile_h // 2), display_name, font=bar_font, fill=(155, 160, 166))
-        mana_w = mana_width(mana)
-        name_w = max(30, tile_w - 14 - (mana_w + 9 if mana_w else 0))
-        label = _ellipsize(draw, display_name, bar_font, name_w)
-        for index in range(bars):
-            bar_y = y0 + index * bar_h
-            draw.rectangle((x0, bar_y, x0 + tile_w, bar_y + bar_h), fill=C_BAR_BG)
-            draw.line((x0, bar_y + bar_h - 1, x0 + tile_w, bar_y + bar_h - 1), fill=(53, 58, 66))
-            font_size = getattr(bar_font, "size", 12)
-            draw.text((x0 + 6, bar_y + max(1, (bar_h - font_size) // 2)), label,
-                      font=bar_font, fill=C_BAR_TXT)
-            draw_mana(x0 + tile_w - 6, bar_y, mana)
+            total_h = cell_h(bars)
+            draw.rectangle((x0, y0, x0 + tile_w, y0 + total_h), fill=(36, 39, 44),
+                           outline=C_LINE)
+            draw.text((x0 + 8, y0 + total_h // 2), display_name, font=f_stat,
+                      fill=(155, 160, 166))
 
     for index, (name, bars) in enumerate(main_cells):
-        column, row = divmod(index, main_rows)
-        draw_cell(MARGIN + column * (tile_w + gap), body_y + row * (tile_h + gap), name, bars)
+        row, column = divmod(index, main_cols)
+        draw_cell(MARGIN + column * (tile_w + gap), body_y + main_ys[row], name, bars)
     for index, (name, bars) in enumerate(side_cells):
-        column, row = divmod(index, side_rows)
-        draw_cell(side_x + column * (tile_w + gap), body_y + row * (tile_h + gap), name, bars)
+        column = index // SIDE_COL_CELLS
+        draw_cell(side_x + column * (tile_w + gap), body_y + side_ys[index], name, bars)
 
     footer_y = body_y + body_h + 6
     draw.text((MARGIN, footer_y), _ellipsize(draw, footer, f_footer, width - 2 * MARGIN),
               font=f_footer, fill=(123, 129, 138))
     canvas.save(out)
-    print("[完成] %s（主 %d / 备 %d，主 %d 格 %d 列%s）" %
+    print("[完成] %s（主 %d / 备 %d，主 %d 格 %d 列 %d 行%s）" %
           (out, total, sum(quantity for quantity, _name in side), len(main_cells), main_cols,
-           "，备 %d 格 %d 列" % (len(side_cells), side_cols) if side_cols else ""))
-    print("[卡图] 简中命中 %d/%d 种: %s" %
-          (len(zhs_hits), len(info), ", ".join(sorted(zhs_hits)) or "（无）"))
+           main_rows, "，备 %d 格 %d 列" % (len(side_cells), side_cols) if side_cols else ""))
+    zh_names = sorted(zh_hits["mtgch"] | zh_hits["scryfall"])
+    print("[卡图] 简中命中 %d/%d 种（mtgch %d / scryfall %d）: %s" %
+          (len(zh_names), len(info), len(zh_hits["mtgch"]), len(zh_hits["scryfall"]),
+           ", ".join(zh_names) or "（无）"))
     if fails:
         print("[警告] 无卡图: %s" % ", ".join(sorted(set(fails))), file=sys.stderr)
 

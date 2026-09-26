@@ -284,7 +284,7 @@ python tools/deck_version.py --config params.json
 
 # tools/deck_image.py
 
-牌表网格图生成：把 MTGA 导入格式牌表渲染成 Untapped.gg 风格卡牌网格图（默认中文界面，`--lang en` 切英文）。版式对齐 Untapped 模板：渐变顶栏 + 颜色身份圆点 + 战绩徽标；每种牌一格、格顶叠放 N 条名牌条（N=张数，左牌名右彩色法术力费圆角徽章，>4 张拆多格）；主牌区列优先、每列 4 格（最多 5 列）、类别分组连续填充；主牌/备牌各有 "主牌 · 60 张" / "备牌 · 15 张" 分节标头（带分区线），备牌右侧独立列（>8 种双列）；动态列宽（总宽 ≤1600px）。类型统计中文化（如 "26 生物 · 10 瞬间 · 23 地"），造价行同 deck_cost 口径（基本地不计；物质点全量含普通/非普通并括注金位预算点，数据缺失整行省略）。卡图优先简中（zhs）印刷、名牌同步显示 printed_name（Scryfall `cards/search` `!"<牌名>" lang:zhs` unique=prints，双面牌取正面），查不到回退英文；中文图缓存键加 `zhs_` 前缀，统存 `tools/cache/card_images/`（gitignored），复用 mtg_tool 的查询缓存与节流。依赖 Pillow（惰性导入，缺失时退出码 3）。
+牌表网格图生成：把 MTGA 导入格式牌表渲染成 Untapped.gg 风格卡牌网格图（默认中文界面，`--lang en` 切英文）。版式对齐 Untapped 模板：渐变顶栏 + 颜色身份圆点 + 战绩徽标；每种牌一格（stack）= 卡图顶部切片叠放 + 底部完整卡图——副本 1..N-1 各贡献一条切片（卡图顶部 12.5% 高度，含牌框边与名牌栏，切片底部留 2px 深色缝模拟牌堆阴影），格高 = (N-1)×切片高 + tile_h，>4 张拆多格（4/4/3）；主牌区固定 5 列、行优先填充、行高 = 该行最高格高，类别分组（组内 cmc 升序）连续填充；主牌/备牌各有 "主牌 · 60 张" / "备牌 · 15 张" 分节标头（带分区线），备牌右侧独立列（每列 ≤8 格、>8 双列）；动态列宽（总宽 ≤1600px）。类型统计中文化（如 "26 生物 · 10 瞬间 · 23 地"），造价行同 deck_cost 口径（基本地不计；物质点全量含普通/非普通并括注金位预算点，数据缺失整行省略）。卡图简中优先、三级来源：① MTGCH 主源（`mtgch.com/api/v1/result?q=<牌名>&view=1`，display_name 精确匹配/双面牌按正面名，取 webp `image_url` 与 `display_name_zh`，覆盖含未发售新牌）→ ② Scryfall zhs（`cards/search` `!"<牌名>" lang:zhs` unique=prints）→ ③ 英文卡图；某级下载失败顺延下一级，命中统计区分来源（mtgch/scryfall）。缓存按真实扩展名（.webp/.jpg/.png）存 `tools/cache/card_images/`（gitignored，缓存键 mtgch_/zhs_ 前缀区分来源），复用 mtg_tool 的查询缓存、节流与 429 重试。依赖 Pillow（惰性导入，缺失时退出码 3）。
 
 ```bash
 python tools/deck_image.py deck.txt --title "标题" --subtitle "副标题" --out deck.png
