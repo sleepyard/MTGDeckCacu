@@ -6,8 +6,8 @@
   python tools/deck_image.py <牌表.txt> [--out 输出.png] [--title 标题] [--subtitle 副标题]
 
 行为:
-  - 主牌按 地/非地 分组（非地按法术力值升序，地最后），每张去重牌一格，
-    左上角叠 "xN" 数量徽标；备牌（若有）单列于右侧。
+  - 主牌按类别分组（生物/鹏洛客/瞬间/法术/结界/神器/地），每组另起一行、
+    组内按法术力值升序，每张去重牌一格，左上角叠 "xN" 数量徽标；备牌（若有）单列于右侧。
   - 卡图取 Scryfall image_uris.normal（双面牌取正面），下载缓存到
     tools/cache/card_images/（gitignored），复用 mtg_tool 的查询缓存与节流。
   - 顶部标题栏含牌数统计（生物/法术/瞬间/结界/神器/鹏洛客/地）。
@@ -36,6 +36,9 @@ TILE_W, TILE_H = 244, 340          # Scryfall normal = 488x680 的半尺寸
 COLS = 8
 HEADER_H = 90
 BADGE_R = 16
+
+GROUP_ORDER = {"Creature": 0, "Planeswalker": 1, "Instant": 2, "Sorcery": 3,
+               "Enchantment": 4, "Artifact": 5, "Land": 6, "Other": 7}
 
 
 def _load_pil():
@@ -132,7 +135,7 @@ def render(main, side, title, subtitle, out):
                 fails.append(name)
             entries.append((cmc, bucket == "Land", qty, name, img, bucket))
 
-    entries.sort(key=lambda e: (e[1], e[0], e[3]))
+    entries.sort(key=lambda e: (GROUP_ORDER.get(e[5], 99), e[0], e[3]))
     total = sum(q for q, _ in main)
 
     side_entries = []
@@ -141,9 +144,21 @@ def render(main, side, title, subtitle, out):
         img = fetch_image(url, name.replace(" ", "_").replace("/", "_")) if url else None
         side_entries.append((qty, name, img))
 
-    rows = (len(entries) + COLS - 1) // COLS
-    side_w = TILE_W + 20 if side_entries else 0
-    side_rows = len(side_entries)
+    positions = []  # 与 entries 对齐的 (col, row)；类别变化时另起一行
+    col, row, prev_group = 0, 0, None
+    for e in entries:
+        g = GROUP_ORDER.get(e[5], 99)
+        if prev_group is not None and g != prev_group and col != 0:
+            col, row = 0, row + 1
+        positions.append((col, row))
+        col += 1
+        if col == COLS:
+            col, row = 0, row + 1
+        prev_group = g
+    rows = row + 1
+    side_cols = 1 if len(side_entries) <= 8 else 2
+    side_w = side_cols * (TILE_W + 10) + 10 if side_entries else 0
+    side_rows = (len(side_entries) + side_cols - 1) // side_cols
     h = HEADER_H + max(rows, side_rows) * TILE_H + 20
     w = COLS * TILE_W + side_w + 20
     canvas = Image.new("RGB", (w, h), (24, 26, 30))
@@ -174,10 +189,11 @@ def render(main, side, title, subtitle, out):
         draw.text((x + 4 + BADGE_R - lw / 2, y + 4 + BADGE_R - 13), label,
                   font=f_badge, fill=(255, 255, 120))
 
-    for i, (_cmc, _il, qty, _name, img, _b) in enumerate(entries):
-        paste(img, (i % COLS) * TILE_W + 10, HEADER_H + (i // COLS) * TILE_H, qty)
+    for (_cmc, _il, qty, _name, img, _b), (c, r) in zip(entries, positions):
+        paste(img, c * TILE_W + 10, HEADER_H + r * TILE_H, qty)
     for j, (qty, _name, img) in enumerate(side_entries):
-        paste(img, COLS * TILE_W + 10, HEADER_H + j * TILE_H, qty)
+        paste(img, COLS * TILE_W + 10 + (j // side_rows) * (TILE_W + 10),
+              HEADER_H + (j % side_rows) * TILE_H, qty)
 
     canvas.save(out)
     print("[完成] %s（主 %d / 备 %d，%d 格）" % (out, total, sum(q for q, _ in side), len(entries)))
