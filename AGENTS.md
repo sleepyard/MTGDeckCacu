@@ -18,7 +18,6 @@ This is a Python-first MTG deck research and testing toolkit. The executable mod
 
 Root workflow documents (`MtgDeckCacuWorkFlow.md`, `MtgSetReviewWorkFlow.md`, and related design/template files) define research and reporting conventions. `DeckList/`, `MatchRecord/`, `SetReview/`, `SimResult/`, and `AuditReport/` hold local or generated artifacts and are ignored by Git. Runtime caches, Forge/JDK downloads, and automation sessions under `tools/` are also ignored.
 
-
 ## Build, Test, and Development Commands
 
 There is no compile step or package manager; use Python 3.7+ with the standard library:
@@ -45,7 +44,6 @@ Use UTF-8 Python source, four-space indentation, and standard-library patterns a
 ## Testing Guidelines
 
 Tests use `unittest`; test files are named `test_*.py` and methods `test_*`. Add deterministic fixture coverage under `tools/testdata/` and mock HTTP, filesystem, and subprocess boundaries rather than contacting MTGA or external APIs in tests. Run the full discovery command before submitting behavior changes.
-
 
 ## Commit & Pull Request Guidelines
 
