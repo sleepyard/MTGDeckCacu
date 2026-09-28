@@ -104,6 +104,39 @@ RARITY_STYLE = {
                  "text": (238, 238, 238), "glow": (198, 198, 202)},
 }
 
+# MTGA 客户端提取的野卡卡背贴图（WotC 版权素材，仅本地缓存，不入库）；
+# 缺失时造价行回退到 RARITY_STYLE 手绘色块。
+WILDCARD_ICON_DIR = os.path.join(os.path.dirname(CACHE_DIR), "wildcard_icons")
+WILDCARD_ICON_FILE = {
+    "mythic": "CDC_Wildcard_Mythic.png",
+    "rare": "CDC_Wildcard_Rare.png",
+    "uncommon": "CDC_Wildcard_Uncommon.png",
+    "common": "CDC_Wildcard_Common.png",
+}
+WILDCARD_CROP = 0.68                 # 贴图右侧约 32% 为帷幕，仅取左部卡背
+_wildcard_cache = {}
+
+
+def _wildcard_icon(Image, rarity, height):
+    """→ 裁好并缩放到指定高度的野卡卡背 Image；缺失/失败返回 None。"""
+    key = (rarity, height)
+    if key in _wildcard_cache:
+        return _wildcard_cache[key]
+    icon = None
+    path = os.path.join(WILDCARD_ICON_DIR, WILDCARD_ICON_FILE.get(rarity, ""))
+    if os.path.exists(path):
+        try:
+            src = Image.open(path).convert("RGBA")
+            src = src.crop((0, 0, int(src.width * WILDCARD_CROP), src.height))
+            resampling = getattr(getattr(Image, "Resampling", Image), "LANCZOS",
+                                 getattr(Image, "LANCZOS", 1))
+            icon = src.resize((max(1, round(src.width * height / src.height)), height),
+                              resampling)
+        except Exception:
+            icon = None
+    _wildcard_cache[key] = icon
+    return icon
+
 
 def _load_pil():
     try:
@@ -515,12 +548,17 @@ def render(main, side, title, subtitle, out, author="", format_name="", record="
             if not count:
                 continue
             style = RARITY_STYLE[rarity]
-            draw.rounded_rectangle((x, y, x + chip, y + chip), radius=6,
-                                   fill=style["fill"], outline=style["edge"], width=1)
-            letter_w = draw.textlength(style["letter"], font=f_stat)
-            draw.text((x + (chip - letter_w) / 2, y + 1), style["letter"],
-                      font=f_stat, fill=style["text"])
-            x += chip + 4
+            icon = _wildcard_icon(Image, rarity, chip + 4)
+            if icon is not None:
+                canvas.paste(icon, (int(round(x)), y - 2), icon)
+                x += icon.width + 4
+            else:
+                draw.rounded_rectangle((x, y, x + chip, y + chip), radius=6,
+                                       fill=style["fill"], outline=style["edge"], width=1)
+                letter_w = draw.textlength(style["letter"], font=f_stat)
+                draw.text((x + (chip - letter_w) / 2, y + 1), style["letter"],
+                          font=f_stat, fill=style["text"])
+                x += chip + 4
             num = "×%d" % count
             draw.text((x, y + 2), num, font=f_probe, fill=style["glow"])
             x += draw.textlength(num, font=f_probe) + 14

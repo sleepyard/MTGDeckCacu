@@ -33,7 +33,13 @@
 | C | Common | 普通 | 灰黑 | `#424246` / `#78787E` |
 
 - MTGA 未公布官方色值，上表为参照客户端实机观感的取值（深底 UI 适用；浅底文档可直接用填充色）
-- 应用处：`tools/deck_image.py` 造价行色块（`RARITY_STYLE` 常量，与本表一致）；交付文档表格建议同款色块或"M 红橙 / R 金 / U 银 / C 灰黑"文字标注
+- **首选图形：MTGA 野卡卡背贴图**。四张 512×512 贴图（M 红橙 / R 金 / U 冰银蓝 / C 银白）提取自本机
+  MTGA 客户端 AssetBundle（一次性用 UnityPy 解包 `Textures_Bucket_Card.MaterialOverride_*` 中的
+  `CDC_Wildcard_*.png`，贴图右约 32% 为帷幕，展示时裁左 68%），缓存在
+  `tools/cache/wildcard_icons/`（gitignored）。WotC 版权素材，仅本机渲染使用，不入库、不分发；
+  换机或客户端更新后 bundle 名会变，需从 Manifest 重查后重新提取
+- 应用处：`tools/deck_image.py` 造价行优先粘贴上述野卡图标，缓存缺失时回退到 `RARITY_STYLE`
+  手绘色块（与本表一致）；交付文档表格建议同款色块或"M 红橙 / R 金 / U 银 / C 灰黑"文字标注
 - 颜色依据：MTG 稀有度符号配色（黑/银/金/红橙），MTGA 沿用——见 MagicArena Wiki「Rarity」与官方牌底字母规则
 - 文字方案：MTGA 客户端全称 Mythic Rare / Rare / Uncommon / Common + Wildcard；中文用官方译名 秘稀/稀有/非普通/普通 + 野卡
 
@@ -61,13 +67,15 @@ python tools/newbie/deck_cost.py parse 4m12r11u13c
 python tools/newbie/deck_cost.py derive | units | relation
 ```
 
-`tools/deck_image.py` 的牌表图自动含 MRUC 色块造价行（无需手动计算）。
+`tools/deck_image.py` 的牌表图自动含造价行（MRUC 野卡图标，缓存缺失时回退手绘色块，无需手动计算）。
 
 ## 5. 适用范围与局限
 
-- **数据覆盖**：稀有度数据来自 `tools/data/rarity_map.json` 本地快照（标准牌池，gitignored）。
-  非标准赛制牌或快照外新牌会"未识别"：deck_image 造价行整行省略，交付文档须标注「造价数据缺失」，
-  不得把缺失当成零造价
+- **数据覆盖与补全**：稀有度首选 `tools/data/rarity_map.json` 本地快照（标准牌池，gitignored）；
+  快照外牌（非标准赛制、新牌）由 `deck_cost.scryfall_look()` 走 Scryfall 回退补全——按精确名检索全部
+  印刷，在 Arena 印刷中取**最低稀有度**计价（MTGA 同名共享收藏、各版本可分别合成，升罕重印不抬造价；
+  设 `DECK_COST_NO_FALLBACK=1` 可关闭回退）。仅当快照与 Scryfall 双重落空时才标「造价数据缺失」：
+  deck_image 造价行整行省略，交付文档须标注缺失，不得把缺失当成零造价
 - **造价 ≠ 强度**：指标只衡量 MTGA 收集成本（野卡/包），不评价牌表强度
 - **物质点预算档是自设约束**：低造价档 20.4 / 上限 40.8 是新手系列的预算规则（2026-09-24 定），
   不是 MTGA 官方概念；无预算任务只报点数不报档位

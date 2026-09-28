@@ -14,6 +14,11 @@
   python3 deck_cost.py sum  <牌表文件…>       # 多副相加，给系列总账单
   python3 deck_cost.py parse 4m12r11u13c     # 直接解析签名
 
+稀有度数据：默认读 tools/data/rarity_map.json（标准牌池快照）；快照外的牌
+（如 Explorer 池）自动回退 Scryfall 按名检索，取最新 Arena 印刷的稀有度
+（走 mtg_tool 磁盘缓存与节流；回退也查不到才计入"未识别"）。
+设 DECK_COST_NO_FALLBACK=1 可关闭回退（纯快照口径）。
+
 口径（点值见 data/mtga_economy.md §四；四档口径取 ④ 1普通=1点）:
   A 物质总量 = 实牌+野卡+进度轮 的产出归一化   → 衡量"物质"
   B 可定向   = 野卡+进度轮 的产出归一化        → ★ 衡量造价
@@ -78,6 +83,41 @@ def look(name):
     return M.get(k) if k else None
 
 
+_SCRY_CACHE = {}
+
+
+_RAR_RANK = {'common': 0, 'uncommon': 1, 'rare': 2, 'mythic': 3}
+
+
+def scryfall_look(name):
+    """快照外牌的 Scryfall 回退：按精确名检索全部印刷，在 Arena 印刷中取
+    最低稀有度（MTGA 同名共享收藏、各版本可分别合成，最低版本即真实野卡成本；
+    升罕重印不会抬高造价），并取对应 type_line / 基本地判定
+    （走 mtg_tool 磁盘缓存与节流）。
+    查不到或环境不可用时返回 None（调用方按"未识别"处理）。"""
+    if os.environ.get('DECK_COST_NO_FALLBACK'):
+        return None
+    if name in _SCRY_CACHE:
+        return _SCRY_CACHE[name]
+    entry = None
+    try:
+        sys.path.insert(0, os.path.normpath(os.path.join(HERE, '..')))
+        import mtg_tool
+        cards, _total, _warn = mtg_tool.scryfall_search('!"%s"' % name.replace('"', ''),
+                                                        unique='prints')
+        arena = [c for c in cards if 'arena' in (c.get('games') or [])]
+        if arena:
+            c = min(arena, key=lambda x: (_RAR_RANK.get(x.get('rarity'), 0),
+                                          x.get('released_at') or ''))
+            entry = {'rarity': c.get('rarity', 'common'),
+                     'basic': (c.get('type_line') or '').startswith('Basic Land'),
+                     'type_line': c.get('type_line') or ''}
+    except Exception:
+        entry = None
+    _SCRY_CACHE[name] = entry
+    return entry
+
+
 def parse_deck(path):
     out, cur = [], None
     for raw in open(path, encoding='utf-8'):
@@ -105,6 +145,8 @@ def census(pairs):
         if side != 'main':
             continue
         e = look(nm)
+        if e is None:
+            e = scryfall_look(nm)
         if e is None:
             unk.append(nm); continue
         extra['total'] += q

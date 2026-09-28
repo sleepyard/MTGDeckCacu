@@ -284,7 +284,7 @@ python tools/deck_version.py --config params.json
 
 # tools/deck_image.py
 
-牌表网格图生成：把 MTGA 导入格式牌表渲染成 Untapped.gg 风格卡牌网格图（默认中文界面，`--lang en` 切英文）。版式对齐 Untapped 模板：渐变顶栏 + 颜色身份圆点 + 战绩徽标；每种牌一格（stack）= 卡图顶部切片叠放 + 底部完整卡图——副本 1..N-1 各贡献一条切片（卡图顶部 12.5% 高度，含牌框边与名牌栏，切片底部留 2px 深色缝模拟牌堆阴影），格高 = (N-1)×切片高 + tile_h，>4 张拆多格（4/4/3）；主牌区固定 5 列、行优先填充、行高 = 该行最高格高，类别分组（组内 cmc 升序）连续填充；主牌/备牌各有 "主牌 · 60 张" / "备牌 · 15 张" 分节标头（带分区线），备牌右侧独立列（每列 ≤8 格、>8 双列）；动态列宽（总宽 ≤1600px）。类型统计中文化（如 "26 生物 · 10 瞬间 · 23 地"），造价行同 deck_cost 口径：MRUC 四稀有度色块按 MTGA 配色（秘稀红橙/稀有金/非普通银/普通灰黑）+ 数量，物质点与 PP 明细随后；基本地不计，数据缺失整行省略；指标定义见根目录 `MtgDeckCostMetric.md`）。卡图简中优先、三级来源：① MTGCH 主源（`mtgch.com/api/v1/result?q=<牌名>&view=1`，display_name 精确匹配/双面牌按正面名，取 webp `image_url` 与 `display_name_zh`，覆盖含未发售新牌）→ ② Scryfall zhs（`cards/search` `!"<牌名>" lang:zhs` unique=prints）→ ③ 英文卡图；某级下载失败顺延下一级，命中统计区分来源（mtgch/scryfall）。缓存按真实扩展名（.webp/.jpg/.png）存 `tools/cache/card_images/`（gitignored，缓存键 mtgch_/zhs_ 前缀区分来源），复用 mtg_tool 的查询缓存、节流与 429 重试。依赖 Pillow（惰性导入，缺失时退出码 3）。
+牌表网格图生成：把 MTGA 导入格式牌表渲染成 Untapped.gg 风格卡牌网格图（默认中文界面，`--lang en` 切英文）。版式对齐 Untapped 模板：渐变顶栏 + 颜色身份圆点 + 战绩徽标；每种牌一格（stack）= 卡图顶部切片叠放 + 底部完整卡图——副本 1..N-1 各贡献一条切片（卡图顶部 12.5% 高度，含牌框边与名牌栏，切片底部留 2px 深色缝模拟牌堆阴影），格高 = (N-1)×切片高 + tile_h，>4 张拆多格（4/4/3）；主牌区固定 5 列、行优先填充、行高 = 该行最高格高，类别分组（组内 cmc 升序）连续填充；主牌/备牌各有 "主牌 · 60 张" / "备牌 · 15 张" 分节标头（带分区线），备牌右侧独立列（每列 ≤8 格、>8 双列）；动态列宽（总宽 ≤1600px）。类型统计中文化（如 "26 生物 · 10 瞬间 · 23 地"），造价行同 deck_cost 口径：MRUC 四稀有度图标 + 数量（优先用 MTGA 客户端提取的野卡卡背贴图，缓存 `tools/cache/wildcard_icons/`，gitignored；缺失时回退手绘色块，配色秘稀红橙/稀有金/非普通银/普通灰黑），物质点与 PP 明细随后；基本地不计，快照外牌经 Scryfall 回退补全、双重落空才整行省略；指标定义见根目录 `MtgDeckCostMetric.md`）。卡图简中优先、三级来源：① MTGCH 主源（`mtgch.com/api/v1/result?q=<牌名>&view=1`，display_name 精确匹配/双面牌按正面名，取 webp `image_url` 与 `display_name_zh`，覆盖含未发售新牌）→ ② Scryfall zhs（`cards/search` `!"<牌名>" lang:zhs` unique=prints）→ ③ 英文卡图；某级下载失败顺延下一级，命中统计区分来源（mtgch/scryfall）。缓存按真实扩展名（.webp/.jpg/.png）存 `tools/cache/card_images/`（gitignored，缓存键 mtgch_/zhs_ 前缀区分来源），复用 mtg_tool 的查询缓存、节流与 429 重试。依赖 Pillow（惰性导入，缺失时退出码 3）。
 
 ```bash
 python tools/deck_image.py deck.txt --title "标题" --subtitle "副标题" --out deck.png
@@ -319,7 +319,7 @@ python tools/cn_audit.py set FRA
 
 # tools/newbie/（标准新手系列工具组）
 
-标准赛制低造价新手系列（6 副 BO1 套牌，见 `DeckList/Standard_*`）的专属工具，共 32 个纯标准库脚本：造价核算（`deck_cost.py` 造价签名 / 物质点预算 / PP 包数，指标口径与 MRUC 视觉方案见根目录 `MtgDeckCostMetric.md`、`mtga_cost.py`、`pack_points.py`）、逐套牌金鱼模拟器（`sim_black.py` / `sim_blue.py` / `sim_green.py` / `sim_red_blind.py` / `sim_dual.py` / `sim_white.py` / `sim_mono_white.py` / `sim_blue_spells.py`）、轴线扫描（`*_axis_scan.py`、`axis_layers.py`）与地数扫描（`land_sweep.py`）。共享数据快照在 `tools/data/`（gitignored，约 21MB；rarity_map / std_prints / metagame 等），脚本经 `../data` 相对路径引用。来源与命令对照见 `AuditReport/NewbieSeries/合并说明_20260925.md`。
+标准赛制低造价新手系列（6 副 BO1 套牌，见 `DeckList/Standard_*`）的专属工具，共 32 个纯标准库脚本：造价核算（`deck_cost.py` 造价签名 / 物质点预算 / PP 包数，指标口径与 MRUC 视觉方案见根目录 `MtgDeckCostMetric.md`；快照外牌自动走 Scryfall 回退、各 Arena 印刷取最低稀有度计价，`DECK_COST_NO_FALLBACK=1` 关闭、`mtga_cost.py`、`pack_points.py`）、逐套牌金鱼模拟器（`sim_black.py` / `sim_blue.py` / `sim_green.py` / `sim_red_blind.py` / `sim_dual.py` / `sim_white.py` / `sim_mono_white.py` / `sim_blue_spells.py`）、轴线扫描（`*_axis_scan.py`、`axis_layers.py`）与地数扫描（`land_sweep.py`）。共享数据快照在 `tools/data/`（gitignored，约 21MB；rarity_map / std_prints / metagame 等），脚本经 `../data` 相对路径引用。来源与命令对照见 `AuditReport/NewbieSeries/合并说明_20260925.md`。
 
 ```bash
 # 1. 造价签名一览（brief）/ 单表全口径（sig）
