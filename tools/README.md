@@ -73,7 +73,7 @@ MTGO/MTGA 导入兼容：每行 `数量 英文名`；`Deck`/`Sideboard`/`Command
 
 Forge 套牌测试 CLI：牌表转换 `.dck`、AI vs AI 无头模拟、GUI 试玩入口。仅 Python 标准库，牌表解析复用 mtg_tool。
 
-## 依赖（一次性安装，均已被 .gitignore 排除）
+## 依赖（可选项：仅 forge_tool.py 的 sim/play 需要；convert 与仓库其余工具链均为纯标准库，无此依赖也能用。一次性安装，均已被 .gitignore 排除）
 
 - 便携 JDK：`tools/jdk/bin/java.exe`（Microsoft OpenJDK 21，`https://aka.ms/download-jdk/microsoft-jdk-21-windows-x64.zip` 解压即得；也可用 JAVA_HOME/PATH 中任意 Java 17+）
 - Forge 2.0.13：`tools/forge/`（GitHub release `forge-2.0.13` 的 `forge-installer-2.0.13.tar.bz2` 解压即得；GitHub 直连慢时可经 ghfast.top 代理并校验 sha256 = `df23b237095cfc5ff97a4711946b25ff852da9ff43b916c40783f6b5a41ce855`）

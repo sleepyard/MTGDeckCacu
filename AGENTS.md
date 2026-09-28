@@ -21,7 +21,7 @@ Root workflow documents (`MtgDeckCacuWorkFlow.md`, `MtgSetReviewWorkFlow.md`, an
 
 ## Build, Test, and Development Commands
 
-There is no compile step or package manager; use Python 3.7+ with the standard library:
+There is no compile step or package manager; use Python 3.7+ with the standard library. Optional dependency: the portable JDK + Forge install under `tools/jdk` and `tools/forge` is only required for `forge_tool.py sim/play` (download instructions in `tools/README.md`); everything else runs without it:
 
 ```powershell
 python -m unittest discover -s tools -p "test_*.py"
