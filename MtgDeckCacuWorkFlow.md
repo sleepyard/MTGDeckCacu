@@ -202,7 +202,8 @@ M9 指挥官	Commander-style 赛制的合法指挥官、颜色身份与指挥区
 
 - 自研套牌按主题归档：`DeckList/{赛制}_{色组}_{主题}/`；同一主题的多个构筑方向（如多色组变体）必须收进**同一个主题文件夹**，用子文件夹区分方向（例：`DeckList/Explorer_SlimeAgainstHumanity/{MonoGreen,Golgari,Simic}/`），不得在 DeckList 顶层平铺多个方向目录。
 - 对手 / 环境 meta 测试用例与自研套牌分开存放：统一放 `DeckList/opponents/{赛制}_{色组}_{ archetype }Meta/`（或既有对手目录），不与自研套牌混在同一层级。
-- 每版套牌同名 `.txt`（MTGA 导入格式）+ `.md`（设计文档）成对出现。脚手架 `tools/deck_version.py` 可直接生成：`{Name}V{n}.txt` / `{Name}V{n}.md` 成对、版本 max+1 禁覆盖、附设计文档骨架与基础门禁（主≥60 / 备 0 或 15 / 同名 >4 报警，基本地与 ANY_NUMBER 豁免；警告 exit 2）；含中文参数必须走 `--config params.json` 传参。
+- 每版套牌同名 `.txt`（MTGA 导入格式）+ `.md`（设计文档）成对出现，并配同名 `{Name}V{n}.png` 牌表图。脚手架 `tools/deck_version.py` 可直接生成成对文件：`{Name}V{n}.txt` / `{Name}V{n}.md` 成对、版本 max+1 禁覆盖、附设计文档骨架与基础门禁（主≥60 / 备 0 或 15 / 同名 >4 报警，基本地与 ANY_NUMBER 豁免；警告 exit 2）；含中文参数必须走 `--config params.json` 传参。
+- 牌表图：成对文件落定、validate 通过后，执行 `python tools/deck_image.py {Name}V{n}.txt --title "<标题>" --format <赛制> [--record 7-0 --author 名]`，默认输出同名 `{Name}V{n}.png` 到套牌同一目录（Untapped.gg 风格网格，卡图简中优先、三级来源缓存于 `tools/cache/card_images/`；Pillow 未安装时 exit 3）。版本递增（V{n}→V{n+1}）时重新生图，新版图与新版牌表同名，不覆盖旧版图。
 
 牌表格式（MTGO / MTGA 导入兼容）
 
