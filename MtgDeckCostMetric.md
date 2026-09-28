@@ -33,13 +33,14 @@
 | C | Common | 普通 | 灰黑 | `#424246` / `#78787E` |
 
 - MTGA 未公布官方色值，上表为参照客户端实机观感的取值（深底 UI 适用；浅底文档可直接用填充色）
-- **首选图形：MTGA 野卡卡背贴图**。四张 512×512 贴图（M 红橙 / R 金 / U 冰银蓝 / C 银白）提取自本机
-  MTGA 客户端 AssetBundle（一次性用 UnityPy 解包 `Textures_Bucket_Card.MaterialOverride_*` 中的
-  `CDC_Wildcard_*.png`，贴图右约 32% 为帷幕，展示时裁左 68%），缓存在
-  `tools/cache/wildcard_icons/`（gitignored）。WotC 版权素材，仅本机渲染使用，不入库、不分发；
-  换机或客户端更新后 bundle 名会变，需从 Manifest 重查后重新提取
-- 应用处：`tools/deck_image.py` 造价行优先粘贴上述野卡图标，缓存缺失时回退到 `RARITY_STYLE`
-  手绘色块（与本表一致）；交付文档表格建议同款色块或"M 红橙 / R 金 / U 银 / C 灰黑"文字标注
+- **首选图形：MTGA 野卡卡背贴图**。四张贴图（M 红橙 / R 金 / U 冰银蓝 / C 银白）提取自本机 MTGA
+  客户端 AssetBundle，已裁去右侧帷幕并作为项目资源提交在 `tools/assets/icons/wildcard/`；
+  同目录下 `mana/`（法术力符号 46 个：五色 + 无色/雪/通用数字/X/T + 混色）与 `type/`（类型图标：
+  客户端原生仅有 Artifact / Enchantment / Land）可供其他展示场景复用。提取脚本
+  `tools/extract_mtga_icons.py`（按需维护用，需本机 MTGA 客户端 + 可选依赖 UnityPy，非仓库常驻依赖），
+  客户端大更新后重跑即可刷新；WotC 版权素材，仅限本项目内渲染使用，不再分发
+- 应用处：`tools/deck_image.py` 造价行优先粘贴上述野卡图标（项目资源 → 旧缓存目录 →
+  `RARITY_STYLE` 手绘色块三级回退）；交付文档表格建议同款色块或"M 红橙 / R 金 / U 银 / C 灰黑"文字标注
 - 颜色依据：MTG 稀有度符号配色（黑/银/金/红橙），MTGA 沿用——见 MagicArena Wiki「Rarity」与官方牌底字母规则
 - 文字方案：MTGA 客户端全称 Mythic Rare / Rare / Uncommon / Common + Wildcard；中文用官方译名 秘稀/稀有/非普通/普通 + 野卡
 

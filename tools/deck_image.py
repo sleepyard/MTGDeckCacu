@@ -104,9 +104,13 @@ RARITY_STYLE = {
                  "text": (238, 238, 238), "glow": (198, 198, 202)},
 }
 
-# MTGA 客户端提取的野卡卡背贴图（WotC 版权素材，仅本地缓存，不入库）；
-# 缺失时造价行回退到 RARITY_STYLE 手绘色块。
-WILDCARD_ICON_DIR = os.path.join(os.path.dirname(CACHE_DIR), "wildcard_icons")
+# MTGA 客户端提取的野卡卡背贴图（WotC 版权素材，作为项目资源提交于
+# tools/assets/icons/wildcard/，由 tools/extract_mtga_icons.py 提取）；
+# 优先读项目资源，其次旧缓存目录，皆缺失时造价行回退到 RARITY_STYLE 手绘色块。
+ASSETS_ICON_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                               "assets", "icons")
+WILDCARD_ICON_DIRS = (os.path.join(ASSETS_ICON_DIR, "wildcard"),
+                      os.path.join(os.path.dirname(CACHE_DIR), "wildcard_icons"))
 WILDCARD_ICON_FILE = {
     "mythic": "CDC_Wildcard_Mythic.png",
     "rare": "CDC_Wildcard_Rare.png",
@@ -123,17 +127,23 @@ def _wildcard_icon(Image, rarity, height):
     if key in _wildcard_cache:
         return _wildcard_cache[key]
     icon = None
-    path = os.path.join(WILDCARD_ICON_DIR, WILDCARD_ICON_FILE.get(rarity, ""))
-    if os.path.exists(path):
+    for icon_dir in WILDCARD_ICON_DIRS:
+        path = os.path.join(icon_dir, WILDCARD_ICON_FILE.get(rarity, ""))
+        if not os.path.exists(path):
+            continue
         try:
             src = Image.open(path).convert("RGBA")
-            src = src.crop((0, 0, int(src.width * WILDCARD_CROP), src.height))
+            # 原始贴图右约 32% 为帷幕需裁左部；extract_mtga_icons 产物已裁好（宽约高 68%）
+            if src.width >= src.height * 0.9:
+                src = src.crop((0, 0, int(src.width * WILDCARD_CROP), src.height))
             resampling = getattr(getattr(Image, "Resampling", Image), "LANCZOS",
                                  getattr(Image, "LANCZOS", 1))
             icon = src.resize((max(1, round(src.width * height / src.height)), height),
                               resampling)
         except Exception:
             icon = None
+        if icon is not None:
+            break
     _wildcard_cache[key] = icon
     return icon
 
