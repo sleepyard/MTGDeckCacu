@@ -15,8 +15,9 @@
   - 主牌区固定 5 列 stack（不足 5 列按实际），每行 5 格、行数 = ceil(格数/5)，
     行高 = 该行最高格高；类别分组顺序与组内 cmc 升序不变（连续填充不强制换行）。
     备牌区维持右侧独立列（每列 ≤8 格）。总宽 ≤1600，列宽动态缩放。
-  - 主牌/备牌分区标头，顶部中文标题、颜色身份、类型统计与造价行（deck_cost 口径，
-    基本地不计，数据缺失整行省略）。
+  - 主牌/备牌分区标头，顶部中文标题、颜色身份、类型统计与造价行（deck_cost 口径：
+    MRUC 色块按 MTGA 稀有度配色——秘稀红橙/稀有金/非普通银/普通灰黑——加数量，
+    物质点与 PP 明细随后；基本地不计，数据缺失整行省略）。
 
 卡图简中优先，三级来源：
   1. MTGCH（主源，覆盖含未发售新牌）：mtgch.com/api/v1/result?q=<牌名>&view=1，
@@ -90,6 +91,18 @@ C_BAR_TXT = (240, 240, 240)
 C_BODY = (22, 24, 28)
 C_LINE = (83, 91, 101)
 C_ACCENT = (36, 191, 146)
+RARITY_STYLE = {
+    # MTGA 稀有度配色方案：秘稀红橙 / 稀有金 / 非普通银 / 普通灰黑
+    # （文字方案 M/R/U/C 取自牌底稀有度字母与 MTGA 野卡展示惯例）
+    "mythic":   {"letter": "M", "fill": (191, 68, 39),   "edge": (226, 120, 90),
+                 "text": (255, 244, 238), "glow": (233, 148, 122)},
+    "rare":     {"letter": "R", "fill": (168, 142, 74),  "edge": (212, 186, 116),
+                 "text": (28, 22, 10),    "glow": (216, 192, 132)},
+    "uncommon": {"letter": "U", "fill": (124, 134, 148), "edge": (168, 178, 192),
+                 "text": (18, 22, 26),    "glow": (188, 198, 210)},
+    "common":   {"letter": "C", "fill": (66, 66, 70),    "edge": (120, 120, 126),
+                 "text": (238, 238, 238), "glow": (198, 198, 202)},
+}
 
 
 def _load_pil():
@@ -259,21 +272,18 @@ def type_bucket(type_line):
     return "Other"
 
 
-def cost_line(main):
-    """按 deck_cost.py 口径生成造价行；牌张稀有度未知时整行省略。"""
+def cost_info(main):
+    """按 deck_cost.py 口径核算造价：返回 (deck_cost 模块, 签名 dict, metrics)；
+    牌张稀有度未知或工具不可用返回 None（调用方整行省略）。"""
     try:
         sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "newbie"))
         import deck_cost
         sig, unknown, _extra = deck_cost.census([(name, qty, "main") for qty, name in main])
         if unknown:
-            return ""
-        metrics = deck_cost.metrics(sig)
-        gold = sig.get("mythic", 0) * deck_cost.MYTHIC + sig.get("rare", 0) * deck_cost.RARE
-        return ("造价 %s ｜ 物质点 %.1f（金位 %.1f/上限 %.1f）｜ PP核心 %.1f 包 ｜ PP全量 %.1f 包"
-                % (deck_cost.fmt_sig(sig), metrics["tot_a"], gold, deck_cost.BUDGET_MAX,
-                   metrics["packs_core"], metrics["packs_all"]))
+            return None
+        return deck_cost, sig, deck_cost.metrics(sig)
     except Exception:
-        return ""
+        return None
 
 
 def _ellipsize(draw, text, font, max_w):
@@ -442,11 +452,19 @@ def render(main, side, title, subtitle, out, author="", format_name="", record="
             stats_parts.append("%d %s" % (counts[bucket], label))
     stats_text = " · ".join(stats_parts)
     stat_lines = _wrap(probe, stats_text, f_stat, available, 2) if stats_text else []
-    cost = cost_line(main)
-    cost_lines = _wrap(probe, cost, f_probe, available, 3) if cost else []
+    cost = cost_info(main)
+    cost_detail = ""
+    if cost:
+        dc, cost_sig, cost_metrics = cost
+        gold = cost_sig.get("mythic", 0) * dc.MYTHIC + cost_sig.get("rare", 0) * dc.RARE
+        cost_detail = ("物质点 %.1f（金位 %.1f/上限 %.1f）｜ PP核心 %.1f 包 ｜ PP全量 %.1f 包"
+                       % (cost_metrics["tot_a"], gold, dc.BUDGET_MAX,
+                          cost_metrics["packs_core"], cost_metrics["packs_all"]))
+    cost_lines = _wrap(probe, cost_detail, f_probe, available, 2) if cost_detail else []
+    cost_h = (30 + len(cost_lines) * 24) if cost else 0
     title = _ellipsize(probe, title, f_title, available)
     meta_text = " · ".join(part for part in (author, format_name) if part)
-    header_h = 14 + 43 + (24 if meta_text else 0) + len(stat_lines) * 25 + len(cost_lines) * 24 + 12
+    header_h = 14 + 43 + (24 if meta_text else 0) + len(stat_lines) * 25 + cost_h + 12
     body_y = header_h + SEC_H
     height = body_y + body_h + FOOTER_H
 
@@ -485,9 +503,31 @@ def render(main, side, title, subtitle, out, author="", format_name="", record="
     for line in stat_lines:
         draw.text((MARGIN, y), line, font=f_stat, fill=C_TITLE)
         y += 25
-    for line in cost_lines:
-        draw.text((MARGIN, y), line, font=f_probe, fill=C_COST)
-        y += 24
+    if cost:
+        _dc, sig, _metrics = cost
+        x = MARGIN
+        label = "造价"
+        draw.text((x, y + 2), label, font=f_probe, fill=C_COST)
+        x += draw.textlength(label, font=f_probe) + 12
+        chip = 24
+        for rarity in ("mythic", "rare", "uncommon", "common"):
+            count = sig.get(rarity, 0)
+            if not count:
+                continue
+            style = RARITY_STYLE[rarity]
+            draw.rounded_rectangle((x, y, x + chip, y + chip), radius=6,
+                                   fill=style["fill"], outline=style["edge"], width=1)
+            letter_w = draw.textlength(style["letter"], font=f_stat)
+            draw.text((x + (chip - letter_w) / 2, y + 1), style["letter"],
+                      font=f_stat, fill=style["text"])
+            x += chip + 4
+            num = "×%d" % count
+            draw.text((x, y + 2), num, font=f_probe, fill=style["glow"])
+            x += draw.textlength(num, font=f_probe) + 14
+        y += 30
+        for line in cost_lines:
+            draw.text((MARGIN, y), line, font=f_probe, fill=C_COST)
+            y += 24
 
     def section_heading(x0, section_w, text):
         text_w = draw.textlength(text, font=f_sec)
