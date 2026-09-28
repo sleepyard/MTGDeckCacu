@@ -25,10 +25,6 @@ Ref/
 # 本地工具配置，不入库
 .kimi-code/
 
-# 本地残余文件，不推送远端
-JevModelResearch.md
-formal_results_r3_gold.txt
-
 # 本地测试数据，不入库（MTGA 日志合成样本为回归测试夹具，保留跟踪）
 tools/testdata/*
 !tools/testdata/mtga_log_sample.txt
