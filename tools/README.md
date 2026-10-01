@@ -256,12 +256,12 @@ python tools/mtga_auto_tool.py draft --watch [--set HOB] [--port 8643]
 python tools/mtga_draft_tool.py build-ratings --set HOB \
     --context SetReview/HOB_20260806/02_LimitedEnvironment.md
 
-# 2. 17Lands 胜率缓存（历史遗留：公共端点 2026 年已关闭，仅在有缓存/镜像时可用）
+# 2. 17Lands 胜率缓存（直连优先、shiqidi 同源代理兜底，磁盘缓存 3 天）
 python tools/mtga_draft_tool.py ratings --set FDN [--format QuickDraft] [--refresh]
 ```
 
 - 评分表口径：字母等级 S/A/A-/B+/B/B-/C+/C/C-/D/F + ≤40 字中文短评 + 社区分（Draftsim 0-10，有则附）；输入 = Scryfall 集合 JSON（自动找 `SetReview/<SET>_*/data/scryfall_*.json`）+ 社区评分明细（`tools/cache/draft_ratings/<SET>_draftsim.json`）+ 系列环境摘要；分批（25 张/批）调 LLM，逐批落盘 `tools/cache/draft_ratings/<SET>.json`，中断重跑自动续评；LLM 漏评的牌给占位，`--refresh` 重评。
-- 数据时效注记：17Lands `card_ratings` 公共端点与 S3 公开桶均已关闭（2026-08 实测 NEO/BLB/ECL 等历史系列也全 0），本地预生成表是当前唯一锚点源。
+- 数据时效注记：17Lands `card_ratings` 公共端点 2026-08 一度失效（NEO/BLB/ECL 等历史系列全 0），期间由 shiqidi 同源代理维持在线数据；2026-10 复查直连已恢复。代码直连优先、代理兜底、磁盘缓存 3 天；本地预生成评分表仍是轮抓中喂给 LLM 的事实锚点。
 - 回归测试：`python tools/test_mtga_draft.py`（10 例，Ratings/缓存降级/评分表生成与合并，网络与 LLM 全 mock）。
 - 设计先验：`tools/draft_methodology.md`（评分公式 / 9 轴 WASPAS pick 内核 / 信号读取 / 组牌骨架数字，沉淀自旧项目 MTGCacu 限制赛代码与教学笔记）。
 - 纯函数内核：`tools/deck_core.py`——WASPAS 九轴综合（机器轴：曲线契合/主色契合/颜色开放度/信号/调色/去除/稀有度；LLM 只出 RawPower/Synergy）、信号读取（ALSA 顺位比较，无 ALSA 降级为高等级牌计数）、组牌骨架（动态地数/曲线评级/颜色深度/splash 准入/法术力配比/爆地卡地自检）。无 I/O，回归 `python tools/test_draft_core.py`。

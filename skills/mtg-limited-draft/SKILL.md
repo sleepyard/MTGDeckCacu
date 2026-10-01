@@ -13,7 +13,7 @@ whenToUse: 用户要求限制赛组牌（Sealed/Draft 牌池）、轮抓实时�
 关键口径与前置要求：
 
 - **评分表预生成（硬前置）**：`deck_pooper.py limited`/`draft` 都要求本地预生成评分表，缺失即报错不产出伪造结果。生成：`python tools/mtga_draft_tool.py build-ratings --set <SET> --context SetReview/<SET>_*/02_LimitedEnvironment.md`（分批调 LLM，逐批落盘 `tools/cache/draft_ratings/<SET>.json`，中断重跑自动续评，幂等）。
-- **17Lands 数据口径**：公共 `card_ratings` 端点与 S3 桶已关闭（历史系列也全 0），17Lands 锚点直连优先、shiqidi 代理回退，仅在有缓存/镜像时可用；本地预生成评分表是当前唯一稳定锚点源。17Lands 不可用（无网/无缓存/无系列码）时锚点退回纯字母等级、signal 轴退回等级锚点，**只告警不阻断轮抓**。
+- **17Lands 数据口径**：直连优先、shiqidi 同源代理兜底（2026-08 直连一度失效、由代理维持，2026-10 复查直连已恢复），磁盘缓存 3 天；本地预生成评分表是喂给 LLM 的事实锚点。两端均不可用（无网/无缓存/无系列码）时锚点退回纯字母等级、signal 轴退回等级锚点，**只告警不阻断轮抓**。
 - **pick 排名内核**：九轴 WASPAS（`tools/deck_core.py` 纯函数内核：曲线契合/主色契合/颜色开放度/信号/调色/去除/稀有度七条机器轴 + LLM 只出 RawPower/Synergy 两轴）；信号轴按真实 ALSA 判颜色开放，无 ALSA 降级为本包高等级牌计数快照；LLM 离线锚点 = 0.6 等级 + 0.4 GIH 归一化。设计先验见 `tools/draft_methodology.md`。
 - **组牌策略**：`tools/limited_strategy.py` 先枚举 5 单色 + 10 双色方案，按颜色深度、splash 准入、曲线缺口、生物/去除配额选 23 张非地，再算动态地数、法术力配比和爆地/卡地检查。
 - **LLM 建议**：`--llm` 需 `tools/llm_config.json`（OpenAI 兼容端点，api_key 可用 `DEEPSEEK_API_KEY` 覆盖，**不得提交**）；LLM 失败显式显示 offline 并保留机器排名，面板有"重试推荐"按钮。
