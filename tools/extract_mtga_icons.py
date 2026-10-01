@@ -1,8 +1,10 @@
 """从本机 MTGA 客户端 AssetBundle 提取 UI 图标为项目资源（tools/assets/icons/）。
 
 一次性/按需维护脚本，非常驻依赖：需要本机安装 MTGA 客户端 + `pip install UnityPy pillow`
-（两者均不入 requirements，仓库其余功能不依赖本脚本）。提取产物已提交入库，
-仅在客户端大更新需刷新图标时重跑：
+（两者均不入 requirements，仓库其余功能不依赖本脚本）。mana/ 与 type/ 已由开源
+Mana 字体渲染产物取代（tools/render_open_icons.py，SIL OFL 1.1）；wildcard/ 为
+WotC 版权素材，提取产物仅供本机使用（tools/assets/icons/wildcard/ 已 gitignore，
+不随仓库分发），仅在客户端大更新需刷新图标时重跑：
 
     python tools/extract_mtga_icons.py
     python tools/extract_mtga_icons.py --mtga-dir "D:/.../downloads/AssetBundle" --out tools/assets/icons

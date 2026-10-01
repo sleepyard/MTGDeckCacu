@@ -30,6 +30,27 @@ python tools/mtg_tool.py baseline --format pioneer --date 2026-08-08
 
 ---
 
+# tools/mcp_server.py
+
+MCP server（stdio，零依赖）：把只读 CLI 能力以 MCP 工具形式暴露给聊天型 Agent 客户端（CherryStudio / WorkBuddy / DeepSeek Harness 等）。协议为换行分隔的 JSON-RPC 2.0，实现 initialize / ping / tools/list / tools/call 最小集；工具执行 = 子进程调用对应 CLI（UTF-8 强制、180s 超时、50K 字符截断），非零退出码映射 `isError`。暴露 6 个只读工具：`mtg_search` / `mtg_check` / `mtg_baseline` / `deck_validate` / `deck_cost` / `rot_audit`。有 Shell 能力的编程 Agent 直接用 CLI + `skills/`，无需经此。
+
+客户端配置（CherryStudio / WorkBuddy 的 MCP JSON 同构，路径换成实际仓库位置）：
+
+```json
+{
+  "mcpServers": {
+    "neomtgdeckcacu": {
+      "command": "python",
+      "args": ["<仓库绝对路径>/tools/mcp_server.py"]
+    }
+  }
+}
+```
+
+冒烟自测：`python tools/mcp_server.py --selftest`；回归测试 `python tools/test_mcp_server.py`（子进程全 mock）。
+
+---
+
 # tools/deck_pooper.py
 
 DeckPooper 的限制赛组牌入口（P1）。它要求本地预生成评分表，并只接受牌池文本或
@@ -284,7 +305,7 @@ python tools/deck_version.py --config params.json
 
 # tools/deck_image.py
 
-牌表网格图生成：把 MTGA 导入格式牌表渲染成 Untapped.gg 风格卡牌网格图（默认中文界面，`--lang en` 切英文）。版式对齐 Untapped 模板：渐变顶栏 + 颜色身份圆点 + 战绩徽标；每种牌一格（stack）= 卡图顶部切片叠放 + 底部完整卡图——副本 1..N-1 各贡献一条切片（卡图顶部 12.5% 高度，含牌框边与名牌栏，切片底部留 2px 深色缝模拟牌堆阴影），格高 = (N-1)×切片高 + tile_h，>4 张拆多格（4/4/3）；主牌区固定 5 列、行优先填充、行高 = 该行最高格高，类别分组（组内 cmc 升序）连续填充；主牌/备牌各有 "主牌 · 60 张" / "备牌 · 15 张" 分节标头（带分区线），备牌右侧独立列（每列 ≤8 格、>8 双列）；动态列宽（总宽 ≤1600px）。类型统计中文化（如 "26 生物 · 10 瞬间 · 23 地"），造价行同 deck_cost 口径：MRUC 四稀有度图标 + 数量（优先用项目资源 `tools/assets/icons/wildcard/` 中 MTGA 客户端提取的野卡卡背贴图，其次旧缓存目录，皆缺时回退手绘色块，配色秘稀红橙/稀有金/非普通银/普通灰黑），物质点与 PP 明细随后；基本地不计，快照外牌经 Scryfall 回退补全、双重落空才整行省略；指标定义见根目录 `MtgDeckCostMetric.md`）。卡图简中优先、三级来源：① MTGCH 主源（`mtgch.com/api/v1/result?q=<牌名>&view=1`，display_name 精确匹配/双面牌按正面名，取 webp `image_url` 与 `display_name_zh`，覆盖含未发售新牌）→ ② Scryfall zhs（`cards/search` `!"<牌名>" lang:zhs` unique=prints）→ ③ 英文卡图；某级下载失败顺延下一级，命中统计区分来源（mtgch/scryfall）。缓存按真实扩展名（.webp/.jpg/.png）存 `tools/cache/card_images/`（gitignored，缓存键 mtgch_/zhs_ 前缀区分来源），复用 mtg_tool 的查询缓存、节流与 429 重试。依赖 Pillow（惰性导入，缺失时退出码 3）。
+牌表网格图生成：把 MTGA 导入格式牌表渲染成 Untapped.gg 风格卡牌网格图（默认中文界面，`--lang en` 切英文，造价行标签/明细同步英文化）。版式对齐 Untapped 模板：渐变顶栏 + 颜色身份圆点 + 战绩徽标；顶栏含两行统计——类型计数（中文化，如 "26 生物 · 10 瞬间 · 23 地"）与比率行（生物/非生物/地占比，有色占比按非地口径），造价带右侧附指标释义（物质点/PP核心/PP全量）。牌区中央斜置低透明度 DeckPooper 商标水印（`--no-watermark` 关闭），页脚含 DeckPooper 品牌署名；画布底部留footer 净空带（备牌列再高也不会贴边出血）。每种牌一格（stack）= 卡图顶部切片叠放 + 底部完整卡图——副本 1..N-1 各贡献一条切片（卡图顶部 12.5% 高度，含牌框边与名牌栏，切片底部留 2px 深色缝模拟牌堆阴影），格高 = (N-1)×切片高 + tile_h，>4 张拆多格（4/4/3）；主牌区固定 5 列、行优先填充、行高 = 该行最高格高，类别分组（组内 cmc 升序）连续填充；主牌/备牌各有 "主牌 · 60 张" / "备牌 · 15 张" 分节标头（带分区线），备牌右侧独立列、1–2 列均衡分配（每列 ≤8 格），列数自动选择：优先让右列 ≤ 主牌区高度（不撑高画布），并列取少列保牌格尺寸；Commander / Companion 分区单独解析为独立位（右列顶部，带"指挥官/伙伴"标签与主题色描边，造价核算含独立位、不含备牌）；动态列宽（总宽 ≤1600px）。类型统计中文化（如 "26 生物 · 10 瞬间 · 23 地"），造价行同 deck_cost 口径：MRUC 四稀有度图标 + 数量（野卡卡背贴图不随仓库分发：本机可用 `tools/extract_mtga_icons.py` 从 MTGA 客户端提取至 `tools/assets/icons/wildcard/`（gitignored），其次旧缓存目录，皆缺时回退手绘色块，配色秘稀红橙/稀有金/非普通银/普通灰黑），物质点与 PP 明细随后；基本地不计，快照外牌经 Scryfall 回退补全、双重落空才整行省略；指标定义见根目录 `MtgDeckCostMetric.md`）。卡图简中优先、三级来源：① MTGCH 主源（`mtgch.com/api/v1/result?q=<牌名>&view=1`，display_name 精确匹配/双面牌按正面名，取 webp `image_url` 与 `display_name_zh`，覆盖含未发售新牌）→ ② Scryfall zhs（`cards/search` `!"<牌名>" lang:zhs` unique=prints）→ ③ 英文卡图；某级下载失败顺延下一级，命中统计区分来源（mtgch/scryfall）。缓存按真实扩展名（.webp/.jpg/.png）存 `tools/cache/card_images/`（gitignored，缓存键 mtgch_/zhs_ 前缀区分来源），复用 mtg_tool 的查询缓存、节流与 429 重试。依赖 Pillow（惰性导入，缺失时退出码 3）。
 
 ```bash
 python tools/deck_image.py deck.txt --title "标题" --subtitle "副标题" --out deck.png
@@ -293,11 +314,20 @@ python tools/deck_image.py deck.txt --author 作者 --format standard --record 7
 
 # tools/extract_mtga_icons.py
 
-MTGA 客户端图标提取（按需维护脚本，非工具链常驻环节）：从本机 MTGA 客户端 AssetBundle 提取 UI 图标为项目资源 `tools/assets/icons/`——`wildcard/` 野卡卡背四稀有度（deck_image 造价行用）、`mana/` 法术力符号 46 个（五色 + C/S/X/T/数字 0-20/混色，TMP glyph 表切片合成彩底圆符）、`type/` 类型图标（客户端原生仅 Artifact / Enchantment / Land；鹏洛客/生物/法术/瞬间无原生图形）。产物已提交入库，仅客户端大更新需刷新时重跑。需要本机 MTGA 客户端 + 可选依赖 UnityPy / Pillow（均非常驻依赖）。
+MTGA 客户端图标提取（按需维护脚本，非工具链常驻环节）：从本机 MTGA 客户端 AssetBundle 提取 UI 图标为本地资源 `tools/assets/icons/`——`wildcard/` 野卡卡背四稀有度（deck_image 造价行用，**产物 gitignored 不入库**，缺失时造价行回退手绘色块）；`mana/`/`type/` 的提取功能已被 `tools/render_open_icons.py` 取代（见下），保留仅供对照。需要本机 MTGA 客户端 + 可选依赖 UnityPy / Pillow（均非常驻依赖）。
 
 ```bash
 python tools/extract_mtga_icons.py            # 默认 Steam 库路径 → tools/assets/icons/
 python tools/extract_mtga_icons.py --mtga-dir "<AssetBundle目录>" --out tools/assets/icons
+```
+
+# tools/render_open_icons.py
+
+开源图标渲染：用 Andrew Gioia 的 Mana 字体（SIL OFL 1.1，固定版本 v1.17.1，zip 缓存于 `tools/cache/fonts/`）渲染 `tools/assets/icons/mana/`（46 个法术力符号：五色 + C/S/X/T/E + 数字 0–20 + 混色/双色）与 `tools/assets/icons/type/`（Artifact / Enchantment / Land）PNG，产物提交入库，许可与归属见 `tools/assets/icons/LICENSE-OFL.txt` 与 `NOTICE.md`。字体包变更时用 `--refresh` 强制重下。依赖 Pillow（惰性导入）。
+
+```bash
+python tools/render_open_icons.py              # 缓存命中则不重下
+python tools/render_open_icons.py --refresh    # 强制重新下载字体
 ```
 
 # tools/rot_audit.py

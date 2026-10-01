@@ -31,3 +31,7 @@ tools/testdata/*
 !tools/testdata/mtga_log_sample2.txt
 !tools/testdata/mtga_inventory_sample.txt
 !tools/testdata/mtga_inventory_summary_only.txt
+
+# MTGA 客户端提取的野卡图标（WotC 素材，不随仓库分发；
+# 本机可用 tools/extract_mtga_icons.py 重新提取，缺失时 deck_image.py 回退手绘色块）
+tools/assets/icons/wildcard/

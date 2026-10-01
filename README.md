@@ -34,14 +34,18 @@
 
 ## 图标资源
 
-`tools/assets/icons/` 为从本机 MTGA 客户端提取的项目资源：`wildcard/`（野卡卡背四稀有度）、
-`mana/`（法术力符号 46 个：五色 + C/S/X/T + 数字 0–20 + 混色）、`type/`（类型图标，
-客户端原生仅 Artifact / Enchantment / Land）。客户端大更新后用
-`tools/extract_mtga_icons.py` 重提（需本机 MTGA + 可选依赖 UnityPy）。
+`tools/assets/icons/` 下的 `mana/`（法术力符号 46 个：五色 + C/S/X/T/E + 数字 0–20 + 混色）
+与 `type/`（Artifact / Enchantment / Land）由 `tools/render_open_icons.py` 用开源 Mana
+字体（SIL OFL 1.1，© Andrew Gioia）渲染，许可见 `tools/assets/icons/NOTICE.md`。
+`wildcard/` 野卡图标不随仓库分发：本机可用 `tools/extract_mtga_icons.py` 从自己的 MTGA
+客户端提取（需 UnityPy），缺失时 `deck_image.py` 造价行自动回退手绘稀有度色块。
 
 ## 快速开始
 
 ```bash
+# 克隆后初始化（目录骨架 + LLM 配置模板；--with-data 联网重建造价快照）
+python tools/init_workspace.py
+
 # 回归测试（282 例）
 python -m unittest discover -s tools -p "test_*.py"
 
@@ -61,11 +65,22 @@ python tools/mtga_log_tool.py scan
 python tools/deck_pooper.py draft --watch --set HOB --llm --port 8643
 ```
 
+## 给 Agent 用
+
+- **编程类 Agent**（Kimi Code / Claude Code / Codex）：读 `AGENTS.md` + `skills/`
+  目录下的 SKILL.md，直接驱动 CLI；Claude Code 入口为 `CLAUDE.md`。
+- **聊天型 Agent 客户端**（CherryStudio / WorkBuddy / DeepSeek Harness）：接入
+  `tools/mcp_server.py`（零依赖 stdio MCP server，6 个只读工具），配置 JSON 示例见
+  `tools/README.md` 的 mcp_server 章节，冒烟自测 `python tools/mcp_server.py --selftest`。
+
 ## 文档导航
 
 | 文档 | 内容 |
 |---|---|
 | `AGENTS.md` | 仓库规范：结构、命令、风格、测试与提交约定 |
+| `CONTRIBUTING.md` | 贡献指南：反馈通道、PR 要求、升级方式 |
+| `CHANGELOG.md` | 版本变更记录 |
+| `skills/` | Agent 技能权威源（mtg-deckbuilding / mtg-set-review / mtg-limited-draft） |
 | `tools/README.md` | 工具手册：每个脚本的口径与用法 |
 | `MtgDeckCacuWorkFlow.md` | 构筑工作流（阶段 0–5 全流程规范） |
 | `MtgSetReviewWorkFlow.md` / `MtgSetReviewTemplate.md` | 新系列评测工作流与模板 |
@@ -75,5 +90,12 @@ python tools/deck_pooper.py draft --watch --set HOB --llm --port 8643
 ## 数据与版权
 
 本地产出（`DeckList/`、`MatchRecord/`、`AuditReport/`、`SimResult/`、`SetReview/`、
-`tools/cache/`、`tools/data/` 等）一律 gitignored 不入库。卡图与图标素材版权归
-Wizards of the Coast 所有，仅限本项目研究用途；本项目为非营利粉丝工具，与 WotC 无关联。
+`tools/cache/`、`tools/data/` 等）一律 gitignored 不入库；克隆后跑
+`python tools/init_workspace.py` 补目录骨架与 `tools/llm_config.json` 模板
+（`--with-data` 联网重建造价快照）。
+
+项目代码以 MIT 发布（`LICENSE`）。图标素材见 `tools/assets/icons/NOTICE.md`：
+法术力/类型符号由 Mana 字体（SIL OFL 1.1，© Andrew Gioia）渲染；野卡图标不随仓库
+分发，本机可用 `tools/extract_mtga_icons.py` 提取，缺失时自动回退手绘色块。
+卡图与符号形象版权归 Wizards of the Coast 所有，仅限本项目研究用途；
+本项目为非营利粉丝工具，与 WotC 无关联。

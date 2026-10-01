@@ -444,7 +444,8 @@ class TestLlmBackend(unittest.TestCase):
             path.write_text(json.dumps({"base_url": "https://llm.test/v1",
                                         "model": "draft-model",
                                         "api_key": "secret-key"}), encoding="utf-8")
-            status = MAT.llm_config_status(path)
+            with mock.patch.dict("os.environ", {}, clear=True):
+                status = MAT.llm_config_status(path)
         self.assertTrue(status["has_api_key"])
         self.assertEqual(status["api_key_source"], "file")
         self.assertNotIn("secret-key", json.dumps(status))

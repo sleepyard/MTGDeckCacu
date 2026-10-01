@@ -33,12 +33,12 @@
 | C | Common | 普通 | 灰黑 | `#424246` / `#78787E` |
 
 - MTGA 未公布官方色值，上表为参照客户端实机观感的取值（深底 UI 适用；浅底文档可直接用填充色）
-- **首选图形：MTGA 野卡卡背贴图**。四张贴图（M 红橙 / R 金 / U 冰银蓝 / C 银白）提取自本机 MTGA
-  客户端 AssetBundle，已裁去右侧帷幕并作为项目资源提交在 `tools/assets/icons/wildcard/`；
-  同目录下 `mana/`（法术力符号 46 个：五色 + 无色/雪/通用数字/X/T + 混色）与 `type/`（类型图标：
-  客户端原生仅有 Artifact / Enchantment / Land）可供其他展示场景复用。提取脚本
-  `tools/extract_mtga_icons.py`（按需维护用，需本机 MTGA 客户端 + 可选依赖 UnityPy，非仓库常驻依赖），
-  客户端大更新后重跑即可刷新；WotC 版权素材，仅限本项目内渲染使用，不再分发
+- **首选图形：MTGA 野卡卡背贴图**。四张贴图（M 红橙 / R 金 / U 冰银蓝 / C 银白）为 WotC 版权素材，
+  **不随仓库分发**：本机用户用 `tools/extract_mtga_icons.py` 从自己安装的 MTGA 客户端提取至
+  `tools/assets/icons/wildcard/`（gitignored，需可选依赖 UnityPy），缺失时自动回退手绘色块；
+  同目录下 `mana/`（法术力符号 46 个：五色 + 无色/雪/能量/通用数字/X/T + 混色）与 `type/`
+  （Artifact / Enchantment / Land）已改由 `tools/render_open_icons.py` 用开源 Mana 字体
+  （SIL OFL 1.1，© Andrew Gioia）渲染并入库，许可与归属见 `tools/assets/icons/NOTICE.md`
 - 应用处：`tools/deck_image.py` 造价行优先粘贴上述野卡图标（项目资源 → 旧缓存目录 →
   `RARITY_STYLE` 手绘色块三级回退）；交付文档表格建议同款色块或"M 红橙 / R 金 / U 银 / C 灰黑"文字标注
 - 颜色依据：MTG 稀有度符号配色（黑/银/金/红橙），MTGA 沿用——见 MagicArena Wiki「Rarity」与官方牌底字母规则
@@ -68,7 +68,9 @@ python tools/newbie/deck_cost.py parse 4m12r11u13c
 python tools/newbie/deck_cost.py derive | units | relation
 ```
 
-`tools/deck_image.py` 的牌表图自动含造价行（MRUC 野卡图标，缓存缺失时回退手绘色块，无需手动计算）。
+`tools/deck_image.py` 的牌表图自动含造价行（MRUC 野卡图标，缓存缺失时回退手绘色块，无需手动计算；
+`--lang en` 时造价行标签与明细为英文）。聊天型 Agent 客户端可经 MCP 工具 `deck_cost`
+（`tools/mcp_server.py`）调用同口径核算。
 
 ## 5. 适用范围与局限
 
