@@ -8,14 +8,16 @@ splash 准入、法术力配比和爆地/卡地检查。它不读文件、不联
 import re
 from math import comb
 
+import deck_config
+
+# 策略参数（Phase 2 数据化）：import 时加载一次，原常量名保留为兼容别名。
+_PARAMS = deck_config.load_params()["deck_core"]
+
 
 # ---------------------------------------------------------------- 字母等级 -> 等效数值
-GRADE_EQ = {
-    "S": 0.60, "A": 0.57, "A-": 0.56, "B+": 0.55, "B": 0.545, "B-": 0.54,
-    "C+": 0.53, "C": 0.525, "C-": 0.52, "D": 0.51, "F": 0.48,
-}
-HIGH_GRADES = {"S", "A", "A-", "B+", "B"}
-RARITY_SCORE = {"mythic": 1.0, "rare": 0.7, "uncommon": 0.45, "common": 0.2}
+GRADE_EQ = {k: float(v) for k, v in _PARAMS["GRADE_EQ"].items()}
+HIGH_GRADES = set(_PARAMS["HIGH_GRADES"])
+RARITY_SCORE = {k: float(v) for k, v in _PARAMS["RARITY_SCORE"].items()}
 
 
 def grade_eq(grade):
@@ -32,18 +34,8 @@ def gih_anchor(wr, lo, hi):
 
 
 # ---------------------------------------------------------------- 九轴 WASPAS
-AXES = {
-    "raw_power": 0.20,
-    "synergy": 0.15,
-    "curve_fit": 0.15,
-    "color_fit": 0.15,
-    "color_openness": 0.10,
-    "signal": 0.10,
-    "fixer": 0.05,
-    "removal": 0.05,
-    "rarity": 0.05,
-}
-_WASPAS_LAMBDA = 0.5
+AXES = {k: float(v) for k, v in _PARAMS["AXES"].items()}
+_WASPAS_LAMBDA = float(_PARAMS["WASPAS_LAMBDA"])
 _EPS = 1e-6
 
 
@@ -81,7 +73,8 @@ def fixer_score(card_colors, produces_colors, picked_colors):
 
 
 # ---------------------------------------------------------------- 曲线
-CURVE_TARGET = {1: (2, 4), 2: (5, 7), 3: (4, 6), 4: (3, 5), 5: (2, 4)}
+CURVE_TARGET = {int(k): tuple(v) for k, v in _PARAMS["CURVE_TARGET"].items()}
+_CURVE_RATING = _PARAMS["CURVE_RATING"]
 
 
 def cmc_slot(cmc):
@@ -101,27 +94,26 @@ def curve_fit_score(picked_counts, cmc):
 
 
 def curve_rating(cmc_counts):
-    """返回 (评级, 调整分)。低费占比和中费数量共同决定评级。"""
+    """返回 (评级, 调整分)。低费占比和中费数量共同决定评级；
+    首个命中的评级档生效（CURVE_RATING.TIERS 顺序即原 if/elif 链）。"""
     total = sum(cmc_counts.values())
+    fallback = _CURVE_RATING["FALLBACK"]
     if total <= 0:
-        return "不足", -5
+        return fallback["label"], fallback["delta"]
     low = cmc_counts.get(1, 0) + cmc_counts.get(2, 0)
     mid = cmc_counts.get(3, 0) + cmc_counts.get(4, 0)
     ratio = low / total
-    if ratio >= 0.40 and mid >= 3:
-        return "优秀", +5
-    if ratio >= 0.30 and mid >= 2:
-        return "良好", +2
-    if ratio >= 0.20:
-        return "偏慢", -3
-    return "不足", -5
+    for tier in _CURVE_RATING["TIERS"]:
+        if ratio >= tier["ratio"] and mid >= tier["mid"]:
+            return tier["label"], tier["delta"]
+    return fallback["label"], fallback["delta"]
 
 
 # ---------------------------------------------------------------- 轮抓信号
-SIGNAL_OPEN_DELTA = 0.3
-SIGNAL_CLOSED_DELTA = -0.2
-ALSA_MARGIN = 1.5
-_FALLBACK_PER_HIGH = 0.1
+SIGNAL_OPEN_DELTA = float(_PARAMS["SIGNAL_OPEN_DELTA"])
+SIGNAL_CLOSED_DELTA = float(_PARAMS["SIGNAL_CLOSED_DELTA"])
+ALSA_MARGIN = float(_PARAMS["ALSA_MARGIN"])
+_FALLBACK_PER_HIGH = float(_PARAMS["FALLBACK_PER_HIGH"])
 
 
 def update_signals(signals, pack_remaining, pick_number):
@@ -162,8 +154,8 @@ def color_openness_score(signals, card_colors):
     return (sum(values) / len(values) + 1.0) / 2.0
 
 
-COLOR_FIT_MAIN_COLORS = 2       # 主色取已抓颜色计数前二
-_COLOR_FIT_NEUTRAL_PICKS = 5    # 已抓有色计数低于此值视为方向未明
+COLOR_FIT_MAIN_COLORS = int(_PARAMS["COLOR_FIT_MAIN_COLORS"])     # 主色取已抓颜色计数前二
+_COLOR_FIT_NEUTRAL_PICKS = int(_PARAMS["COLOR_FIT_NEUTRAL_PICKS"])  # 已抓有色计数低于此值视为方向未明
 
 
 def color_fit_score(card_colors, picked_color_counts):
@@ -188,39 +180,38 @@ def color_fit_score(card_colors, picked_color_counts):
 
 
 # ---------------------------------------------------------------- 组牌骨架
-TARGET_NON_LANDS = 23
-LAND_MIN, LAND_MAX = 16, 19
-STRATEGY_TARGETS = {
-    "aggro": {"creature": 16, "removal": 3},
-    "mid": {"creature": 13, "removal": 3},
-    "control": {"creature": 10, "removal": 6},
-}
-DEPTH_MONO_MIN = 14
-DEPTH_DUAL_MIN = 8
-SPLASH_MAX_CARDS = 3
-SPLASH_DISCOUNT = 0.3
-SPLASH_IWD_THRESHOLD = 0.03
-SPLASH_SCORE_THRESHOLD = 6.0
+TARGET_NON_LANDS = int(_PARAMS["TARGET_NON_LANDS"])
+LAND_MIN, LAND_MAX = int(_PARAMS["LAND_MIN"]), int(_PARAMS["LAND_MAX"])
+STRATEGY_TARGETS = {k: dict(v) for k, v in _PARAMS["STRATEGY_TARGETS"].items()}
+DEPTH_MONO_MIN = int(_PARAMS["DEPTH_MONO_MIN"])
+DEPTH_DUAL_MIN = int(_PARAMS["DEPTH_DUAL_MIN"])
+SPLASH_MAX_CARDS = int(_PARAMS["SPLASH_MAX_CARDS"])
+SPLASH_DISCOUNT = float(_PARAMS["SPLASH_DISCOUNT"])
+SPLASH_IWD_THRESHOLD = float(_PARAMS["SPLASH_IWD_THRESHOLD"])
+SPLASH_SCORE_THRESHOLD = float(_PARAMS["SPLASH_SCORE_THRESHOLD"])
+
+_LAND_COUNT = _PARAMS["LAND_COUNT"]
+_LAND_CHECK = _PARAMS["LAND_CHECK"]
+
+_CMP = {">": lambda a, b: a > b, "<": lambda a, b: a < b,
+        ">=": lambda a, b: a >= b, "<=": lambda a, b: a <= b}
 
 
 def land_count(avg_cmc, draw_ramp_count=0, splash_count=0):
-    """动态地数，按教学口径 clamp 到 [16, 19]。"""
-    base = 17
-    if avg_cmc > 4.0:
-        base += 2
-    elif avg_cmc > 3.4:
-        base += 1
-    elif avg_cmc < 2.5:
-        base -= 2
-    elif avg_cmc < 2.8:
-        base -= 1
-    if draw_ramp_count >= 4:
-        base -= 1
-    base += min(2, splash_count * 0.5)
-    if avg_cmc <= 2.5 and splash_count <= 2:
-        base = min(base, 16)
-    if avg_cmc < 2.8 and splash_count <= 1:
-        base = min(base, 17)
+    """动态地数，按教学口径 clamp 到 [LAND_MIN, LAND_MAX]；
+    阈值全部来自 LAND_COUNT 参数（函数签名不变）。"""
+    cfg = _LAND_COUNT
+    base = cfg["BASE"]
+    for op, cmc, delta in cfg["CMC_STEPS"]:  # 首个命中生效（原 if/elif 链语义）
+        if _CMP[op](avg_cmc, cmc):
+            base += delta
+            break
+    if draw_ramp_count >= cfg["RAMP_MIN"]:
+        base += cfg["RAMP_DELTA"]
+    base += min(cfg["SPLASH_MAX_ADD"], splash_count * cfg["SPLASH_PER"])
+    for cmc_op, cmc, splash_op, splash, cap in cfg["CAPS"]:
+        if _CMP[cmc_op](avg_cmc, cmc) and _CMP[splash_op](splash_count, splash):
+            base = min(base, cap)
     return int(round(max(LAND_MIN, min(LAND_MAX, base))))
 
 
@@ -306,7 +297,8 @@ def hypergeom_at_least(deck_size, lands, draws, k):
 
 
 def land_check(lands, deck_size=40):
-    """检查第 3 回合至少 2 地、第 5 回合至少 4 地的概率门槛。"""
-    p3 = hypergeom_at_least(deck_size, lands, 7 + 2, 2)
-    p5 = hypergeom_at_least(deck_size, lands, 7 + 4, 4)
-    return p3, p5, (p3 > 0.90 and p5 > 0.70)
+    """检查第 3 回合至少 2 地、第 5 回合至少 4 地的概率门槛（LAND_CHECK 参数）。"""
+    cfg = _LAND_CHECK
+    p3 = hypergeom_at_least(deck_size, lands, cfg["P3_DRAWS"], cfg["P3_K"])
+    p5 = hypergeom_at_least(deck_size, lands, cfg["P5_DRAWS"], cfg["P5_K"])
+    return p3, p5, (p3 > cfg["P3_MIN"] and p5 > cfg["P5_MIN"])

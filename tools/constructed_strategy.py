@@ -460,8 +460,9 @@ def build_constructed_deck(candidates: Sequence[Mapping], seed: SeedSet,
                            fmt: str, bo3: bool = False, strategy: str = "mid",
                            platform: Optional[str] = None) -> ConstructedDeck:
     """构建普通 60/15 或 Brawl 1+99 套牌，并返回结构门禁结果。"""
-    if strategy not in {"aggro", "mid", "control"}:
-        raise ValueError("strategy 必须是 aggro、mid 或 control")
+    if strategy not in deck_core.STRATEGY_TARGETS:
+        raise ValueError(
+            f"strategy 必须是 {'、'.join(deck_core.STRATEGY_TARGETS)} 之一")
     index = _index_candidates(candidates)
     _seed_requirements(seed, index)
     brawl = fmt.lower() in BRAWL_FORMATS

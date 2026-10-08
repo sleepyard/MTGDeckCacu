@@ -21,6 +21,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from mtg_tool import MtgToolError, scryfall_get  # noqa: E402
+import deck_config  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RECORD_DIR = REPO_ROOT / "MatchRecord"
@@ -344,18 +345,15 @@ ZONE_TYPE_NAMES = {
 
 # ZoneTransfer category → 动作（按真实日志统计校准：实测另有 Resolve/Surveil/Exile/
 # Return/SBA_Damage/Discard 等，一律不计入动作、归入"未识别事件"）
-CATEGORY_ACTIONS = {
-    "PlayLand": "下地",
-    "CastSpell": "施放",
-    "Put": "放进战场",
-    "Draw": "抓牌",
-    "DrawCard": "抓牌",
-}
+# 参数（Phase 2 数据化）：import 时加载一次，原常量名保留为兼容别名
+_PARAMS = deck_config.load_params()["mtga_log_tool"]
 
-# risk 模式标记阈值（硬编码）
-RISK_TURN3_LANDS = 3     # 自己第 3 个回合结束时应已下的地数，不足则标记
-RISK_MULLIGAN_LIMIT = 2  # 单局调度达到此次数则标记
-RISK_STUCK_NONLAND = 4   # 终局手牌中未打出的非地牌达到此数量则标记
+CATEGORY_ACTIONS = dict(_PARAMS["CATEGORY_ACTIONS"])
+
+# risk 模式标记阈值
+RISK_TURN3_LANDS = int(_PARAMS["RISK_TURN3_LANDS"])    # 自己第 3 个回合结束时应已下的地数，不足则标记
+RISK_MULLIGAN_LIMIT = int(_PARAMS["RISK_MULLIGAN_LIMIT"])  # 单局调度达到此次数则标记
+RISK_STUCK_NONLAND = int(_PARAMS["RISK_STUCK_NONLAND"])   # 终局手牌中未打出的非地牌达到此数量则标记
 
 _grp_cache = None
 

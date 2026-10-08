@@ -29,6 +29,9 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import deck_model  # noqa: E402
+
 USER_AGENT = "NeoMtgDeckCacu/1.0"
 SCRYFALL_BASE = "https://api.scryfall.com"
 MTGCH_BASE = "https://mtgch.com"
@@ -39,11 +42,8 @@ MAX_RETRIES = 5
 MAX_PAGES = 100
 
 LEGAL_OK = "legal"
-BASIC_LAND_NAMES = {
-    "Plains", "Island", "Swamp", "Mountain", "Forest", "Wastes",
-    "Snow-Covered Plains", "Snow-Covered Island", "Snow-Covered Swamp",
-    "Snow-Covered Mountain", "Snow-Covered Forest", "Snow-Covered Wastes",
-}
+# 单一来源在 deck_model（Phase 2 统一）；此处保留原名 re-export 兼容
+BASIC_LAND_NAMES = deck_model.BASIC_LANDS
 
 
 # ---------------------------------------------------------------- 错误模型
@@ -71,8 +71,12 @@ class PaginationIncomplete(MtgToolError):
     """分页遍历未完成（超过页数上限或 next_page 中断）"""
 
 
-class DeckParseError(MtgToolError):
-    """牌表文件解析失败"""
+class DeckParseError(deck_model.DeckParseError, MtgToolError):
+    """牌表文件解析失败。
+
+    双继承：既是 deck_model.DeckParseError（统一解析层异常，re-export 兼容
+    `from mtg_tool import DeckParseError` 的既有路径），又是 MtgToolError
+    （mtga_auto_tool 等处 `except MtgToolError` 仍能捕获）。"""
 
 
 # ---------------------------------------------------------------- HTTP 层
@@ -552,41 +556,15 @@ def cmd_check(args):
 
 
 # ---------------------------------------------------------------- subcommand: validate
-SECTION_HEADERS = {"deck": "main", "sideboard": "sideboard",
-                   "commander": "commander", "companion": "companion"}
-
-
 def parse_deckfile(path):
     """解析 MTGO/MTGA 导入格式。返回 {section: [(qty, name), ...]}。
 
-    块头行 Deck/Sideboard/Commander/Companion 显式切换分区；
-    无块头时，主牌后的空行切换为备牌。"""
-    sections = {"commander": [], "companion": [], "main": [], "sideboard": []}
-    current = "main"
-    blank_switched = False
-    with open(path, "r", encoding="utf-8") as fh:
-        for lineno, raw in enumerate(fh, 1):
-            line = raw.strip()
-            if not line:
-                if current == "main" and sections["main"] and not blank_switched:
-                    current = "sideboard"
-                    blank_switched = True
-                continue
-            low = line.lower()
-            if low in SECTION_HEADERS:
-                current = SECTION_HEADERS[low]
-                continue
-            m = re.match(r"^(\d+)\s+(.+)$", line)
-            if not m:
-                raise DeckParseError(f"第 {lineno} 行无法解析为 '数量 英文名': {line!r}")
-            qty = int(m.group(1))
-            name = m.group(2).strip()
-            # 兼容 MTGO 导出尾部 "(SET) 123"
-            name = re.sub(r"\s+\([A-Za-z0-9_]+\)\s+\S+$", "", name).strip()
-            if not name:
-                raise DeckParseError(f"第 {lineno} 行缺少牌名: {line!r}")
-            sections[current].append((qty, name))
-    return sections
+    薄委托：deck_model.parse_deck(strict=True) + as_section_dict()。
+    坏行抛 DeckParseError（含行号）的严格语义不变。"""
+    try:
+        return deck_model.parse_deck(path, strict=True).as_section_dict()
+    except deck_model.DeckParseError as exc:
+        raise DeckParseError(str(exc)) from exc
 
 
 def is_basic_land(type_line):

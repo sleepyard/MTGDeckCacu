@@ -347,7 +347,7 @@ def build_limited_deck(pool: Sequence[Mapping], table=None,
                        deck_size: int = LIMITED_DECK_SIZE) -> LimitedDeck:
     """从已解析牌池构建限制赛套牌，不负责输入/输出文件。"""
     if strategy not in STRATEGIES:
-        raise ValueError("strategy 必须是 aggro、mid 或 control")
+        raise ValueError(f"strategy 必须是 {'、'.join(STRATEGIES)} 之一")
     if deck_size < 40:
         raise ValueError("deck_size 不得低于限制赛下限 40")
     if not pool:

@@ -28,15 +28,11 @@ import sys
 from datetime import date
 from pathlib import Path
 
-BASIC_LANDS = {"Plains", "Island", "Swamp", "Mountain", "Forest",
-               "Wastes", "Snow-Covered Plains", "Snow-Covered Island",
-               "Snow-Covered Swamp", "Snow-Covered Mountain", "Snow-Covered Forest"}
-# 规则文本允许任意张数的牌（按需扩充）
-ANY_NUMBER = {"Slime Against Humanity", "Rat Colony", "Persistent Petitioners",
-              "Relentless Rats", "Shadowborn Apostle", "Seven Dwarves",
-              "Dragon's Approach", "Hare Apparent", "Templar Knight"}
+from deck_model import (ANY_NUMBER, BASIC_LANDS, REASON_BAD_LINE,
+                        parse_deck as _parse_deck)
 
-SECTIONS = {"deck", "sideboard", "commander", "companion", "about"}
+# BASIC_LANDS / ANY_NUMBER 单一来源在 deck_model（Phase 2 统一，修复本地名单
+# 缺 Snow-Covered Wastes 的问题）；此处保留原名 re-export 兼容。
 
 VERSION_RE = re.compile(r"^(.*?)V(\d+)\.txt$", re.IGNORECASE)
 
@@ -58,23 +54,20 @@ REPORT_SECTIONS = [
 
 
 def parse_deck(path):
-    """解析 MTGA 导入格式，返回 {section: [(qty, name)]}。
+    """薄委托：deck_model.parse_deck → {section: [(qty, name)]}。
 
-    兼容 `数量 名称 (SET) 编号` 后缀与 Deck/Sideboard/Commander/Companion 区块头。
+    主牌键为 "deck"（对齐 validate 与既有调用）；只含非空分区；
+    坏行打印警告后跳过（警告通道沿用旧行为）。BOM 由 utf-8-sig 读取兼容。
     """
-    result, section = {}, "deck"
-    for raw in path.read_text(encoding="utf-8-sig").splitlines():
-        line = raw.strip()
-        if not line:
-            continue
-        if line.lower() in SECTIONS:
-            section = line.lower()
-            continue
-        m = re.match(r"^(\d+)\s+(.+?)(?:\s+\([A-Za-z0-9_]+\)\s+\S+)?$", line)
-        if not m:
-            print(f"  [警告] 无法解析的行: {line}", file=sys.stderr)
-            continue
-        result.setdefault(section, []).append((int(m.group(1)), m.group(2)))
+    deck = _parse_deck(Path(path))
+    for skip in deck.skipped:
+        if skip.reason == REASON_BAD_LINE:
+            print(f"  [警告] 无法解析的行: {skip.raw}", file=sys.stderr)
+    result = {}
+    for key, cards in (("commander", deck.commander), ("companion", deck.companion),
+                       ("deck", deck.main), ("sideboard", deck.sideboard)):
+        if cards:
+            result[key] = [(c.qty, c.name) for c in cards]
     return result
 
 

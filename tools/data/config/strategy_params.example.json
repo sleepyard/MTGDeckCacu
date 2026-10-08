@@ -1,0 +1,203 @@
+{
+  "deck_core": {
+    "GRADE_EQ": {
+      "S": 0.6,
+      "A": 0.57,
+      "A-": 0.56,
+      "B+": 0.55,
+      "B": 0.545,
+      "B-": 0.54,
+      "C+": 0.53,
+      "C": 0.525,
+      "C-": 0.52,
+      "D": 0.51,
+      "F": 0.48
+    },
+    "HIGH_GRADES": [
+      "S",
+      "A",
+      "A-",
+      "B+",
+      "B"
+    ],
+    "RARITY_SCORE": {
+      "mythic": 1.0,
+      "rare": 0.7,
+      "uncommon": 0.45,
+      "common": 0.2
+    },
+    "AXES": {
+      "raw_power": 0.2,
+      "synergy": 0.15,
+      "curve_fit": 0.15,
+      "color_fit": 0.15,
+      "color_openness": 0.1,
+      "signal": 0.1,
+      "fixer": 0.05,
+      "removal": 0.05,
+      "rarity": 0.05
+    },
+    "WASPAS_LAMBDA": 0.5,
+    "CURVE_TARGET": {
+      "1": [
+        2,
+        4
+      ],
+      "2": [
+        5,
+        7
+      ],
+      "3": [
+        4,
+        6
+      ],
+      "4": [
+        3,
+        5
+      ],
+      "5": [
+        2,
+        4
+      ]
+    },
+    "CURVE_RATING": {
+      "TIERS": [
+        {
+          "label": "优秀",
+          "ratio": 0.4,
+          "mid": 3,
+          "delta": 5
+        },
+        {
+          "label": "良好",
+          "ratio": 0.3,
+          "mid": 2,
+          "delta": 2
+        },
+        {
+          "label": "偏慢",
+          "ratio": 0.2,
+          "mid": 0,
+          "delta": -3
+        }
+      ],
+      "FALLBACK": {
+        "label": "不足",
+        "delta": -5
+      }
+    },
+    "SIGNAL_OPEN_DELTA": 0.3,
+    "SIGNAL_CLOSED_DELTA": -0.2,
+    "ALSA_MARGIN": 1.5,
+    "FALLBACK_PER_HIGH": 0.1,
+    "COLOR_FIT_MAIN_COLORS": 2,
+    "COLOR_FIT_NEUTRAL_PICKS": 5,
+    "TARGET_NON_LANDS": 23,
+    "LAND_MIN": 16,
+    "LAND_MAX": 19,
+    "STRATEGY_TARGETS": {
+      "aggro": {
+        "creature": 16,
+        "removal": 3
+      },
+      "mid": {
+        "creature": 13,
+        "removal": 3
+      },
+      "control": {
+        "creature": 10,
+        "removal": 6
+      }
+    },
+    "DEPTH_MONO_MIN": 14,
+    "DEPTH_DUAL_MIN": 8,
+    "SPLASH_MAX_CARDS": 3,
+    "SPLASH_DISCOUNT": 0.3,
+    "SPLASH_IWD_THRESHOLD": 0.03,
+    "SPLASH_SCORE_THRESHOLD": 6.0,
+    "LAND_COUNT": {
+      "BASE": 17,
+      "CMC_STEPS": [
+        [
+          ">",
+          4.0,
+          2
+        ],
+        [
+          ">",
+          3.4,
+          1
+        ],
+        [
+          "<",
+          2.5,
+          -2
+        ],
+        [
+          "<",
+          2.8,
+          -1
+        ]
+      ],
+      "RAMP_MIN": 4,
+      "RAMP_DELTA": -1,
+      "SPLASH_PER": 0.5,
+      "SPLASH_MAX_ADD": 2,
+      "CAPS": [
+        [
+          "<=",
+          2.5,
+          "<=",
+          2,
+          16
+        ],
+        [
+          "<",
+          2.8,
+          "<=",
+          1,
+          17
+        ]
+      ]
+    },
+    "LAND_CHECK": {
+      "P3_DRAWS": 9,
+      "P3_K": 2,
+      "P3_MIN": 0.9,
+      "P5_DRAWS": 11,
+      "P5_K": 4,
+      "P5_MIN": 0.7
+    }
+  },
+  "mtga_log_tool": {
+    "RISK_TURN3_LANDS": 3,
+    "RISK_MULLIGAN_LIMIT": 2,
+    "RISK_STUCK_NONLAND": 4,
+    "CATEGORY_ACTIONS": {
+      "PlayLand": "下地",
+      "CastSpell": "施放",
+      "Put": "放进战场",
+      "Draw": "抓牌",
+      "DrawCard": "抓牌"
+    }
+  },
+  "rot_audit": {
+    "ROTATION_DATE": "2027-02-02",
+    "ROTATION_SUMMARY": "WOE LCI MKM OTJ(+BIG) BLB DSK",
+    "ROTATING_SETS": [
+      "woe",
+      "woc",
+      "lci",
+      "lcc",
+      "mkm",
+      "mkc",
+      "otj",
+      "otc",
+      "big",
+      "blb",
+      "blc",
+      "dsk",
+      "dsc"
+    ]
+  }
+}

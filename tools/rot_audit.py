@@ -3,8 +3,8 @@
 """轮替存活审计 —— 判定一套标准牌表在**下一次轮替**后还剩多少张牌能用。
 
 规则（官方）：「每年一次，在当年第一个 premier 系列的售前赛之后，标准里最旧的六个系列轮替出去。」
-  · 当前窗口的下一次轮替日：**2027-02-02**（随《诺克提斯：沉沦之境》售前赛）
-  · 退出：WOE / LCI / MKM / OTJ(+BIG) / BLB / DSK
+  · 当前窗口的下一次轮替日与退出系列：见 strategy_params 的 rot_audit 节
+    （默认 2027-02-02，随《诺克提斯：沉沦之境》售前赛）
 
 判定方法（关键，别用「Scryfall f:standard」直接判存亡）：
   Scryfall 的赛制合法性是**按牌（oracle）**算的 —— 同一张牌的所有印刷都会显示 f:standard，
@@ -17,9 +17,17 @@
 """
 import json, sys, time, urllib.request, urllib.parse
 
+import deck_config
+from deck_model import parse_deck as _parse_deck
+
 UA = "mtg-deckbuilder/1.0"
-ROTATING = {"woe", "woc", "lci", "lcc", "mkm", "mkc", "otj", "otc", "big",
-            "blb", "blc", "dsk", "dsc"}
+
+# 参数（Phase 2 数据化）：import 时加载一次，原常量名保留为兼容别名
+_PARAMS = deck_config.load_params()["rot_audit"]
+ROTATION_DATE = _PARAMS["ROTATION_DATE"]          # 下一次轮替日
+ROTATION_SUMMARY = _PARAMS["ROTATION_SUMMARY"]    # 报告头退出系列展示串
+ROTATING = set(_PARAMS["ROTATING_SETS"])          # 本次轮替退出的系列代码
+
 SAVING_TYPES = {"core", "expansion"}
 # 轮替后最旧的标准系列 = FDN《基石构筑》(2024-11-15)。此日期之后的 core/expansion 非数字系列
 # 都在本次轮替后存活（含尚未发售的 FRA，以及未来的新系列）。
@@ -92,19 +100,8 @@ def audit(name):
 
 
 def parse_deck(path):
-    cards, side, mode = [], [], "main"
-    for line in open(path, encoding="utf-8"):
-        t = line.strip()
-        if not t:
-            continue
-        if t.lower().startswith("sideboard"):
-            mode = "side"; continue
-        if t.startswith("#") or t.startswith("//"):
-            continue
-        parts = t.split(" ", 1)
-        if len(parts) == 2 and parts[0].isdigit():
-            (cards if mode == "main" else side).append((int(parts[0]), parts[1].strip()))
-    return cards, side
+    """薄委托：deck_model.parse_deck → (主牌, 备牌) 两个 [(qty, name)]。"""
+    return _parse_deck(path).main_side_pairs()
 
 
 def main():
@@ -116,7 +113,7 @@ def main():
     if mode == "deck":
         main_c, side_c = parse_deck(sys.argv[2])
         print(f"# 轮替存活审计：{sys.argv[2]}")
-        print(f"# 轮替日 2027-02-02 ｜ 退出：WOE LCI MKM OTJ(+BIG) BLB DSK\n")
+        print(f"# 轮替日 {ROTATION_DATE} ｜ 退出：{ROTATION_SUMMARY}\n")
         tot = die = tot_s = die_s = 0
         for label, lst in (("主牌", main_c), ("备牌", side_c)):
             print(f"== {label}")
