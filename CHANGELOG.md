@@ -45,6 +45,10 @@
   （os.replace 覆盖，只留一代，轮转失败同样静默）。
 - **删除 fix_mulligan.py（Phase 4 收尾）**：一次性调度迁移脚本使命完成
   （调度逻辑已收敛进 goldfish 引擎），文件删除，git 历史可考。
+- **动员轴补充（newbie 工具集）**：`red_axis_scan.py` 新增"动员 Mobilize"
+  补充关键词轴段落（攻击时生成当回合攻击衍生物），作为独立关键词 pass
+  而非三层乘区轴——防止无 token 翻倍收益的 Cavalcade 式骨架被漏掉；
+  `red_enum.py` 新增 `mobilize` 子查询。
 
 ## v1.0.0（2026-10）
 

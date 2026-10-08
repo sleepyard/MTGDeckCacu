@@ -137,6 +137,22 @@ def main():
                           for _, n, _ in items)
             print('   %s: %s' % (lab, s))
 
+    # Mobilize is an attack-time token axis, not a three-layer multiplier axis.
+    # Keep it as a separate keyword pass so a Cavalcade-style shell cannot be
+    # missed merely because it has no token-doubling payoff in the red pool.
+    mobilize = cnt(R, r'\b[Mm]obilize\s+\d+', cmc=3, nongold=False)
+    print()
+    print('=' * 104)
+    print('补充关键词轴：动员 Mobilize（攻击时生成当回合攻击衍生物）')
+    print('=' * 104)
+    if mobilize:
+        for _, n, e in mobilize:
+            alive = '存活' if e.get('alive') else '将退'
+            print('   %-28s cmc=%-3g %-4s %s' % (n, e['cmc'], alive,
+                  (tx(e).replace('\n', ' | ')[:120])))
+    else:
+        print('   （无红色候选）')
+
 
 if __name__ == '__main__':
     main()

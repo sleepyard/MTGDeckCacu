@@ -59,3 +59,6 @@ if __name__ == '__main__':
     if what in ('all', 'l2'):
         dump('L2 每个伤害实例 +N / 翻倍',
              r'deals? that much damage plus \d|would deal .{0,50}damage.{0,25}(twice|double)|noncombat damage.{0,60}(plus \d|instead)|opponents are dealt noncombat damage', 3, True, limit=20)
+    if what in ('all', 'mobilize'):
+        dump('关键词轴 动员 Mobilize（攻击时生成临时攻击衍生物）',
+             r'\b[Mm]obilize\s+\d+', 3, True, limit=40)
