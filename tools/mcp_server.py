@@ -47,7 +47,7 @@ ROOT = os.path.dirname(HERE)
 
 PROTOCOL_VERSION = "2024-11-05"
 SERVER_NAME = "neomtgdeckcacu"
-SERVER_VERSION = "1.0.0"
+SERVER_VERSION = "1.1.0"
 CALL_TIMEOUT = 180
 MAX_OUTPUT_CHARS = 50000
 REGISTRY_PATH = os.path.join(HERE, "mcp_tools.json")

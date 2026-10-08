@@ -1,6 +1,6 @@
 # Changelog
 
-## 未发布（底层架构强化 Phase 0–4）
+## v1.1.0（2026-10-08）— 底层架构强化 Phase 0–4
 
 - **解析层统一（Phase 0/1）**：`tools/` 与 `tools/newbie/` 的 9 个 `parse_deck`/`load_deck`
   收敛为 `deck_model.parse_deck` 薄委托（新模块 `tools/deck_model.py`，
