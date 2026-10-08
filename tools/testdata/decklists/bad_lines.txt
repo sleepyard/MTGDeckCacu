@@ -1,0 +1,8 @@
+Deck
+4 Lightning Strike
+这是一行无法解析的坏行
+2 Shock
+
+Sideboard
+foobar
+1 Negate

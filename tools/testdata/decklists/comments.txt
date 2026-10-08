@@ -1,0 +1,9 @@
+Deck
+# 顶部注释
+// 双斜杠注释行
+4 Lightning Strike
+2 Shock
+
+Sideboard
+# 备牌注释
+2 Negate

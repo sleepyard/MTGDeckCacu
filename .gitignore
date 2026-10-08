@@ -1,5 +1,10 @@
 tools/cache/
-tools/data/
+tools/data/*
+# 配置示例入库；用户自建的 strategy_params.json 不入库
+!tools/data/config/
+tools/data/config/strategy_params.json
+# 运行自证行留痕（runlog.py 写入），本地产物不入库
+tools/data/run_log.jsonl
 tools/downloads/
 tools/forge/
 tools/jdk/
@@ -31,6 +36,7 @@ tools/testdata/*
 !tools/testdata/mtga_log_sample2.txt
 !tools/testdata/mtga_inventory_sample.txt
 !tools/testdata/mtga_inventory_summary_only.txt
+!tools/testdata/decklists/
 
 # MTGA 客户端提取的野卡图标（WotC 素材，不随仓库分发；
 # 本机可用 tools/extract_mtga_icons.py 重新提取，缺失时 deck_image.py 回退手绘色块）

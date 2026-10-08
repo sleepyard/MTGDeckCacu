@@ -24,29 +24,13 @@ DATA = os.path.normpath(os.path.join(HERE, '..', 'data'))
 M = json.load(open(os.path.join(DATA, 'rarity_map.json'), encoding='utf-8'))
 LANDNAME = {'Forest', 'Island', 'Mountain', 'Swamp', 'Plains'}
 
+sys.path.insert(0, os.path.normpath(os.path.join(HERE, '..')))
+from deck_model import parse_deck as _parse_deck
+
 
 def load_deck(path):
-    deck = []
-    cur = 'main'
-    for raw in open(path, encoding='utf-8'):
-        l = raw.strip()
-        if not l or l.startswith('//') or l.startswith('#'):
-            continue
-        if l.lower() in ('sideboard', '备牌'):
-            cur = 'side'
-            continue
-        if cur != 'main':
-            continue
-        parts = l.split(' ', 1)
-        if len(parts) != 2:
-            continue
-        try:
-            q = int(parts[0])
-        except ValueError:
-            continue
-        n = parts[1].strip()
-        deck += [n] * q
-    return deck
+    """薄委托：deck_model.parse_deck → 主牌 [name]*qty 展开（只含主牌）。"""
+    return _parse_deck(path).flat_names()
 
 
 def is_land(n):

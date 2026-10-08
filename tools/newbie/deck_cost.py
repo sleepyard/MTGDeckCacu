@@ -34,6 +34,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.normpath(os.path.join(HERE, '..', 'data'))
 M = json.load(open(os.path.join(DATA, 'rarity_map.json'), encoding='utf-8'))
 
+sys.path.insert(0, os.path.normpath(os.path.join(HERE, '..')))
+from deck_model import parse_deck as _parse_deck
+
 # ── 产出模型（不含金色包赠送；进度轮 ×1.1 计入金色包对野卡轨的推进）──
 SUB = {'common': 1/3., 'uncommon': 1/5., 'rare': 1/30., 'mythic': 1/30.}
 UPGRADE = 7.0
@@ -119,29 +122,18 @@ def scryfall_look(name):
 
 
 def parse_deck(path):
-    out, cur = [], None
-    for raw in open(path, encoding='utf-8'):
-        line = raw.strip()
-        if not line or line.startswith('//') or line.startswith('#'):
-            continue
-        if re.match(r'^(sideboard|备牌)$', line, re.I):
-            cur = 'side'; continue
-        if re.match(r'^(deck|主牌)$', line, re.I):
-            cur = 'main'; continue
-        m = re.match(r'^(\d+)\s+(?:\[[^\]]+\]\s*)?(.+?)(?:\s+\([A-Za-z0-9]{2,6}\)\s*\d*)?$', line)
-        if not m:
-            continue
-        q, nm = int(m.group(1)), m.group(2).strip()
-        rec = (nm, q, cur or 'main')
-        out.append(rec)
-    return out
+    """薄委托：deck_model.parse_deck → 扁平 [(qty, name, section)]。
+
+    ★ Phase 1 起元素顺序统一为 (qty, name, section)（旧实现是反序的
+    (name, qty, section)，消费方 census 已同步适配）。"""
+    return _parse_deck(path).entries()
 
 
 def census(pairs):
     """→ (签名dict, 未识别列表, 统计杂项)"""
     sig = {k: 0 for k in ORDER}
     unk, extra = [], {'land': 0, 'basic': 0, 'creature': 0, 'total': 0}
-    for nm, q, side in pairs:
+    for q, nm, side in pairs:
         if side != 'main':
             continue
         e = look(nm)

@@ -46,6 +46,7 @@ import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mtg_tool  # noqa: E402
+from deck_model import parse_deck as _parse_deck  # noqa: E402
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -179,36 +180,13 @@ def _font(ImageFont, size, bold=False):
 
 
 def parse_deck(path):
-    """返回 (main, side, commanders)：[(数量, 牌名)]；commanders 为
-    [(数量, 牌名, 类别)]，类别 = commander / companion。识别常见 MTGA 分区标题。"""
-    main, side, commanders, zone = [], [], [], "main"
-    for raw in open(path, encoding="utf-8"):
-        line = raw.strip()
-        if not line:
-            continue
-        low = line.lower()
-        if low in ("deck", "main"):
-            zone = "main"
-            continue
-        if low == "sideboard":
-            zone = "side"
-            continue
-        if low == "companion":
-            zone = "companion"
-            continue
-        if low == "commander":
-            zone = "commander"
-            continue
-        parts = line.split(" ", 1)
-        if len(parts) == 2 and parts[0].isdigit():
-            entry = (int(parts[0]), parts[1].strip())
-            if zone == "main":
-                main.append(entry)
-            elif zone == "side":
-                side.append(entry)
-            else:
-                commanders.append(entry + (zone,))
-    return main, side, commanders
+    """薄委托：deck_model.parse_deck → (main, side, commanders)；commanders 为
+    [(数量, 牌名, 类别)]，类别 = commander / companion。
+
+    ★ Phase 1 起自动剥除 `(SET) 123` 后缀（修复：牌名查 Scryfall 更准）。"""
+    deck = _parse_deck(path)
+    main, side = deck.main_side_pairs()
+    return main, side, deck.commanders_with_zone()
 
 
 def _card_image_url(card):

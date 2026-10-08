@@ -1,0 +1,6 @@
+Deck
+4 Clearwater Pathway // Murkwater Pathway
+2 Spikefield Hazard // Spikefield Cave
+
+Sideboard
+1 Glasspool Mimic // Glasspool Shore

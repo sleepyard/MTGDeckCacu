@@ -30,6 +30,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.normpath(os.path.join(HERE, '..', 'data'))
 M = json.load(open(os.path.join(DATA, 'rarity_map.json'), encoding='utf-8'))
 
+sys.path.insert(0, os.path.normpath(os.path.join(HERE, '..')))
+from deck_model import parse_deck as _parse_deck
+
 # ── 产出率（每包期望值）──────────────────────────────
 TRACK_PER_PACK = 4.0 / 30          # 稀有轨: 每 30 包 4 张稀有
 TRACK_MYTH = 1.0 / 30              # 稀有轨: 每 30 包 1 张秘稀
@@ -59,24 +62,10 @@ def rate(x):
 
 
 def parse_deck(path):
-    main, side = [], []
-    cur = main
-    for raw in open(path, encoding='utf-8'):
-        line = raw.strip()
-        if not line or line.startswith('//') or line.startswith('#'):
-            continue
-        if re.match(r'^(sideboard|备牌)$', line, re.I):
-            cur = side
-            continue
-        if re.match(r'^(deck|主牌)$', line, re.I):
-            cur = main
-            continue
-        m = re.match(r'^(\d+)\s+(?:\[[^\]]+\]\s*)?(.+?)(?:\s+\([A-Za-z0-9]+\)\s*\d*)?$', line)
-        if m:
-            cur.append((int(m.group(1)), m.group(2).strip()))
-        else:
-            cur.append((1, line))
-    return main, side
+    """薄委托：deck_model.parse_deck → (主牌, 备牌) 两个 [(qty, name)]。
+
+    ★ Phase 1 起坏行记入 Deck.skipped 而不再兜底成 (1, line) 假牌。"""
+    return _parse_deck(path).main_side_pairs()
 
 
 _PREFIX_IDX = None

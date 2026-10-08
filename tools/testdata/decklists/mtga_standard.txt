@@ -1,0 +1,8 @@
+Deck
+4 Lightning Strike
+2 Shock
+20 Mountain
+
+Sideboard
+3 Negate
+1 Island

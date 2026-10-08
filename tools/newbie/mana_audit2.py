@@ -21,26 +21,13 @@ from collections import Counter
 HERE = os.path.dirname(os.path.abspath(__file__))
 LANDNAME = {'Forest', 'Island', 'Mountain', 'Swamp', 'Plains', 'Wastes'}
 
+sys.path.insert(0, os.path.normpath(os.path.join(HERE, '..')))
+from deck_model import parse_deck as _parse_deck
+
 
 def load_deck(path):
-    deck, cur = [], 'main'
-    for raw in open(path, encoding='utf-8'):
-        l = raw.strip()
-        if not l or l.startswith('//') or l.startswith('#'):
-            continue
-        if l.lower() in ('sideboard', '备牌'):
-            cur = 'side'; continue
-        if cur != 'main':
-            continue
-        p = l.split(' ', 1)
-        if len(p) != 2:
-            continue
-        try:
-            q = int(p[0])
-        except ValueError:
-            continue
-        deck += [p[1].strip()] * q
-    return deck
+    """薄委托：deck_model.parse_deck → 主牌 [name]*qty 展开（只含主牌）。"""
+    return _parse_deck(path).flat_names()
 
 
 def is_land(n):
