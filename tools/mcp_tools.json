@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "comment": "MCP 工具注册表（接口契约，入库）。mcp_server.py 启动时加载并 fail-fast 校验：缺字段/重名/未知 builder/script 文件不存在均启动报错，不走兜底。builder 引用 mcp_server._ARGV_BUILDERS 中的 argv 构造函数名；省略 builder 字段时默认取与工具同名的 builder（约定式引用），同名也不存在则启动报错。修改本文件后必须跑 python tools/mcp_server.py --selftest 与 python tools/test_mcp_server.py。",
+  "tools": [
+    {
+      "name": "mtg_search",
+      "description": "Scryfall 查询枚举候选牌（全分页 + oracle 去重，返回 JSON 数组）。查询语法示例：f:standard game:arena ci<=ug o:flash t:creature",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {"type": "string", "description": "Scryfall 查询式"}
+        },
+        "required": ["query"]
+      },
+      "script": "mtg_tool.py",
+      "builder": "mtg_search"
+    },
+    {
+      "name": "mtg_check",
+      "description": "逐牌三重核对：赛制合法 + Arena 平台可用 + mtgch 中文名（Markdown 表格）。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "names": {"type": "array", "items": {"type": "string"},
+                    "description": "英文牌名数组"},
+          "format": {"type": "string", "description": "赛制，默认 standard；explorer 按先驱别名推导"},
+          "platform": {"type": "string", "description": "平台，默认 arena"}
+        },
+        "required": ["names"]
+      },
+      "script": "mtg_tool.py",
+      "builder": "mtg_check"
+    },
+    {
+      "name": "mtg_baseline",
+      "description": "赛制环境基线：已发售系列 + 未发售系列标注 + 禁牌表（Markdown，可直接粘进报告）。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "format": {"type": "string", "description": "赛制，默认 standard"},
+          "date": {"type": "string", "description": "截止日期 YYYY-MM-DD，可选"}
+        }
+      },
+      "script": "mtg_tool.py",
+      "builder": "mtg_baseline"
+    },
+    {
+      "name": "deck_validate",
+      "description": "牌表机器门禁：主牌≥60、备牌≤15、同名≤4（基本地与任意张数牌豁免）、逐牌赛制+平台核查。失败非零退出，不写出。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "deckfile": {"type": "string", "description": "牌表文件路径（MTGA 导入格式）"},
+          "format": {"type": "string", "description": "赛制，默认 standard"},
+          "bo3": {"type": "boolean", "description": "BO3 口径（含备牌检查）"},
+          "colors": {"type": "string", "description": "颜色身份过滤，如 ug，可选"}
+        },
+        "required": ["deckfile"]
+      },
+      "script": "mtg_tool.py",
+      "builder": "deck_validate"
+    },
+    {
+      "name": "deck_cost",
+      "description": "MTGA 造价核算：造价签名 + 物质点 + PP 包数（野卡用量口径，与实际价格无关；需 tools/data/rarity_map.json，缺失先跑 init_workspace.py --with-data）。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "deckfile": {"type": "string", "description": "牌表文件路径"}
+        },
+        "required": ["deckfile"]
+      },
+      "script": "newbie/deck_cost.py",
+      "builder": "deck_cost"
+    },
+    {
+      "name": "rot_audit",
+      "description": "标准轮替存活审计：判定牌表/单卡在下一次轮替后是否仍可用（set_type + 非数字 + 发售日判据，免疫促销重印）。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "mode": {"type": "string", "enum": ["deck", "card"]},
+          "target": {"type": "string",
+                     "description": "deck=牌表文件路径；card=英文牌名"}
+        },
+        "required": ["mode", "target"]
+      },
+      "script": "rot_audit.py",
+      "builder": "rot_audit"
+    }
+  ]
+}

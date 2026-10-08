@@ -12,6 +12,12 @@ tools/list / tools/call 最小集。工具执行 = 子进程调用对应 CLI 脚
 （列表参数无 shell 拼接，UTF-8 输出），stdout/stderr 合并为文本结果，
 非零退出码映射为 isError。
 
+工具注册表外置在 mcp_tools.json（接口契约，入库）：启动时 load_registry
+加载并 fail-fast 校验（缺字段/重名/未知 builder/script 文件不存在均
+启动报错退出，不走兜底）；argv 构造逻辑保留在本文件 _ARGV_BUILDERS，
+JSON 以 builder 名引用。run_tool 出口写运行自证行（runlog.log_run →
+tools/data/run_log.jsonl，成功/超时/非零退出各一条，写失败静默跳过）。
+
 本 server 面向本机可信使用：deck_validate / deck_cost 接收本地文件路径。
 
 客户端配置示例（CherryStudio / WorkBuddy 的 MCP JSON 同构）：
@@ -34,6 +40,8 @@ import json
 import os
 import subprocess
 
+import runlog
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 
@@ -42,13 +50,18 @@ SERVER_NAME = "neomtgdeckcacu"
 SERVER_VERSION = "1.0.0"
 CALL_TIMEOUT = 180
 MAX_OUTPUT_CHARS = 50000
+REGISTRY_PATH = os.path.join(HERE, "mcp_tools.json")
 
 
 def _fmt(value, default):
     return str(value or default).strip()
 
 
-# name → (description, inputSchema, argv 构造函数)
+# name → argv 构造函数（builder 注册表；mcp_tools.json 以名字引用）
+def _mtg_search_argv(a):
+    return ["search", str(a.get("query") or ""), "--unique", "oracle"]
+
+
 def _mtg_check_argv(a):
     names = a.get("names") or []
     if not isinstance(names, list) or not names:
@@ -78,118 +91,97 @@ def _baseline_argv(a):
     return argv
 
 
-TOOLS = (
-    {
-        "name": "mtg_search",
-        "description": "Scryfall 查询枚举候选牌（全分页 + oracle 去重，返回 JSON 数组）。"
-                       "查询语法示例：f:standard game:arena ci<=ug o:flash t:creature",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "query": {"type": "string", "description": "Scryfall 查询式"},
-            },
-            "required": ["query"],
-        },
-        "argv": lambda a: ["search", str(a.get("query") or ""), "--unique", "oracle"],
-        "script": "mtg_tool.py",
-    },
-    {
-        "name": "mtg_check",
-        "description": "逐牌三重核对：赛制合法 + Arena 平台可用 + mtgch 中文名（Markdown 表格）。",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "names": {"type": "array", "items": {"type": "string"},
-                          "description": "英文牌名数组"},
-                "format": {"type": "string", "description": "赛制，默认 standard；"
-                           "explorer 按先驱别名推导"},
-                "platform": {"type": "string", "description": "平台，默认 arena"},
-            },
-            "required": ["names"],
-        },
-        "argv": _mtg_check_argv,
-        "script": "mtg_tool.py",
-    },
-    {
-        "name": "mtg_baseline",
-        "description": "赛制环境基线：已发售系列 + 未发售系列标注 + 禁牌表（Markdown，"
-                       "可直接粘进报告）。",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "format": {"type": "string", "description": "赛制，默认 standard"},
-                "date": {"type": "string", "description": "截止日期 YYYY-MM-DD，可选"},
-            },
-        },
-        "argv": _baseline_argv,
-        "script": "mtg_tool.py",
-    },
-    {
-        "name": "deck_validate",
-        "description": "牌表机器门禁：主牌≥60、备牌≤15、同名≤4（基本地与任意张数牌豁免）、"
-                       "逐牌赛制+平台核查。失败非零退出，不写出。",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "deckfile": {"type": "string", "description": "牌表文件路径（MTGA 导入格式）"},
-                "format": {"type": "string", "description": "赛制，默认 standard"},
-                "bo3": {"type": "boolean", "description": "BO3 口径（含备牌检查）"},
-                "colors": {"type": "string", "description": "颜色身份过滤，如 ug，可选"},
-            },
-            "required": ["deckfile"],
-        },
-        "argv": _validate_argv,
-        "script": "mtg_tool.py",
-    },
-    {
-        "name": "deck_cost",
-        "description": "MTGA 造价核算：造价签名 + 物质点 + PP 包数（野卡用量口径，"
-                       "与实际价格无关；需 tools/data/rarity_map.json，缺失先跑 "
-                       "init_workspace.py --with-data）。",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "deckfile": {"type": "string", "description": "牌表文件路径"},
-            },
-            "required": ["deckfile"],
-        },
-        "argv": lambda a: ["sig", str(a.get("deckfile") or "")],
-        "script": os.path.join("newbie", "deck_cost.py"),
-    },
-    {
-        "name": "rot_audit",
-        "description": "标准轮替存活审计：判定牌表/单卡在下一次轮替后是否仍可用"
-                       "（set_type + 非数字 + 发售日判据，免疫促销重印）。",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "mode": {"type": "string", "enum": ["deck", "card"]},
-                "target": {"type": "string",
-                           "description": "deck=牌表文件路径；card=英文牌名"},
-            },
-            "required": ["mode", "target"],
-        },
-        "argv": lambda a: [str(a.get("mode") or ""), str(a.get("target") or "")],
-        "script": "rot_audit.py",
-    },
-)
+def _deck_cost_argv(a):
+    return ["sig", str(a.get("deckfile") or "")]
+
+
+def _rot_audit_argv(a):
+    return [str(a.get("mode") or ""), str(a.get("target") or "")]
+
+
+_ARGV_BUILDERS = {
+    "mtg_search": _mtg_search_argv,
+    "mtg_check": _mtg_check_argv,
+    "mtg_baseline": _baseline_argv,
+    "deck_validate": _validate_argv,
+    "deck_cost": _deck_cost_argv,
+    "rot_audit": _rot_audit_argv,
+}
+
+_REGISTRY_REQUIRED = (("name", str), ("description", str),
+                      ("inputSchema", dict), ("script", str))
+
+
+def load_registry(path=REGISTRY_PATH):
+    """加载并校验 mcp_tools.json（接口契约，fail-fast，不走兜底）。
+
+    校验：JSON 可读、tools 非空数组、逐条缺字段/类型错误、重名、
+    builder 在 _ARGV_BUILDERS 中存在（省略 builder 字段时默认取与工具
+    同名的 builder——约定式引用，同名也不存在即报错）、script 文件真实存在。
+    任何违规抛 RuntimeError。
+    """
+    try:
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError) as exc:
+        raise RuntimeError(f"MCP 工具注册表加载失败: {path}: {exc}")
+    entries = data.get("tools") if isinstance(data, dict) else None
+    if not isinstance(entries, list) or not entries:
+        raise RuntimeError(f"MCP 工具注册表缺非空 tools 数组: {path}")
+    tools, seen = [], set()
+    for i, entry in enumerate(entries):
+        where = f"{path} tools[{i}]"
+        if not isinstance(entry, dict):
+            raise RuntimeError(f"{where}: 条目必须是对象")
+        for key, typ in _REGISTRY_REQUIRED:
+            value = entry.get(key)
+            if not isinstance(value, typ) or (typ is str and not value):
+                raise RuntimeError(f"{where}: 缺字段或类型错误: {key}")
+        name = entry["name"]
+        if name in seen:
+            raise RuntimeError(f"{where}: 工具重名: {name}")
+        seen.add(name)
+        builder_name = entry.get("builder") or name   # 默认规则：与工具同名
+        argv = _ARGV_BUILDERS.get(builder_name)
+        if argv is None:
+            raise RuntimeError(f"{where}: 未知 builder: {builder_name}")
+        if not os.path.exists(os.path.join(HERE, entry["script"])):
+            raise RuntimeError(f"{where}: script 文件不存在: {entry['script']}")
+        tools.append({"name": name, "description": entry["description"],
+                      "inputSchema": entry["inputSchema"],
+                      "argv": argv, "script": entry["script"]})
+    return tuple(tools)
+
+
+try:
+    TOOLS = load_registry()
+    REGISTRY_ERROR = None
+except RuntimeError as exc:   # 契约损坏：main() 启动即报错退出，见下
+    TOOLS = ()
+    REGISTRY_ERROR = exc
 
 _TOOL_INDEX = {t["name"]: t for t in TOOLS}
 
 
 def run_tool(tool, arguments):
-    """子进程执行 CLI，返回 (text, is_error)。"""
+    """子进程执行 CLI，返回 (text, is_error)；出口写运行自证行（runlog）。"""
     argv = tool["argv"](arguments)
     if not all(argv):
         raise ValueError("必填参数缺失或为空")
     cmd = [sys.executable, os.path.join(HERE, tool["script"])] + argv
     env = dict(os.environ, PYTHONIOENCODING="utf-8")
-    proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True,
-                          encoding="utf-8", errors="replace",
-                          timeout=CALL_TIMEOUT, env=env)
+    try:
+        proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True,
+                              encoding="utf-8", errors="replace",
+                              timeout=CALL_TIMEOUT, env=env)
+    except subprocess.TimeoutExpired:
+        runlog.log_run(tool["name"], "timeout", f"执行超时（>{CALL_TIMEOUT}s）")
+        raise
     text = proc.stdout
     if proc.stderr:
         text += ("\n" if text else "") + proc.stderr
+    runlog.log_run(tool["name"], "error" if proc.returncode != 0 else "ok",
+                   f"exit={proc.returncode} chars={len(text)}")
     if len(text) > MAX_OUTPUT_CHARS:
         text = text[:MAX_OUTPUT_CHARS] + "\n…(输出过长已截断)"
     return text or "(无输出)", proc.returncode != 0
@@ -248,8 +240,12 @@ def handle(request):
 
 
 def main():
+    if REGISTRY_ERROR is not None:
+        print(f"[启动失败] {REGISTRY_ERROR}", file=sys.stderr)
+        return 1
     if "--selftest" in sys.argv:
-        print(f"{SERVER_NAME} v{SERVER_VERSION}，工具 {len(TOOLS)} 个：")
+        print(f"{SERVER_NAME} v{SERVER_VERSION}，工具 {len(TOOLS)} 个"
+              f"（注册表 {os.path.basename(REGISTRY_PATH)} 校验通过）：")
         for t in TOOLS:
             print(f"  - {t['name']}: {t['description'][:40]}…")
         return 0
