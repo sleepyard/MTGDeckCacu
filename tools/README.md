@@ -9,6 +9,8 @@ MTG 套牌构筑工作流 CLI。数据源：Scryfall API + mtgch.com API。仅 P
 - 所有请求带 `User-Agent: NeoMtgDeckCacu/1.0`；Scryfall 节流 ≥100ms；429/5xx 指数退避（遵守 Retry-After），最多重试 5 次。
 - 磁盘缓存：`tools/cache/{scryfall|mtgch}/<sha1>.json`（含 fetched_at / http_status / url / payload），重复请求直接命中；各子命令均有 `--no-cache` 绕过读取。mtgch 2026 年改版后中文名走新端点：逐牌 `GET /api/v1/result?q=<名>&view=1`（view=1 才带中文名）；按系列批量 `GET /api/v1/set/<code>/cards/`（`fetch_set_chinese_names`，逐牌风暴会被 429 限流，批量场景必须用这个）。
 - 错误分类报告：网络失败 / HTTP 失败 / 查询语法错误（Scryfall error 对象）/ 分页不完整 / 模糊名未精确命中 / 真实零结果，互不混淆；任何失败不会被静默当作"不存在/不合法"。
+- 策略参数：`tools/deck_config.py` 集中管理（deck_core 评分/曲线/地数阈值、mtga_log_tool 风险标记、rot_audit 轮替窗口）；默认值内置，复制 `tools/data/config/strategy_params.example.json` → 同目录 `strategy_params.json`（gitignored）可按键覆盖，缺失/损坏自动回退默认并打一条 stderr warning，加载器绝不写回 JSON。
+- 牌表解析：`tools/deck_model.py` 是唯一解析层（`CardRef`/`SkippedLine`/`Deck` + `parse_deck`/`parse_text`），tools/ 与 tools/newbie/ 全部 `parse_deck`/`load_deck` 均为其薄委托；新增解析需求扩展 deck_model，不再另起解析器。
 
 ## 用法
 
@@ -33,6 +35,8 @@ python tools/mtg_tool.py baseline --format pioneer --date 2026-08-08
 # tools/mcp_server.py
 
 MCP server（stdio，零依赖）：把只读 CLI 能力以 MCP 工具形式暴露给聊天型 Agent 客户端（CherryStudio / WorkBuddy / DeepSeek Harness 等）。协议为换行分隔的 JSON-RPC 2.0，实现 initialize / ping / tools/list / tools/call 最小集；工具执行 = 子进程调用对应 CLI（UTF-8 强制、180s 超时、50K 字符截断），非零退出码映射 `isError`。暴露 6 个只读工具：`mtg_search` / `mtg_check` / `mtg_baseline` / `deck_validate` / `deck_cost` / `rot_audit`。有 Shell 能力的编程 Agent 直接用 CLI + `skills/`，无需经此。
+
+工具注册表外置为 `tools/mcp_tools.json`（接口契约，入库）：启动时 fail-fast 校验（缺字段/重名/未知 builder/script 文件不存在均启动报错退出），argv 构造逻辑保留在 `mcp_server._ARGV_BUILDERS`，JSON 以 builder 名引用（省略 builder 字段时默认取与工具同名）。每次工具执行的出口经 `runlog.log_run` 写一行运行自证到 `tools/data/run_log.jsonl`（gitignored；成功/超时/非零退出各一条，summary 含退出码与输出长度；写失败静默跳过）。
 
 客户端配置（CherryStudio / WorkBuddy 的 MCP JSON 同构，路径换成实际仓库位置）：
 
@@ -132,15 +136,15 @@ python tools/forge_tool.py play deck.txt
 
 # tools/goldfish_template.py
 
-金鱼蒙特卡洛模拟器模板（融合自外部 mtg-deck-builder v1.4.0 技能包）：自建模拟器对比不同构筑构型的铺场速度 / 累计伤害 / 法术力健康度，补 Forge 实测之前的构型初筛。仅 Python 标准库。
+金鱼蒙特卡洛模拟器模板（Phase 3 起为薄壳）：标准写法是复用 `tools/newbie/goldfish/` 引擎（engine + data JSON + decks 模块，模板文件内含最小可运行示例与完整建模规范）；双色法术力源等超出单地哨兵马纳基的场景才需全自建（参照 `tools/newbie/sim_dual.py`）。补 Forge 实测之前的构型初筛。仅 Python 标准库。
 
 ```bash
-# 改文件内 CARDS / LANDS / DECKS 三处后直接运行
-python tools/goldfish_template.py
+python tools/goldfish_template.py   # 运行内置最小示例
 ```
 
 - 建模规范（文件顶部注释与工作流阶段 3 均有，历史重灾）：每张牌的每个效果都要建模（持续触发逐回合、条件触发条件与效果分别建、减费动态算、免费施放按"看 N 选 1"）；对比"砍 vs 保留"时被对比牌必须在模拟里真的有效果，否则系统性低估保留方。
-- 金鱼是"法术力受限"模型：抓牌/赚牌引擎的分不能被它裁决，必须同时输出 `idle`（空转回合）/ `hand6` / `hand8`（回合末手牌）gas 指标；金鱼分只作"是否掉速"的下限检查，实测反馈优先于模拟分数。
+- 贪心施放排序键必须带牌名 tiebreaker（`key=(-c, name)`），否则结果受 PYTHONHASHSEED 影响不可复现。
+- 金鱼是"法术力受限"模型：抓牌/赚牌引擎的分不能被它裁决——引擎 run 的 `curve`（按回合累计伤害）可做 gas 观察，需要更多指标时经 `collect` 钩子聚合；实测反馈优先于模拟分数。
 - 报告必须声明模拟局限（去除、应对干扰无法被金鱼衡量）。
 
 # tools/mtga_log_tool.py
@@ -358,7 +362,7 @@ python tools/cn_audit.py set FRA
 
 # tools/newbie/（标准新手系列工具组）
 
-标准赛制低造价新手系列（6 副 BO1 套牌，见 `DeckList/Standard_*`）的专属工具，共 32 个纯标准库脚本：造价核算（`deck_cost.py` 造价签名 / 物质点预算 / PP 包数，指标口径与 MRUC 视觉方案见根目录 `MtgDeckCostMetric.md`；快照外牌自动走 Scryfall 回退、各 Arena 印刷取最低稀有度计价，`DECK_COST_NO_FALLBACK=1` 关闭、`mtga_cost.py`、`pack_points.py`）、逐套牌金鱼模拟器（`sim_black.py` / `sim_blue.py` / `sim_green.py` / `sim_red_blind.py` / `sim_dual.py` / `sim_white.py` / `sim_mono_white.py` / `sim_blue_spells.py`）、轴线扫描（`*_axis_scan.py`、`axis_layers.py`）与地数扫描（`land_sweep.py`）。共享数据快照在 `tools/data/`（gitignored，约 21MB；rarity_map / std_prints / metagame 等），脚本经 `../data` 相对路径引用。来源与命令对照见 `AuditReport/NewbieSeries/合并说明_20260925.md`。
+标准赛制低造价新手系列（6 副 BO1 套牌，见 `DeckList/Standard_*`）的专属工具，共 32 个纯标准库脚本：造价核算（`deck_cost.py` 造价签名 / 物质点预算 / PP 包数，指标口径与 MRUC 视觉方案见根目录 `MtgDeckCostMetric.md`；快照外牌自动走 Scryfall 回退、各 Arena 印刷取最低稀有度计价，`DECK_COST_NO_FALLBACK=1` 关闭、`mtga_cost.py`、`pack_points.py`）、逐套牌金鱼模拟器（`sim_black.py` / `sim_blue.py` / `sim_green.py` / `sim_red.py` / `sim_red_blind.py` / `sim_white.py` / `sim_mono_white.py` / `sim_blue_spells.py`——Phase 3 起均已收敛为 `goldfish/` 引擎（`goldfish/engine.py` 骨架 + `goldfish/data/*.json` 牌池 + `goldfish/decks/*.py` 回合逻辑 + `goldfish/mechanics.py` 机制注册表），原 sim 文件为兼容 shim，CLI 与模块级 API 不变；`sim_dual.py` 未纳入引擎，已标记过时/冻结，仅作历史参考）、轴线扫描（`*_axis_scan.py`、`axis_layers.py`）与地数扫描（`land_sweep.py`）。共享数据快照在 `tools/data/`（gitignored，约 21MB；rarity_map / std_prints / metagame 等），脚本经 `../data` 相对路径引用。来源与命令对照见 `AuditReport/NewbieSeries/合并说明_20260925.md`。
 
 ```bash
 # 1. 造价签名一览（brief）/ 单表全口径（sig）
