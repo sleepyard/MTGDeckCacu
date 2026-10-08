@@ -37,6 +37,14 @@
 - **运行自证行（Phase 4）**：新模块 `tools/runlog.py`（`log_run` 追加 JSON 行到
   `tools/data/run_log.jsonl`，gitignored，写失败静默跳过）；已接入
   `mcp_server.run_tool` 出口（成功/超时/非零退出各记一条，summary 含退出码与输出长度）。
+- **运行自证行扩大 + 轮转（Phase 4 收尾）**：`runlog.log_run` 接入
+  `deck_version.py`（版本号/路径）、`deck_image.py`（PNG 路径）、`deck_pooper.py`
+  （limited/constructed/draft 子命令与 out 路径）、`set_preview_tool.py`（批次统计）
+  的 CLI 主出口——最外层 `runlog.run_logged` 包装记异常路径（退出码不变），
+  出口内行记成功/业务失败；写入前文件超 5MB 自动轮转为 `run_log.1.jsonl`
+  （os.replace 覆盖，只留一代，轮转失败同样静默）。
+- **删除 fix_mulligan.py（Phase 4 收尾）**：一次性调度迁移脚本使命完成
+  （调度逻辑已收敛进 goldfish 引擎），文件删除，git 历史可考。
 
 ## v1.0.0（2026-10）
 

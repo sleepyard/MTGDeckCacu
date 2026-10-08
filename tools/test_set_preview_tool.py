@@ -21,6 +21,21 @@ import mtg_tool  # noqa: E402
 import mtga_draft_tool as MDT  # noqa: E402
 import set_preview_tool as SPT  # noqa: E402
 
+# 运行自证行边界屏蔽：本文件直接调 cmd_fetch/main，测试期间不写入真实 run_log。
+# 用 setUpModule/tearDownModule 限定在本模块测试执行期内（共享 runlog 模块属性，
+# import 时全局 start 会污染其他测试模块）。
+_PATCHER = None
+
+
+def setUpModule():
+    global _PATCHER
+    _PATCHER = mock.patch.object(SPT.runlog, "log_run")
+    _PATCHER.start()
+
+
+def tearDownModule():
+    _PATCHER.stop()
+
 
 def _card(name, num, oid, text="Trample", cost="{2}{G}",
           type_line="Creature — Beast", layout="normal", rarity="common"):

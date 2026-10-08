@@ -10,6 +10,22 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import deck_version
+from unittest import mock
+
+# 运行自证行边界屏蔽：本文件直接调 main()，测试期间不写入真实 run_log。
+# 用 setUpModule/tearDownModule 限定在本模块测试执行期内（共享 runlog 模块属性，
+# import 时全局 start 会污染其他测试模块）。
+_PATCHER = None
+
+
+def setUpModule():
+    global _PATCHER
+    _PATCHER = mock.patch.object(deck_version.runlog, "log_run")
+    _PATCHER.start()
+
+
+def tearDownModule():
+    _PATCHER.stop()
 
 
 def write_deck(path, main_cards, side_cards=None):

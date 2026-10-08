@@ -20,6 +20,7 @@ import constructed_strategy as CS  # noqa: E402
 import mtg_tool  # noqa: E402
 import mtga_draft_tool  # noqa: E402
 import mtga_auto_tool  # noqa: E402
+import runlog  # noqa: E402
 
 
 SECTION_HEADERS = {"deck", "sideboard", "commander", "companion", "pool"}
@@ -384,8 +385,11 @@ def build_parser():
 
 def main(argv=None):
     args = build_parser().parse_args(argv)
-    return args.func(args)
+    rc = args.func(args)
+    runlog.log_run("deck_pooper.py", "ok" if rc == 0 else "error",
+                   f"{args.command} exit={rc} out={getattr(args, 'out', None)}")
+    return rc
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(runlog.run_logged("deck_pooper.py", main))

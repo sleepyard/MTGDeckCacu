@@ -36,7 +36,7 @@ python tools/mtg_tool.py baseline --format pioneer --date 2026-08-08
 
 MCP server（stdio，零依赖）：把只读 CLI 能力以 MCP 工具形式暴露给聊天型 Agent 客户端（CherryStudio / WorkBuddy / DeepSeek Harness 等）。协议为换行分隔的 JSON-RPC 2.0，实现 initialize / ping / tools/list / tools/call 最小集；工具执行 = 子进程调用对应 CLI（UTF-8 强制、180s 超时、50K 字符截断），非零退出码映射 `isError`。暴露 6 个只读工具：`mtg_search` / `mtg_check` / `mtg_baseline` / `deck_validate` / `deck_cost` / `rot_audit`。有 Shell 能力的编程 Agent 直接用 CLI + `skills/`，无需经此。
 
-工具注册表外置为 `tools/mcp_tools.json`（接口契约，入库）：启动时 fail-fast 校验（缺字段/重名/未知 builder/script 文件不存在均启动报错退出），argv 构造逻辑保留在 `mcp_server._ARGV_BUILDERS`，JSON 以 builder 名引用（省略 builder 字段时默认取与工具同名）。每次工具执行的出口经 `runlog.log_run` 写一行运行自证到 `tools/data/run_log.jsonl`（gitignored；成功/超时/非零退出各一条，summary 含退出码与输出长度；写失败静默跳过）。
+工具注册表外置为 `tools/mcp_tools.json`（接口契约，入库）：启动时 fail-fast 校验（缺字段/重名/未知 builder/script 文件不存在均启动报错退出），argv 构造逻辑保留在 `mcp_server._ARGV_BUILDERS`，JSON 以 builder 名引用（省略 builder 字段时默认取与工具同名）。每次工具执行的出口经 `runlog.log_run` 写一行运行自证到 `tools/data/run_log.jsonl`（gitignored；成功/超时/非零退出各一条，summary 含退出码与输出长度；写失败静默跳过；超过 5MB 自动轮转为 `run_log.1.jsonl`，只留一代）。同一自证也已接入 `deck_version.py` / `deck_image.py` / `deck_pooper.py` / `set_preview_tool.py` 的 CLI 主出口（最外层 `runlog.run_logged` 记异常路径，出口内行记成功/业务失败，summary 含版本号/PNG 路径/子命令/批次统计等产物信息）。
 
 客户端配置（CherryStudio / WorkBuddy 的 MCP JSON 同构，路径换成实际仓库位置）：
 

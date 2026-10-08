@@ -46,6 +46,7 @@ import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mtg_tool  # noqa: E402
+import runlog  # noqa: E402
 from deck_model import parse_deck as _parse_deck  # noqa: E402
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -768,7 +769,8 @@ def main():
     render(main_entries, side_entries, title, args.subtitle, out, args.author,
            args.format_name, args.record, args.lang, watermark=not args.no_watermark,
            commanders=cmd_entries)
+    runlog.log_run("deck_image.py", "ok", f"png={out} main={len(main_entries)}")
 
 
 if __name__ == "__main__":
-    main()
+    runlog.run_logged("deck_image.py", main)

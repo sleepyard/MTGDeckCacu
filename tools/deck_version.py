@@ -28,6 +28,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
+import runlog
 from deck_model import (ANY_NUMBER, BASIC_LANDS, REASON_BAD_LINE,
                         parse_deck as _parse_deck)
 
@@ -180,10 +181,13 @@ def main(argv=None):
         print("[门禁警告]")
         for p in problems:
             print(f"  - {p}")
+        runlog.log_run("deck_version.py", "error",
+                       f"{name}V{version} {deck_out} 门禁警告{len(problems)}条 exit=2")
         return 2
     print("[门禁] 基础校验通过")
+    runlog.log_run("deck_version.py", "ok", f"{name}V{version} {deck_out} exit=0")
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(runlog.run_logged("deck_version.py", main))

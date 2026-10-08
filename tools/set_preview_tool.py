@@ -35,6 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import mtg_tool  # noqa: E402 Scryfall HTTP 层 / 错误分类 / BASIC_LAND_NAMES
 import mtga_draft_tool  # noqa: E402 build_card_table / CardTable / 评分表路径
 import mtga_auto_tool as AUTO  # noqa: E402 LLM 配置与调用（llm_chat 由 build_card_table 使用）
+import runlog  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SET_REVIEW_ROOT = REPO_ROOT / "SetReview"
@@ -484,7 +485,12 @@ def append_changelog(review_dir, set_code, batch):
 
 
 def cmd_fetch(args):
-    code, _batch = do_fetch(args)
+    code, batch = do_fetch(args)
+    if code == 0 and batch:
+        runlog.log_run("set_preview_tool.py", "ok",
+                       "fetch 已公开 %d；新增 %d / 变更 %d / 移除 %d"
+                       % (batch["revealed"], len(batch["added"]),
+                          len(batch["changed"]), len(batch["removed"])))
     return code
 
 
@@ -827,8 +833,11 @@ def main(argv=None):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
     args = build_parser().parse_args(argv)
-    return args.func(args)
+    rc = args.func(args)
+    runlog.log_run("set_preview_tool.py", "ok" if rc == 0 else "error",
+                   f"{args.cmd} exit={rc}")
+    return rc
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(runlog.run_logged("set_preview_tool.py", main))
