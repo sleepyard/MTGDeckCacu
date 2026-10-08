@@ -1,0 +1,177 @@
+{
+ "land": "LAND",
+ "basic_prefix": "Plains",
+ "pool": {
+  "Political Triumph": {
+   "k": "E",
+   "c": 1,
+   "p": 0,
+   "d": 0,
+   "triumph": 1
+  },
+  "Seam Rip": {
+   "k": "R",
+   "c": 1,
+   "p": 0,
+   "d": 0
+  },
+  "Erode": {
+   "k": "R",
+   "c": 1,
+   "p": 0,
+   "d": 0
+  },
+  "Savannah Lions": {
+   "k": "C",
+   "c": 1,
+   "p": 2,
+   "d": 1
+  },
+  "Lightstall Inquisitor": {
+   "k": "C",
+   "c": 1,
+   "p": 2,
+   "d": 1
+  },
+  "Healer's Hawk": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 1,
+   "fly": 1
+  },
+  "Nesting Bot": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 1
+  },
+  "Leonin Vanguard": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 1,
+   "lord3": 1
+  },
+  "Resolute Reinforcements": {
+   "k": "C",
+   "c": 2,
+   "p": 1,
+   "d": 1,
+   "etb": 1
+  },
+  "Honored Knight-Captain": {
+   "k": "C",
+   "c": 2,
+   "p": 1,
+   "d": 1,
+   "etb": 1
+  },
+  "Hare Apparent": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 2,
+   "hare": 1
+  },
+  "Belladonna Took": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 2,
+   "bella": 1
+  },
+  "Battle Menu": {
+   "k": "S",
+   "c": 2,
+   "p": 0,
+   "d": 0,
+   "tokens": [
+    [
+     2,
+     2
+    ]
+   ]
+  },
+  "Dalkovan Packbeasts": {
+   "k": "C",
+   "c": 3,
+   "p": 0,
+   "d": 4,
+   "mobilize": 3,
+   "vig": 1
+  },
+  "Clachan Festival": {
+   "k": "E",
+   "c": 3,
+   "p": 0,
+   "d": 0,
+   "tokens": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ]
+  },
+  "Okoye, Dora Milaje Leader": {
+   "k": "C",
+   "c": 4,
+   "p": 3,
+   "d": 2,
+   "tokens": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "tok_fs": 1
+  },
+  "Release the Dogs": {
+   "k": "S",
+   "c": 4,
+   "p": 0,
+   "d": 0,
+   "tokens": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ]
+  },
+  "Voice of Victory": {
+   "k": "C",
+   "c": 2,
+   "p": 1,
+   "d": 3,
+   "mobilize": 2,
+   "lock": 1
+  },
+  "Dauntless Veteran": {
+   "k": "C",
+   "c": 3,
+   "p": 2,
+   "d": 2,
+   "atk_pump": 1
+  }
+ }
+}

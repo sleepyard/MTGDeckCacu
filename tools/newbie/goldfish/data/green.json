@@ -1,0 +1,269 @@
+{
+ "land": "Forest",
+ "basic_prefix": "Forest",
+ "pool": {
+  "Sazh's Chocobo": {
+   "k": "C",
+   "c": 1,
+   "p": 0,
+   "d": 1,
+   "landfall_ctr": 1
+  },
+  "Llanowar Elves": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 1,
+   "dork": 1
+  },
+  "Gene Pollinator": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 1,
+   "dork2": 1
+  },
+  "Mossborn Hydra": {
+   "k": "C",
+   "c": 3,
+   "p": 0,
+   "d": 0,
+   "trample": 1,
+   "start_ctr": 1,
+   "landfall_double": 1
+  },
+  "Mightform Harmonizer": {
+   "k": "C",
+   "c": 4,
+   "p": 4,
+   "d": 4,
+   "landfall_dblpow": 1
+  },
+  "Icetill Explorer": {
+   "k": "C",
+   "c": 4,
+   "p": 2,
+   "d": 4,
+   "extra_land": 1
+  },
+  "Inspiring Call": {
+   "k": "S",
+   "c": 3,
+   "p": 0,
+   "d": 0,
+   "inspire": 1
+  },
+  "Meltstrider Eulogist": {
+   "k": "C",
+   "c": 3,
+   "p": 3,
+   "d": 3,
+   "eulogist": 1
+  },
+  "Cactuar": {
+   "k": "C",
+   "c": 1,
+   "p": 3,
+   "d": 3,
+   "trample": 1,
+   "bounce_back": 1
+  },
+  "Jibbirik Omnivore": {
+   "k": "C",
+   "c": 2,
+   "p": 3,
+   "d": 2
+  },
+  "Bejeweled Warg": {
+   "k": "C",
+   "c": 2,
+   "p": 3,
+   "d": 2,
+   "trample": 1
+  },
+  "Frenzied Baloth": {
+   "k": "C",
+   "c": 2,
+   "p": 3,
+   "d": 2,
+   "trample": 1,
+   "haste": 1
+  },
+  "Marwyn, the Preserver": {
+   "k": "C",
+   "c": 2,
+   "p": 3,
+   "d": 2
+  },
+  "Afterburner Expert": {
+   "k": "C",
+   "c": 3,
+   "p": 4,
+   "d": 2
+  },
+  "Champion of Dusan": {
+   "k": "C",
+   "c": 3,
+   "p": 4,
+   "d": 2,
+   "trample": 1
+  },
+  "Thrashing Brontodon": {
+   "k": "C",
+   "c": 3,
+   "p": 3,
+   "d": 4
+  },
+  "Eager Trufflesnout": {
+   "k": "C",
+   "c": 3,
+   "p": 4,
+   "d": 2,
+   "trample": 1
+  },
+  "Beast-Kin Ranger": {
+   "k": "C",
+   "c": 3,
+   "p": 3,
+   "d": 3,
+   "trample": 1
+  },
+  "Crossroads Watcher": {
+   "k": "C",
+   "c": 3,
+   "p": 3,
+   "d": 3,
+   "trample": 1
+  },
+  "Attuned Hunter": {
+   "k": "C",
+   "c": 3,
+   "p": 3,
+   "d": 3,
+   "trample": 1
+  },
+  "Budding Insurgent": {
+   "k": "C",
+   "c": 3,
+   "p": 3,
+   "d": 3
+  },
+  "Vinebred Brawler": {
+   "k": "C",
+   "c": 3,
+   "p": 4,
+   "d": 2
+  },
+  "Sureshot Sower": {
+   "k": "C",
+   "c": 2,
+   "p": 3,
+   "d": 1
+  },
+  "Wary Thespian": {
+   "k": "C",
+   "c": 2,
+   "p": 3,
+   "d": 1
+  },
+  "Little Bear": {
+   "k": "C",
+   "c": 3,
+   "p": 3,
+   "d": 2
+  },
+  "Skystinger": {
+   "k": "C",
+   "c": 3,
+   "p": 3,
+   "d": 3
+  },
+  "Loporrit Scout": {
+   "k": "C",
+   "c": 3,
+   "p": 3,
+   "d": 2
+  },
+  "Garruk's Uprising": {
+   "k": "E",
+   "c": 3,
+   "p": 0,
+   "d": 0,
+   "mass_trample": 1,
+   "power4_draw": 1
+  },
+  "Elvish Archdruid": {
+   "k": "C",
+   "c": 3,
+   "p": 2,
+   "d": 2,
+   "elf_lord": 1,
+   "lord_dork": 1
+  },
+  "Regal Imperiosaur": {
+   "k": "C",
+   "c": 3,
+   "p": 5,
+   "d": 4,
+   "dino_lord": 1
+  },
+  "Mutagen Man, Living Ooze": {
+   "k": "C",
+   "c": 4,
+   "p": 2,
+   "d": 3,
+   "trample": 1,
+   "mutagen": 2
+  },
+  "Surrak, Elusive Hunter": {
+   "k": "C",
+   "c": 3,
+   "p": 4,
+   "d": 3,
+   "trample": 1
+  },
+  "Meltstrider's Resolve": {
+   "k": "S",
+   "c": 1,
+   "p": 0,
+   "d": 0,
+   "ctr_fight": 1
+  },
+  "Snakeskin Veil": {
+   "k": "S",
+   "c": 1,
+   "p": 0,
+   "d": 0,
+   "ctr_pump": 1
+  },
+  "Shared Roots": {
+   "k": "S",
+   "c": 2,
+   "p": 0,
+   "d": 0,
+   "land_ramp": 1
+  },
+  "Escape Tunnel": {
+   "k": "S",
+   "c": 0,
+   "p": 0,
+   "d": 0,
+   "land_ramp": 1,
+   "from_land": 1
+  },
+  "Bushwhack": {
+   "k": "S",
+   "c": 1,
+   "p": 0,
+   "d": 0,
+   "land_ramp": 1
+  },
+  "Glimpse the Core": {
+   "k": "S",
+   "c": 2,
+   "p": 0,
+   "d": 0,
+   "land_ramp": 1
+  }
+ }
+}

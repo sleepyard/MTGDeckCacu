@@ -3,6 +3,10 @@
 """修正所有模拟器的调度实现：伦敦调度必须减手牌（7→6→5）
 
 此前实现：每次调度重抽 7 张 ⇒ 调度完全免费 ⇒ 所有地数与卡地率数据偏乐观。
+
+⚠ 已废弃（一次性迁移脚本，使命完成）：Phase 3 起调度逻辑统一收敛在
+  goldfish/engine.py 的 GameBase.opening（sim_red 亦已借此修复），
+  sim_*.py 均为无 opening 定义的兼容 shim，本脚本再跑只会全部 no-match。
 """
 import sys
 if hasattr(sys.stdout, 'reconfigure'):

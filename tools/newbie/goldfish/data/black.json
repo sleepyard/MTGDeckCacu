@@ -1,0 +1,190 @@
+{
+ "land": "Swamp",
+ "basic_prefix": "Swamp",
+ "pool": {
+  "Dream Beavers": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 1,
+   "fly": 1,
+   "etb_drain": 1
+  },
+  "Callous Inspector": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 1,
+   "menace": 1
+  },
+  "Nighthowl Pursuer": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 1,
+   "menace": 1,
+   "ferocious": 1
+  },
+  "Pulse Tracker": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 1,
+   "atk_drain": 1
+  },
+  "Burrog Banemaker": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 1,
+   "deathtouch": 1,
+   "pump_self": 1
+  },
+  "Engine Rat": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 1,
+   "deathtouch": 1
+  },
+  "Desolation Prowler": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 2,
+   "pay_pump": 1
+  },
+  "Sanguine Syphoner": {
+   "k": "C",
+   "c": 2,
+   "p": 1,
+   "d": 3,
+   "atk_drain": 1
+  },
+  "Umbral Collar Zealot": {
+   "k": "C",
+   "c": 2,
+   "p": 3,
+   "d": 2
+  },
+  "Vampire Gourmand": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 2,
+   "sac_draw_unblock": 1
+  },
+  "Delta Bloodflies": {
+   "k": "C",
+   "c": 2,
+   "p": 1,
+   "d": 2,
+   "fly": 1,
+   "atk_drain_cond": 1
+  },
+  "Agents of HYDRA": {
+   "k": "C",
+   "c": 2,
+   "p": 1,
+   "d": 1,
+   "dies_token": 1
+  },
+  "Knight of Malice": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 2,
+   "first_strike": 1
+  },
+  "Merciless Enforcers": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 1,
+   "lifelink": 1,
+   "sink_drain": 1
+  },
+  "Gollum, Riddle Master": {
+   "k": "C",
+   "c": 2,
+   "p": 3,
+   "d": 1,
+   "leg": 1
+  },
+  "Vampire Nighthawk": {
+   "k": "C",
+   "c": 3,
+   "p": 2,
+   "d": 3,
+   "fly": 1,
+   "deathtouch": 1,
+   "lifelink": 1
+  },
+  "Nullpriest of Oblivion": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 1,
+   "menace": 1,
+   "lifelink": 1
+  },
+  "Sunset Saboteur": {
+   "k": "C",
+   "c": 2,
+   "p": 4,
+   "d": 1,
+   "menace": 1,
+   "atk_ctr": 1
+  },
+  "Hunted Bonebrute": {
+   "k": "C",
+   "c": 3,
+   "p": 6,
+   "d": 2,
+   "menace": 1
+  },
+  "Sengir Vampire": {
+   "k": "C",
+   "c": 4,
+   "p": 4,
+   "d": 4,
+   "fly": 1
+  },
+  "Requiting Hex": {
+   "k": "S",
+   "c": 1,
+   "p": 0,
+   "d": 0,
+   "removal": 1
+  },
+  "Deadly Precision": {
+   "k": "S",
+   "c": 1,
+   "p": 0,
+   "d": 0,
+   "removal": 1
+  },
+  "Heartless Act": {
+   "k": "S",
+   "c": 2,
+   "p": 0,
+   "d": 0,
+   "removal": 1
+  },
+  "Dissection Practice": {
+   "k": "S",
+   "c": 1,
+   "p": 0,
+   "d": 0,
+   "drain": 1,
+   "pump1": 1
+  },
+  "Melancholic Poet": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 2,
+   "repartee_drain": 1
+  }
+ }
+}

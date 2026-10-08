@@ -1,0 +1,202 @@
+{
+ "land": "Mountain",
+ "basic_prefix": "Mountain",
+ "pool": {
+  "Shock": {
+   "k": "S",
+   "c": 1,
+   "p": 0,
+   "d": 0,
+   "burn": 2
+  },
+  "Burst Lightning": {
+   "k": "S",
+   "c": 1,
+   "p": 0,
+   "d": 0,
+   "burn": 2
+  },
+  "Boltwave": {
+   "k": "S",
+   "c": 1,
+   "p": 0,
+   "d": 0,
+   "burn": 3
+  },
+  "Lightning Strike": {
+   "k": "S",
+   "c": 2,
+   "p": 0,
+   "d": 0,
+   "burn": 3
+  },
+  "Ancestral Anger": {
+   "k": "S",
+   "c": 1,
+   "p": 0,
+   "d": 0,
+   "pump": 1,
+   "draw": 1
+  },
+  "Playful Shove": {
+   "k": "S",
+   "c": 2,
+   "p": 0,
+   "d": 0,
+   "burn": 1,
+   "draw": 1
+  },
+  "Scorching Dragonfire": {
+   "k": "S",
+   "c": 2,
+   "p": 0,
+   "d": 0,
+   "burn": 0
+  },
+  "Firebrand Archer": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 1,
+   "archetype": 1
+  },
+  "Thunderdrum Soloist": {
+   "k": "C",
+   "c": 2,
+   "p": 1,
+   "d": 3,
+   "opus_dmg": 1
+  },
+  "Devoted Duelist": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 2,
+   "haste": 1,
+   "flurry": 1
+  },
+  "Guttersnipe": {
+   "k": "C",
+   "c": 3,
+   "p": 2,
+   "d": 2,
+   "guttersnipe": 2
+  },
+  "Expressive Firedancer": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 2,
+   "opus_pump": 1
+  },
+  "Tomik, Izzet Sparkmage": {
+   "k": "C",
+   "c": 2,
+   "p": 1,
+   "d": 3,
+   "prowess": 1,
+   "tomik": 1
+  },
+  "Master of Barbs": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 2,
+   "barbs": 1
+  },
+  "Molten-Core Maestro": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 2,
+   "opus_ctr": 1
+  },
+  "Stromkirk Noble": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 1,
+   "grow_combat": 1
+  },
+  "Ghitu Lavarunner": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 2,
+   "lavarunner": 1
+  },
+  "Fanatical Firebrand": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 1,
+   "haste": 1
+  },
+  "Fleeting Effigy": {
+   "k": "C",
+   "c": 1,
+   "p": 2,
+   "d": 2,
+   "haste": 1
+  },
+  "Viashino Pyromancer": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 1,
+   "etb_ping": 2
+  },
+  "Shocking Sharpshooter": {
+   "k": "C",
+   "c": 2,
+   "p": 1,
+   "d": 3,
+   "ally_ping": 1
+  },
+  "Hired Claw": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 1,
+   "atk_ping": 1
+  },
+  "Slickshot Show-Off": {
+   "k": "C",
+   "c": 2,
+   "p": 1,
+   "d": 2,
+   "haste": 1,
+   "flying": 1,
+   "pump2": 2
+  },
+  "Emberheart Challenger": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 2,
+   "haste": 1,
+   "prowess": 1
+  },
+  "Prowcatcher Specialist": {
+   "k": "C",
+   "c": 2,
+   "p": 1,
+   "d": 2,
+   "haste": 1
+  },
+  "Swab Goblin": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 2
+  },
+  "Emeritus of Conflict": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 2,
+   "first_strike": 1,
+   "emeritus": 1
+  }
+ }
+}

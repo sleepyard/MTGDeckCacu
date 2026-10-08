@@ -1,0 +1,314 @@
+{
+ "land": "Island",
+ "basic_prefix": "Island",
+ "pool": {
+  "Opt": {
+   "k": "S",
+   "c": 1,
+   "p": 0,
+   "d": 0,
+   "draw": 1
+  },
+  "Unending Whisper": {
+   "k": "S",
+   "c": 1,
+   "p": 0,
+   "d": 0,
+   "draw": 1
+  },
+  "Fleeting Distraction": {
+   "k": "S",
+   "c": 1,
+   "p": 0,
+   "d": 0,
+   "draw": 1
+  },
+  "Illvoi Galeblade": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 1,
+   "fly": 1,
+   "sac_draw": 1
+  },
+  "Spectral Sailor": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 1,
+   "fly": 1
+  },
+  "Veteran Ice Climber": {
+   "k": "C",
+   "c": 2,
+   "p": 1,
+   "d": 3,
+   "vig": 1,
+   "unblockable": 1
+  },
+  "Mysterio's Phantasm": {
+   "k": "C",
+   "c": 2,
+   "p": 1,
+   "d": 3,
+   "fly": 1,
+   "vig": 1
+  },
+  "Elementalist Adept": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 1,
+   "prowess": 1
+  },
+  "Illvoi Operative": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 1,
+   "second_spell_ctr": 1
+  },
+  "Wingblade Disciple": {
+   "k": "C",
+   "c": 3,
+   "p": 2,
+   "d": 2,
+   "fly": 1,
+   "second_spell_token": 1
+  },
+  "Glen Elendra Guardian": {
+   "k": "C",
+   "c": 3,
+   "p": 3,
+   "d": 4,
+   "fly": 1
+  },
+  "Sphinx of False Conclusions": {
+   "k": "C",
+   "c": 4,
+   "p": 4,
+   "d": 2,
+   "fly": 1,
+   "atk_loot": 1
+  },
+  "Kang the Conqueror": {
+   "k": "C",
+   "c": 4,
+   "p": 4,
+   "d": 5,
+   "fly": 1
+  },
+  "Beetle, Legacy Criminal": {
+   "k": "C",
+   "c": 4,
+   "p": 3,
+   "d": 3,
+   "fly": 1
+  },
+  "Il Mheg Pixie": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 1,
+   "fly": 1
+  },
+  "Justice, Vance Astrovik": {
+   "k": "C",
+   "c": 3,
+   "p": 2,
+   "d": 2,
+   "fly": 1
+  },
+  "Ray Fillet, Man Ray": {
+   "k": "C",
+   "c": 4,
+   "p": 3,
+   "d": 3,
+   "fly": 1
+  },
+  "Rook Turret": {
+   "k": "C",
+   "c": 4,
+   "p": 3,
+   "d": 3,
+   "fly": 1
+  },
+  "Aegis Sculptor": {
+   "k": "C",
+   "c": 4,
+   "p": 2,
+   "d": 3,
+   "fly": 1
+  },
+  "Giant-Sized Flying Ant": {
+   "k": "C",
+   "c": 4,
+   "p": 3,
+   "d": 2,
+   "fly": 1
+  },
+  "Taigam, Master Opportunist": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 2,
+   "flurry_copy": 1,
+   "leg": 1
+  },
+  "Quick Study": {
+   "k": "S",
+   "c": 3,
+   "p": 0,
+   "d": 0,
+   "draw": 2
+  },
+  "Sphinx's Approach": {
+   "k": "S",
+   "c": 3,
+   "p": 0,
+   "d": 0,
+   "draw": 2
+  },
+  "Flow State": {
+   "k": "S",
+   "c": 2,
+   "p": 0,
+   "d": 0,
+   "dig": 1
+  },
+  "Divining Duelist": {
+   "k": "C",
+   "c": 3,
+   "p": 3,
+   "d": 2,
+   "etb_draw": 1
+  },
+  "Mischievous Mystic": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 1,
+   "fly": 1,
+   "sd_token": 1
+  },
+  "Knowledge Seeker": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 1,
+   "vig": 1,
+   "sd_ctr": 1
+  },
+  "Lakeshore Apothecary": {
+   "k": "C",
+   "c": 2,
+   "p": 1,
+   "d": 2,
+   "vig": 1,
+   "sd_ctr": 1
+  },
+  "Otter-Penguin": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 1,
+   "sd_temp": 1
+  },
+  "Atlantean Cavalry": {
+   "k": "C",
+   "c": 3,
+   "p": 3,
+   "d": 2,
+   "vig": 1,
+   "sd_ctr": 1
+  },
+  "Erudite Wizard": {
+   "k": "C",
+   "c": 3,
+   "p": 2,
+   "d": 3,
+   "sd_ctr": 1
+  },
+  "Thopter Fabricator": {
+   "k": "C",
+   "c": 3,
+   "p": 4,
+   "d": 4,
+   "fly": 1,
+   "sd_token": 1,
+   "leg": 0
+  },
+  "Homunculus Horde": {
+   "k": "C",
+   "c": 4,
+   "p": 2,
+   "d": 2,
+   "sd_copy": 1
+  },
+  "Geist of Saint Thalia": {
+   "k": "C",
+   "c": 2,
+   "p": 1,
+   "d": 2,
+   "fly": 1,
+   "cost_reduce": 1
+  },
+  "Seasoned Cryomancer": {
+   "k": "C",
+   "c": 3,
+   "p": 2,
+   "d": 2,
+   "etb_draw": 2
+  },
+  "Lyra, Tolarian Archangel": {
+   "k": "C",
+   "c": 3,
+   "p": 3,
+   "d": 3,
+   "fly": 1,
+   "draw3_token": 1,
+   "leg": 1
+  },
+  "Brineborn Cutthroat": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 1
+  },
+  "Cryotheory Adept": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 1,
+   "prowess": 1
+  },
+  "Diversion Unit": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 1,
+   "fly": 1
+  },
+  "Unsummon": {
+   "k": "S",
+   "c": 1,
+   "p": 0,
+   "d": 0,
+   "blank": 1
+  },
+  "Countersculpt": {
+   "k": "S",
+   "c": 2,
+   "p": 0,
+   "d": 0,
+   "blank": 1
+  },
+  "Geist of Saint Traft": {
+   "k": "C",
+   "c": 3,
+   "p": 2,
+   "d": 2,
+   "fly": 1
+  }
+ }
+}

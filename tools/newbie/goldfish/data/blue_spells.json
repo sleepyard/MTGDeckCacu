@@ -1,0 +1,151 @@
+{
+ "land": "Island",
+ "basic_prefix": "Island",
+ "pool": {
+  "Opt": {
+   "k": "S",
+   "c": 1,
+   "p": 0,
+   "d": 0,
+   "draw": 1
+  },
+  "Unending Whisper": {
+   "k": "S",
+   "c": 1,
+   "p": 0,
+   "d": 0,
+   "draw": 1
+  },
+  "Fleeting Distraction": {
+   "k": "S",
+   "c": 1,
+   "p": 0,
+   "d": 0,
+   "draw": 1
+  },
+  "Bounce Off": {
+   "k": "S",
+   "c": 1,
+   "p": 0,
+   "d": 0,
+   "bounce": 1
+  },
+  "Into the Roil": {
+   "k": "S",
+   "c": 2,
+   "p": 0,
+   "d": 0,
+   "bounce": 1
+  },
+  "Desculpting Blast": {
+   "k": "S",
+   "c": 2,
+   "p": 0,
+   "d": 0,
+   "bounce": 1,
+   "drone_if_attacking": 1
+  },
+  "Banishing Betrayal": {
+   "k": "S",
+   "c": 2,
+   "p": 0,
+   "d": 0,
+   "bounce": 1
+  },
+  "Mocking Sprite": {
+   "k": "C",
+   "c": 3,
+   "p": 2,
+   "d": 1,
+   "fly": 1,
+   "cost_reduce": 1
+  },
+  "Highspire Bell-Ringer": {
+   "k": "C",
+   "c": 3,
+   "p": 1,
+   "d": 4,
+   "fly": 1,
+   "cost_reduce2": 1
+  },
+  "Muse Seeker": {
+   "k": "C",
+   "c": 2,
+   "p": 1,
+   "d": 2,
+   "opus_draw": 1
+  },
+  "Diary of Dreams": {
+   "k": "E",
+   "c": 2,
+   "p": 0,
+   "d": 0,
+   "page": 1
+  },
+  "Illvoi Operative": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 1,
+   "second_spell_ctr": 1
+  },
+  "Cryotheory Adept": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 1,
+   "prowess": 1
+  },
+  "Elementalist Adept": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 1,
+   "prowess": 1
+  },
+  "Sahagin": {
+   "k": "C",
+   "c": 2,
+   "p": 1,
+   "d": 3,
+   "big_spell_ctr": 1
+  },
+  "Spectral Sailor": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 1,
+   "fly": 1
+  },
+  "Illvoi Galeblade": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 1,
+   "fly": 1
+  },
+  "Il Mheg Pixie": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 1,
+   "fly": 1
+  },
+  "Thopter Fabricator": {
+   "k": "C",
+   "c": 3,
+   "p": 4,
+   "d": 4,
+   "fly": 1,
+   "sd_token": 1
+  },
+  "Mysterio's Phantasm": {
+   "k": "C",
+   "c": 2,
+   "p": 1,
+   "d": 3,
+   "fly": 1,
+   "vig": 1
+  }
+ }
+}

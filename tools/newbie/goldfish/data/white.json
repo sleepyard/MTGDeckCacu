@@ -1,0 +1,194 @@
+{
+ "land": "LAND",
+ "basic_prefix": "Plains",
+ "pool": {
+  "Political Triumph": {
+   "k": "E",
+   "c": 1,
+   "p": 0,
+   "d": 0,
+   "triumph": 1
+  },
+  "Resolute Reinforcements": {
+   "k": "C",
+   "c": 2,
+   "p": 1,
+   "d": 1,
+   "tokens": 1
+  },
+  "Honored Knight-Captain": {
+   "k": "C",
+   "c": 2,
+   "p": 1,
+   "d": 1,
+   "tokens": 1
+  },
+  "Hare Apparent": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 2,
+   "hare": 1
+  },
+  "Battle Menu": {
+   "k": "S",
+   "c": 2,
+   "p": 0,
+   "d": 0,
+   "tokens": 1,
+   "big": 1
+  },
+  "Clachan Festival": {
+   "k": "E",
+   "c": 3,
+   "p": 0,
+   "d": 0,
+   "tokens": 2
+  },
+  "Dalkovan Packbeasts": {
+   "k": "C",
+   "c": 3,
+   "p": 0,
+   "d": 4,
+   "mobilize": 3,
+   "vig": 1
+  },
+  "Okoye, Dora Milaje Leader": {
+   "k": "C",
+   "c": 4,
+   "p": 3,
+   "d": 2,
+   "tokens": 2,
+   "tok_fs": 1
+  },
+  "Hinterland Sanctifier": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 2,
+   "life_src": 1
+  },
+  "Aunt May": {
+   "k": "C",
+   "c": 1,
+   "p": 0,
+   "d": 2,
+   "life_src": 1
+  },
+  "Ajani's Pridemate": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 2,
+   "life_ctr": 1
+  },
+  "Dazzling Angel": {
+   "k": "C",
+   "c": 3,
+   "p": 2,
+   "d": 3,
+   "fly": 1,
+   "life_src": 1
+  },
+  "Angel of Vitality": {
+   "k": "C",
+   "c": 3,
+   "p": 2,
+   "d": 4,
+   "fly": 1
+  },
+  "Exemplar of Light": {
+   "k": "C",
+   "c": 4,
+   "p": 3,
+   "d": 3,
+   "fly": 1,
+   "life_ctr": 1,
+   "ctr_draw": 1
+  },
+  "Haliya, Guided by Light": {
+   "k": "C",
+   "c": 3,
+   "p": 2,
+   "d": 3,
+   "life_src": 1,
+   "life_draw": 3
+  },
+  "Bishop's Soldier": {
+   "k": "C",
+   "c": 2,
+   "p": 2,
+   "d": 2,
+   "lifelink": 1
+  },
+  "Leonardo, Cutting Edge": {
+   "k": "C",
+   "c": 2,
+   "p": 1,
+   "d": 1,
+   "lifelink": 1,
+   "life_ctr": 1
+  },
+  "Aerith Gainsborough": {
+   "k": "C",
+   "c": 3,
+   "p": 2,
+   "d": 2,
+   "lifelink": 1,
+   "life_ctr": 1
+  },
+  "Honor": {
+   "k": "S",
+   "c": 1,
+   "p": 0,
+   "d": 0,
+   "give_ctr": 1,
+   "draw": 1
+  },
+  "Dauntless Veteran": {
+   "k": "C",
+   "c": 3,
+   "p": 2,
+   "d": 2,
+   "atk_pump": 1
+  },
+  "Savannah Lions": {
+   "k": "C",
+   "c": 1,
+   "p": 2,
+   "d": 1
+  },
+  "Lightstall Inquisitor": {
+   "k": "C",
+   "c": 1,
+   "p": 2,
+   "d": 1
+  },
+  "Healer's Hawk": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 1,
+   "fly": 1,
+   "lifelink": 1
+  },
+  "Leonin Vanguard": {
+   "k": "C",
+   "c": 1,
+   "p": 1,
+   "d": 1
+  },
+  "Seam Rip": {
+   "k": "R",
+   "c": 1,
+   "p": 0,
+   "d": 0
+  },
+  "Erode": {
+   "k": "R",
+   "c": 1,
+   "p": 0,
+   "d": 0
+  }
+ }
+}
