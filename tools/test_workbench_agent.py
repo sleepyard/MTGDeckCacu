@@ -263,7 +263,8 @@ class ReceiverTests(unittest.TestCase):
             connection = fx.get_json("/api/agent/connection")[1]
             self.assertEqual(connection["status"], "offline")
             self.assertEqual(connection["backend"], "fake")
-            self.assertTrue(any(b["name"] == "codex" for b in connection["backends"]))
+            names = {b["name"] for b in connection["backends"]}
+            self.assertEqual(names, {"codex", "kimi"})
             self.assertEqual(fx.post_obj("/api/agent/connect", {})[0], 200)
             eventually(lambda: self.receiver.status()["status"] == "idle")
             rid = fx.post_obj("/api/agent/request", {"kind": "next_move"})[1]["request_id"]

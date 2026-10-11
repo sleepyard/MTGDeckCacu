@@ -358,5 +358,7 @@ class AgentReceiver:
 
 
 from workbench_agent_codex import CodexBackend  # noqa: E402 注册默认后端
+from workbench_agent_kimi import KimiBackend  # noqa: E402
 
 register_backend(CodexBackend)
+register_backend(KimiBackend)

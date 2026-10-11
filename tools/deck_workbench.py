@@ -1316,6 +1316,7 @@ class WorkbenchState:
                               for name, entry in self._slots.items()}
             snap["bridges"] = self.bridge.status()
             snap["bridges"]["receiver"] = self.receiver.status()
+            snap["bridges"]["receiver"]["backends"] = workbench_agent.backend_options()
             snap["avenues"] = [dict(avenue) for avenue in self._avenues]
             return snap
 
@@ -2613,7 +2614,7 @@ PAGE_HTML = """<!DOCTYPE html>
         <div class="inspect-view" data-view="assistant" hidden>
           <div class="tool-section"><h3>Agent 助手</h3>
             <div id="agentConnection" class="job-status" aria-live="polite">接收端未连接</div>
-            <div class="actions"><button id="agentConnectBtn">连接 Agent</button><button id="agentDisconnectBtn" hidden>断开</button></div>
+            <div class="actions"><select id="agentBackend" hidden></select><button id="agentConnectBtn">连接 Agent</button><button id="agentDisconnectBtn" hidden>断开</button></div>
             <div class="note">连接一次后持续接收网页任务，自动领取、查证并回执。复用工作台专用会话与本机 Agent CLI 的登录和配置，待机不调用模型。</div>
             <div id="agentApproval" class="card" hidden><strong>Agent 操作需要批准</strong><div id="agentApprovalReason"></div>
               <div id="agentApprovalDetails" class="statline"></div><div class="actions"><button id="agentApproveBtn">允许本次</button><button id="agentDeclineBtn">拒绝</button></div></div>
@@ -3229,6 +3230,21 @@ function renderBridge(snap) {
   const connectBtn = document.getElementById('agentConnectBtn');
   connectBtn.hidden = connected;
   connectBtn.textContent = '连接 ' + (receiver.backend_label || 'Agent');
+  const backendSel = document.getElementById('agentBackend');
+  const backends = receiver.backends || [];
+  backendSel.hidden = connected || backends.length < 2;
+  if (backends.length > 1) {
+    const current = Array.from(backendSel.options).map(o => o.value).join(',');
+    const wanted = backends.map(b => b.name).join(',');
+    if (current !== wanted) {
+      backendSel.innerHTML = '';
+      for (const b of backends) backendSel.add(new Option(b.label, b.name));
+    }
+    backendSel.value = receiver.backend || backends[0].name;
+    connectBtn.textContent = '连接 ' + ((backends.find(b => b.name === backendSel.value) || {}).label || 'Agent');
+    backendSel.onchange = () => { connectBtn.textContent = '连接 ' +
+      ((backends.find(b => b.name === backendSel.value) || {}).label || 'Agent'); };
+  }
   document.getElementById('agentDisconnectBtn').hidden = !connected;
   document.getElementById('agentDisconnectBtn').disabled = receiver.status === 'stopping';
   const approval = receiver.approval;
@@ -3435,7 +3451,7 @@ document.getElementById('tabLimited').onclick = () => setMode('limited');
 document.getElementById('tabConstructed').onclick = () => setMode('constructed');
 document.getElementById('openImport').onclick = openImport;
 document.getElementById('dismissError').onclick = () => showErrors('');
-document.getElementById('agentConnectBtn').onclick = () => run(() => postJSON('/api/agent/connect', {}));
+document.getElementById('agentConnectBtn').onclick = () => run(() => postJSON('/api/agent/connect', {backend: document.getElementById('agentBackend').value}));
 document.getElementById('agentDisconnectBtn').onclick = () => run(() => postJSON('/api/agent/disconnect', {}));
 for (const [id, decision] of [['agentApproveBtn','accept'],['agentDeclineBtn','decline']])
   document.getElementById(id).onclick = () => run(() => postJSON('/api/agent/approval', {

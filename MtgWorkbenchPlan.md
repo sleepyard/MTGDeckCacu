@@ -147,9 +147,12 @@ claim_token 租约、网页审批往返、回执、stale 标注、按后端的�
 + 每请求 `TurnHooks`：keepalive/progress/approval，审批为可选回调）。Codex 迁入
 `workbench_agent_codex.py` 作为首个适配器，协议行为不变。hub 经 `create_receiver` 创建
 接收端，`serve --agent-backend` 设默认，离线时 `POST /api/agent/connect` 可切后端；UI 文案
-去 Codex 化，按钮随后端显示。会话文件增加 backend 字段，跨后端记录不混用。规划中的第二
-后端为 Kimi Code CLI（`kimi -p` 无头 + `--session` 恢复 + stream-json；`-p` 模式无审批，
-契合可选回调设计）。
+去 Codex 化，按钮随后端显示。会话文件增加 backend 字段，跨后端记录不混用。
+第二后端 Kimi Code CLI 已落地（`workbench_agent_kimi.py`）：print 模式逐任务拉起进程
+（stdin 单行 JSONL 任务避免 Windows 命令行长度限制，进程退出即任务边界），
+`--session` 恢复专用会话，会话号从 meta 行或 `session_index.jsonl` 差集捕获；
+连接时探测 `kimi --help`，旧版本缺 `--input-format` 会明确报错；print 模式自动审批，
+不产生网页审批；exit 75 识别为可重试临时错误。
 
 ### Phase 0：hub 骨架与协议（1 个交付周期）
 

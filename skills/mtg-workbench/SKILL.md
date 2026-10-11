@@ -14,10 +14,13 @@ shows in the snapshot.
 The browser's **Connect** button (labelled with the active backend) starts the
 persistent receiver in `tools/workbench_agent.py`. The receiver core is
 backend-agnostic (claim loop, lease heartbeats, page approvals, receipts);
-the actual Agent CLI is a registered adapter — currently `codex`
+the actual Agent CLI is a registered adapter — `codex`
 (`tools/workbench_agent_codex.py`, driving the installed CLI's
-`codex app-server` JSONL protocol), with more backends able to register
-through the contract in the module docstring. While connected,
+`codex app-server` JSONL protocol) and `kimi`
+(`tools/workbench_agent_kimi.py`, Kimi Code CLI print mode: one process per
+request, stdin/out stream-json, `--session` resume, no page approvals since
+print mode auto-approves). More backends can register through the contract
+in the module docstring. While connected,
 frontend submissions are automatically claimed and sent to the backend as
 turns; no second human prompt is needed. The receiver maintains the lease and
 submits the final receipt. Idle waiting does not start model turns. The page

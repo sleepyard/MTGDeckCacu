@@ -456,14 +456,18 @@ curl -s http://127.0.0.1:8644/api/export
 按钮文字随当前后端显示（默认 Codex）；`serve --agent-backend` 指定默认后端，
 离线状态下 `POST /api/agent/connect` 可带 `{"backend": "名字"}` 切换，`/api/agent/connection`
 列出可用后端。Codex 适配器（`workbench_agent_codex.py`）要求本机安装并登录
-Codex CLI；接收端使用已有模型、提供商及登录配置，不走 `llm_config.json`。
-通过 `codex app-server` 的 JSONL 接口创建一个工作台会话，之后自动领取每次网页任务，
-发送 `turn/start` 执行、维持租约并回写结果，不需再回到 CLI 发提示。待机不调用模型。
+Codex CLI；Kimi 适配器（`workbench_agent_kimi.py`）要求 kimi 在 PATH 中且已登录，
+连接时会探测 `kimi --help`，版本过旧（无 `--input-format=stream-json`）会明确报错。
+接收端使用已有模型、提供商及登录配置，不走 `llm_config.json`。
+Codex 经 `codex app-server` JSONL 常驻进程执行 turn/start；Kimi 经 print 模式
+（stdin 单行 JSONL 任务、stream-json 输出、进程退出即任务边界），逐任务拉起进程、
+用 `--session` 恢复同一专用会话，会话号从 meta 行或 `session_index.jsonl` 差集捕获。
+两者都自动领取每次网页任务、维持租约并回写结果，不需再回到 CLI 发提示；待机不调用模型。
 页面显示连接/处理/审批状态、后端、模型、会话 ID、请求号与领取者；不启动子代理。
 断开会中断进行中的任务并显式回执；重连恢复 gitignored
 `tools/cache/workbench_agent_session.json` 中对应后端的会话，恢复失败不会偷偷另开会话。
 后端的原生操作审批（如 Codex 的命令/文件审批）在网页显示，可允许本次或拒绝，
-接收端不自动代批。`/api/agent/connect|disconnect|approval`（POST）与
+接收端不自动代批（Kimi print 模式自动审批，不会产生网页审批）。`/api/agent/connect|disconnect|approval`（POST）与
 `/api/agent/connection`（GET）提供相同的程序化控制。Codex 接口按本机 CLI 0.118.0 实测，
 外部 HTTP/模型在回归测试中 mock。新后端按 `workbench_agent.py`  docstring 的契约实现
 （open/begin_session/run_turn/alive/interrupt/close + TurnHooks）并注册即可接入。
