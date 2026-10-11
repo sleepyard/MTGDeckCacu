@@ -2031,199 +2031,346 @@ PAGE_HTML = """<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MTG 套牌工作台</title>
 <style>
-  body { background:#0d1117; color:#c9d1d9; font-family:Consolas,'Microsoft YaHei',monospace;
-         margin:0; padding:16px; }
-  h1 { font-size:18px; color:#58a6ff; margin:0 0 12px; }
-  .tabs { margin-bottom:12px; }
-  .tabbtn { background:#161b22; color:#8b949e; border:1px solid #30363d;
-            border-radius:6px 6px 0 0; padding:6px 26px; margin:0 6px 0 0;
-            font-size:14px; cursor:pointer; }
-  .tabbtn.active { color:#58a6ff; border-color:#58a6ff; }
-  .panel { background:#161b22; border:1px solid #30363d; border-radius:6px;
-           padding:12px 16px; margin-bottom:12px; }
-  .panel h2 { font-size:13px; color:#8b949e; margin:0 0 8px; font-weight:normal; }
-  .panel h2.sub { margin-top:18px; border-top:1px solid #30363d;
-                  padding-top:12px; }
-  .panel h3.sub2 { font-size:13px; color:#c9d1d9; margin:12px 0 4px;
-                   font-weight:normal; }
-  #session { font-size:13px; color:#8b949e; }
-  .cols { display:flex; gap:12px; align-items:flex-start; }
-  .col { flex:1; min-width:0; }
-  .zone { margin-bottom:10px; }
-  .zone b { color:#3fb950; }
-  .zone ul { margin:4px 0 0; padding-left:20px; line-height:1.7; font-size:14px; }
-  .row { display:flex; align-items:center; gap:8px; padding:2px 0; font-size:13px; }
-  .row .nm { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .row button { margin:0; padding:1px 8px; font-size:12px; }
-  .ts { color:#484f58; }
-  .tag { color:#8b949e; font-size:12px; }
-  #pooltext { width:100%; height:120px; background:#0d1117; color:#c9d1d9;
-              border:1px solid #30363d; border-radius:4px; font-family:inherit; }
-  #decktext { width:100%; height:90px; background:#0d1117; color:#c9d1d9;
-              border:1px solid #30363d; border-radius:4px; font-family:inherit; }
-  #srcname, #setcode { width:160px; background:#0d1117; color:#c9d1d9;
-             border:1px solid #30363d; border-radius:4px; font-family:inherit; }
-  select { background:#0d1117; color:#c9d1d9; border:1px solid #30363d;
-           border-radius:4px; font-family:inherit; padding:3px; }
-  button { background:#21262d; color:#c9d1d9; border:1px solid #30363d;
-           border-radius:6px; padding:5px 14px; margin-top:8px; cursor:pointer; }
-  button:hover { border-color:#58a6ff; }
-  #warnings { color:#e3b341; white-space:pre-wrap; font-size:13px; }
-  #errors { color:#f85149; white-space:pre-wrap; font-size:13px; }
-  .bar { background:#1f6feb; height:12px; border-radius:2px; display:inline-block; }
-  .statline { font-size:13px; line-height:1.8; }
-  .ok { color:#3fb950; } .bad { color:#f85149; } .warn { color:#e3b341; }
-  .note { color:#8b949e; font-size:12px; line-height:1.6; }
-  .card { background:#0d1117; border:1px solid #30363d; border-radius:6px;
-          padding:8px 12px; margin:8px 0; font-size:13px; line-height:1.7; }
-  .card h3 { font-size:13px; color:#58a6ff; margin:0 0 6px; font-weight:normal; }
-  .verdict { font-weight:bold; font-size:14px; background:#0d1117;
-             border-left:3px solid #58a6ff; padding:8px 12px; margin:8px 0;
-             line-height:1.7; }
-  table.kv { border-collapse:collapse; font-size:13px; margin:4px 0; }
-  table.kv td { border:1px solid #30363d; padding:3px 8px; vertical-align:top;
-                line-height:1.6; }
-  td.kvkey { color:#8b949e; white-space:nowrap; }
-  ul.kvlist { margin:2px 0; padding-left:18px; }
-  ul.kvlist li { line-height:1.7; }
+  :root { color-scheme:dark; --bg:#0d1117; --panel:#161d26; --inset:#10161e;
+    --line:#2b3644; --text:#dce3eb; --muted:#95a3b4; --accent:#8bd5bf;
+    --gold:#e8bf78; --bad:#ff9691; --radius:12px; }
+  * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { margin:0; color:var(--text); background:radial-gradient(ellipse at 40% 0%,#1c2c33 0,transparent 55%),var(--bg);
+    font:13px/1.6 'Microsoft YaHei UI','Microsoft YaHei',sans-serif; }
+  button,input,select,textarea { font:inherit; }
+  button,a,summary,input,select,textarea { -webkit-tap-highlight-color:transparent; }
+  button { cursor:pointer; border:1px solid var(--line); background:#202b38;
+    color:var(--text); border-radius:7px; padding:7px 12px; min-height:36px; }
+  button:hover { border-color:var(--accent); background:#263743; }
+  button:disabled { opacity:.55; cursor:wait; }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+  button.primary { background:var(--accent); color:#10231f; border-color:var(--accent); font-weight:700; }
+  button.primary:hover { background:#abe7d5; }
+  a { color:var(--accent); }
+  input:not([type=checkbox]),select,textarea { width:100%; min-width:0; color:var(--text);
+    background:var(--inset); border:1px solid var(--line); border-radius:6px; padding:8px 10px; }
+  textarea { display:block; min-height:106px; resize:vertical;
+    font:12px/1.7 Consolas,'Microsoft YaHei',monospace; }
+  input[type=checkbox] { accent-color:var(--accent); margin:0; }
+  label.field { display:grid; gap:5px; color:var(--muted); font-size:12px; }
+  .check { display:flex; align-items:center; gap:7px; min-height:32px; }
+  .form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:12px 0; }
+  .full { grid-column:1/-1; }
+  .actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .topbar { border-bottom:1px solid var(--line); background:#101820e6; }
+  .topbar-inner { max-width:1800px; margin:auto; padding:18px 26px; display:flex; align-items:center; gap:26px; flex-wrap:wrap; }
+  .brand { display:flex; gap:12px; align-items:center; }
+  .brand-mark { font:700 17px Bahnschrift,Consolas,sans-serif; letter-spacing:-1px; color:var(--accent);
+    border:1px solid #577c74; border-radius:9px; padding:9px 7px; }
+  h1 { font-size:18px; letter-spacing:.5px; margin:0; }
+  .eyebrow { font:11px Bahnschrift,Consolas,sans-serif; letter-spacing:2px; color:var(--muted); }
+  .tabs { display:flex; gap:4px; padding:4px; background:var(--inset); border:1px solid var(--line); border-radius:9px; }
+  .tabbtn { border-color:transparent; background:transparent; color:var(--muted); padding:6px 20px; }
+  .tabbtn.active { background:#2b3e42; color:var(--accent); }
+  .header-actions { margin-left:auto; display:flex; gap:8px; align-items:center; }
+  .connection { color:var(--accent); font-size:12px; }
+  .shell { max-width:1800px; margin:auto; padding:20px 26px 32px; }
+  .session-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+  #session { color:var(--muted); font-size:12px; overflow-wrap:anywhere; }
+  .mode-hint { color:var(--muted); font-size:12px; }
+  .overview { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:20px; }
+  .metric { padding:12px 18px; border:1px solid var(--line); border-radius:var(--radius);
+    background:linear-gradient(120deg,#1c2932,#161d26); display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .metric span { color:var(--muted); font-size:12px; }
+  .metric strong { font:28px Bahnschrift,Consolas,sans-serif; color:var(--text); }
+  .workspace { display:grid; grid-template-columns:minmax(250px,.82fr) minmax(340px,1.55fr) minmax(300px,1fr); gap:18px; align-items:start; }
+  .column { min-width:0; }
+  .column-label { color:var(--muted); font-size:11px; letter-spacing:1px; margin:0 0 10px; }
+  .column-label b { color:var(--accent); font-family:Bahnschrift,Consolas,sans-serif; margin-right:8px; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px; margin-bottom:14px; min-width:0; overflow-wrap:anywhere; }
+  .panel h2 { font-size:14px; margin:0; font-weight:600; }
+  .panel h3 { font-size:13px; margin:0 0 8px; }
+  .panel-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; }
+  .panel-head .tag { background:var(--inset); border:1px solid var(--line); border-radius:5px; padding:2px 7px; }
+  .editor { border-top:2px solid var(--accent); }
+  .editor .panel-head h2 { font-size:18px; }
+  .editor-note { color:var(--muted); font-size:12px; margin:0 0 14px; }
+  #zones { max-height:calc(100vh - 350px); min-height:320px; overflow:auto; scrollbar-gutter:stable; }
+  .zone { margin-bottom:16px; }
+  .zone-head { display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--line); margin-bottom:5px; }
+  .zone-head b { color:var(--accent); }
+  .zone ul { margin:8px 0; padding-left:20px; }
+  .row { display:flex; align-items:center; gap:8px; padding:7px 0; min-width:0; font-size:12px; }
+  .row + .row { border-top:1px solid #25303d; }
+  .row .nm { flex:1; min-width:0; overflow-wrap:anywhere; }
+  .row .tag { min-width:25px; text-align:center; font-family:Bahnschrift,Consolas,sans-serif; }
+  .row button { flex-shrink:0; margin:0; padding:4px 7px; font-size:11px; min-height:30px; }
+  .row .card-actions { display:flex; gap:4px; }
+  .ts,.tag,.note { color:var(--muted); }
+  .tag,.note { font-size:12px; }
+  .note { line-height:1.7; }
+  .empty-state { display:grid; place-content:center; text-align:center; min-height:230px; padding:24px 12px; gap:12px; }
+  .empty-state strong { font-size:16px; font-weight:500; }
+  .empty-glyph { font:36px Bahnschrift,Consolas,sans-serif; color:#557367; }
+  .empty-state .actions { justify-content:center; }
+  #poolList { max-height:360px; overflow:auto; margin-top:8px; scrollbar-gutter:stable; }
+  #poolCount { margin-top:8px; }
+  .pool-toolbar { display:flex; gap:8px; }
+  .pool-toolbar input { flex:1; }
+  .pool-toolbar select { width:110px; }
+  details > summary { cursor:pointer; color:var(--text); font-size:12px; }
+  details[open] > summary { margin-bottom:12px; }
+  .fold { margin:12px 0; padding-top:12px; border-top:1px solid var(--line); }
+  .fold > summary { color:var(--muted); }
+  .inspector-tabs { display:flex; gap:2px; margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--line); }
+  .inspectbtn { flex:1; border-color:transparent; background:transparent; color:var(--muted); padding:6px; }
+  .inspectbtn.active { background:#2b3e42; color:var(--accent); }
+  .tool-section + .tool-section { margin-top:20px; padding-top:18px; border-top:1px solid var(--line); }
+  .statline { font-size:12px; line-height:1.8; overflow-wrap:anywhere; }
+  .ok { color:var(--accent); } .bad { color:var(--bad); } .warn { color:var(--gold); }
+  .bar { background:var(--accent); height:8px; border-radius:3px; display:inline-block; max-width:100%; }
+  .curve { display:flex; gap:8px; height:100px; align-items:end; margin:14px 0; }
+  .curve-col { flex:1; text-align:center; color:var(--muted); min-width:0; font-size:11px; }
+  .curve-col b { display:block; color:var(--text); font:13px Bahnschrift,Consolas,sans-serif; }
+  .curve-bar { display:block; width:100%; max-width:32px; margin:4px auto; border-radius:4px 4px 0 0; background:linear-gradient(var(--accent),#3e8174); }
+  .mana-row { display:flex; align-items:center; gap:8px; padding:4px 0; }
+  .mana-symbol { display:inline-grid; place-content:center; width:22px; height:22px;
+    border-radius:50%; border:1px solid var(--line); font:12px Bahnschrift,Consolas,sans-serif; }
+  .mana-W { background:#e4d8b6; color:#282722; } .mana-U { background:#769fb8; color:#132431; }
+  .mana-B { background:#4a4651; color:#e3dbe9; } .mana-R { background:#c57e68; color:#31180f; }
+  .mana-G { background:#83a787; color:#102e17; }
+  .card { background:var(--inset); border:1px solid var(--line); border-radius:8px;
+    padding:10px 12px; margin:10px 0; font-size:12px; line-height:1.7; }
+  .card h3 { color:var(--accent); margin:0 0 6px; }
+  .verdict { font-weight:600; background:var(--inset); border-left:3px solid var(--accent); padding:10px 12px; margin:10px 0; }
+  table.kv { width:100%; border-collapse:collapse; table-layout:fixed; font-size:12px; margin:6px 0; }
+  table.kv td { border:1px solid var(--line); padding:4px 8px; vertical-align:top; overflow-wrap:anywhere; }
+  td.kvkey { color:var(--muted); width:32%; }
+  ul.kvlist { margin:4px 0; padding-left:18px; }
+  .feedback { margin-bottom:16px; padding:10px 14px; border:1px solid #7b514c; border-radius:8px;
+    background:#32201f; color:var(--bad); display:flex; align-items:start; gap:10px; }
+  #errors { flex:1; white-space:pre-wrap; overflow-wrap:anywhere; }
+  #dismissError { min-height:28px; padding:2px 8px; }
+  #warningPanel { border-color:#64533b; }
+  #warnings { color:var(--gold); white-space:pre-wrap; font-size:12px; }
+  .status-footer { color:var(--muted); font-size:11px; padding:4px 0; }
+  @media (min-width:1201px) { .editor-column { position:sticky; top:18px; } }
+  @media (max-width:1200px) {
+    .workspace { grid-template-columns:minmax(250px,.75fr) minmax(340px,1.25fr); }
+    .inspector-column { grid-column:1/-1; }
+    .inspector-content { max-width:none; }
+    #stats { display:grid; grid-template-columns:1fr 1fr; gap:6px 24px; }
+    #zones { max-height:650px; }
+  }
+  @media (max-width:720px) {
+    .topbar-inner { padding:16px; gap:14px; }
+    .brand { flex:1; } h1 { font-size:16px; }
+    .header-actions { margin:0; } .connection { display:none; }
+    .tabs { order:3; width:100%; } .tabbtn { flex:1; }
+    .shell { padding:16px; } .session-row { flex-wrap:wrap; }
+    .overview { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-bottom:16px; }
+    .metric { padding:10px 12px; } .metric strong { font-size:24px; }
+    .workspace { grid-template-columns:minmax(0,1fr); gap:10px; }
+    .editor-column { order:0; } .source-column { order:1; } .inspector-column { order:2; }
+    .column-label b { display:none; }
+    .inspector-column { grid-column:auto; }
+    .panel { padding:14px; } #zones { max-height:520px; min-height:230px; }
+    #stats { display:block; } .row button { min-height:36px; }
+    .header-actions button { padding:6px 9px; }
+    body.busy .connection,.connection.warn { display:block; position:fixed; bottom:16px; left:16px;
+      z-index:5; background:var(--panel); padding:8px 12px; border:1px solid var(--line); border-radius:8px; }
+  }
+  @media (prefers-reduced-motion:no-preference) {
+    .workspace { animation:arrive .3s ease-out; }
+    @keyframes arrive { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+  }
 </style>
 </head>
 <body>
-<h1>MTG 套牌工作台</h1>
-<div class="tabs">
-  <button class="tabbtn" data-mode="limited" id="tabLimited" type="button">限制赛</button>
-  <button class="tabbtn" data-mode="constructed" id="tabConstructed" type="button">构筑</button>
-</div>
-<div class="panel"><h2>会话</h2><div id="session">尚未导入牌表</div></div>
-<div class="cols">
-  <div class="col mode-panel" data-mode="limited">
-    <div class="panel"><h2>牌池</h2>
-      <div class="row">筛选：<select id="poolFilter">
-        <option value="all">全部</option>
-        <option value="main">已入主牌</option>
-        <option value="sideboard">在备牌</option>
-        <option value="out">未入套（被裁）</option>
-      </select><span class="tag" id="poolCount"></span></div>
-      <div id="poolList">—</div>
-    </div>
-    <div class="panel"><h2>导入牌池（数量 牌名，每行一张）</h2>
-      <textarea id="pooltext" placeholder="粘贴牌池文本（容忍 Deck 段头与 (SET) 编号后缀）"></textarea>
-      <div>来源（可选）：<input id="srcname" type="text"></div>
-      <button id="poolBtn">导入牌池</button>
-    </div>
-    <div class="panel"><h2>自动组牌（限制赛）</h2>
-      <div class="row">色组：<select id="seedColors"></select>
-          张数：<select id="seedSize">
-            <option value="41">41</option>
-            <option value="40">40</option>
-          </select>
-          系列：<input id="setcode" type="text" placeholder="如 FRA（评分表）"></div>
-      <div class="note">通常 17 地 + 24 其他 = 41；选 40 张需在报告注明裁剪理由
-        （draft_methodology §4）。无评分表时按稀有度/结构降级计分并在警告中明示。</div>
-      <button id="seedBtn">生成套牌</button>
-      <div id="seedInfo" class="statline"></div>
-      <div id="seedPlans" class="statline"></div>
-      <div id="seedCuts" class="note"></div>
-    </div>
-    <div class="panel"><h2>统计（deck_core 口径）</h2><div id="stats">—</div></div>
+<header class="topbar"><div class="topbar-inner">
+  <div class="brand"><span class="brand-mark" aria-hidden="true">MTG</span>
+    <div><div class="eyebrow">DECK WORKBENCH</div><h1>MTG 套牌工作台</h1></div></div>
+  <nav class="tabs" aria-label="组牌模式">
+    <button class="tabbtn" data-mode="limited" id="tabLimited" type="button" aria-pressed="true">限制赛</button>
+    <button class="tabbtn" data-mode="constructed" id="tabConstructed" type="button" aria-pressed="false">构筑</button>
+  </nav>
+  <div class="header-actions"><span class="connection" id="connection" role="status" aria-live="polite">正在连接</span>
+    <button id="openImport" type="button">导入</button><button id="exportBtn" type="button">导出牌表</button></div>
+</div></header>
+<main class="shell">
+  <div class="session-row"><div id="session">尚未导入牌表</div><div id="modeHint" class="mode-hint"></div></div>
+  <div id="errorPanel" class="feedback" hidden><div id="errors" role="alert"></div>
+    <button id="dismissError" type="button" aria-label="关闭错误提示">关闭</button></div>
+  <div class="overview" aria-label="当前套牌概况">
+    <div class="metric"><span>主牌 / 张</span><strong id="mainMetric">0</strong></div>
+    <div class="metric"><span>备牌 / 张</span><strong id="sideMetric">0</strong></div>
+    <div class="metric"><span>地牌 / 张</span><strong id="landMetric">0</strong></div>
+    <div class="metric"><span>平均法术力值</span><strong id="cmcMetric">—</strong></div>
   </div>
-  <div class="col mode-panel" data-mode="constructed">
-    <div class="panel"><h2>构筑组牌（候选 = mtg_tool search --out 同构 JSON）</h2>
-      <textarea id="candtext" style="width:100%;height:80px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;" placeholder='粘贴候选 JSON 数组，如 [{"name":"Lightning Bolt",...},...]'></textarea>
-      <div class="row">种子（逗号分隔牌名）：<input id="seednames" type="text" style="width:280px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;">
-        赛制：<input id="ccFormat" type="text" value="pioneer" style="width:80px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;">
-        策略：<select id="ccStrategy"><option value="mid">mid</option><option value="aggro">aggro</option><option value="control">control</option></select>
-        平台：<select id="ccPlatform"><option value="arena">arena</option><option value="paper">paper</option><option value="mtgo">mtgo</option><option value="any">any</option></select>
-        <label><input id="ccBo3" type="checkbox">BO3</label></div>
-      <button id="ccBtn">构筑组牌</button>
-      <div id="ccInfo" class="statline"></div>
-    </div>
-    <div class="panel"><h2>角色分布与缺口（roles.py）</h2>
-      <button id="rolesBtn">刷新角色</button>
-      <div id="rolesBox" class="statline">—</div>
-    </div>
-    <div class="panel"><h2>组合技（Commander Spellbook，可能慢，75 请求/分钟节流）</h2>
-      <div class="row">赛制：<input id="cbFormat" type="text" value="pioneer" style="width:80px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;">
-        平台：<select id="cbPlatform"><option value="arena">arena</option><option value="paper">paper</option><option value="mtgo">mtgo</option></select>
-        条数：<input id="cbLimit" type="text" value="20" style="width:50px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"></div>
-      <button id="combosBtn">查询组合技</button>
-      <div id="combosBox" class="statline">—</div>
-    </div>
-    <div class="panel"><h2>造价核算（deck_cost sig，子进程 = CLI 口径）</h2>
-      <button id="costBtn">核算造价</button>
-      <div id="costBox" class="statline">—</div>
-    </div>
+  <div class="workspace">
+    <aside class="column source-column" aria-label="导入与组牌">
+      <div class="column-label"><b>01</b>准备与组牌</div>
+      <details class="panel" id="deckImport">
+        <summary>导入已有牌表</summary>
+        <label class="field" for="decktext">牌表文本<textarea id="decktext" placeholder="Deck&#10;4 Card Name&#10;...&#10;&#10;Sideboard&#10;2 Card Name"></textarea></label>
+        <div class="note">支持 MTGA 格式与中文分区名称，导入会替换当前牌表。</div>
+        <div class="actions"><button id="importBtn" class="primary">导入牌表</button></div>
+      </details>
+      <section class="mode-panel" data-mode="limited">
+        <div class="panel">
+          <div class="panel-head"><h2>限制赛牌池</h2><span class="tag">卡牌来源</span></div>
+          <details id="poolImport" open><summary>粘贴牌池</summary>
+            <label class="field" for="pooltext">每行：数量 牌名<textarea id="pooltext" placeholder="1 Card Name&#10;2 Another Card Name"></textarea></label>
+            <div class="form-grid"><label class="field full" for="srcname">来源（可选）<input id="srcname" type="text" placeholder="例如：本轮现开牌池"></label></div>
+            <button id="poolBtn">导入牌池</button>
+          </details>
+          <div class="fold">
+            <div class="pool-toolbar"><input id="poolSearch" type="search" placeholder="筛选牌名" aria-label="筛选牌池牌名">
+              <select id="poolFilter" aria-label="筛选牌池分区"><option value="all">全部卡牌</option><option value="main">已入主牌</option><option value="sideboard">在备牌</option><option value="out">未入套</option></select></div>
+            <div class="tag" id="poolCount"></div><div id="poolList"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>自动组牌</h2><span class="tag">限制赛</span></div>
+          <div class="form-grid">
+            <label class="field" for="seedColors">色组<select id="seedColors"></select></label>
+            <label class="field" for="seedSize">主牌张数<select id="seedSize"><option value="41">41 张</option><option value="40">40 张</option></select></label>
+            <label class="field full" for="setcode">系列代码（可选）<input id="setcode" type="text" placeholder="如 FRA，用于加载评分"></label>
+          </div>
+          <div class="note">通常从 17 地 + 24 张其他牌开始；保留 41 张或裁到 40 张时说明理由。没有评分表时会显示降级依据。</div>
+          <div class="actions"><button id="seedBtn" class="primary">生成套牌</button></div>
+          <div id="seedInfo" class="statline"></div>
+          <details class="fold"><summary>对比色组与裁剪结果</summary><div id="seedPlans" class="statline"></div><div id="seedCuts" class="note"></div></details>
+        </div>
+      </section>
+      <section class="panel mode-panel" data-mode="constructed" hidden>
+        <div class="panel-head"><h2>构筑组牌</h2><span class="tag">候选 → 套牌</span></div>
+        <label class="field" for="seednames">核心牌（至少一张，逗号分隔）<input id="seednames" type="text" placeholder="输入希望保留的核心牌名"></label>
+        <div class="form-grid">
+          <label class="field" for="ccFormat">赛制<input id="ccFormat" type="text" value="pioneer"></label>
+          <label class="field" for="ccStrategy">策略<select id="ccStrategy"><option value="mid">中速</option><option value="aggro">快攻</option><option value="control">控制</option></select></label>
+          <label class="field" for="ccPlatform">平台<select id="ccPlatform"><option value="arena">MTG Arena</option><option value="paper">实体牌</option><option value="mtgo">MTGO</option><option value="any">不限</option></select></label>
+          <label class="check"><input id="ccBo3" type="checkbox">三局两胜（BO3）</label>
+        </div>
+        <details class="fold" open><summary>导入候选数据</summary>
+          <label class="field" for="candtext">检索工具导出的 JSON 数组<textarea id="candtext" placeholder='[{"name":"Card Name",...}]'></textarea></label>
+          <div class="note">使用工具检索的完整卡牌数据作为组牌候选。</div>
+        </details>
+        <button id="ccBtn" class="primary">构筑组牌</button><div id="ccInfo" class="statline"></div>
+      </section>
+    </aside>
+    <section class="column editor-column" aria-label="当前牌表编辑区">
+      <div class="column-label"><b>02</b>编辑当前套牌</div>
+      <div class="panel editor">
+        <div class="panel-head"><h2>当前牌表</h2><span class="tag" id="deckTotal">共 0 张</span></div>
+        <p class="editor-note">调整主备牌，或移除一张；每次操作都会更新统计。</p>
+        <div id="zones"></div>
+      </div>
+      <details class="panel" id="warningPanel" hidden open><summary id="warningSummary">需要留意</summary><div id="warnings"></div></details>
+      <div class="status-footer">当前会话保存在内存中；完成调整后请导出牌表。</div>
+    </section>
+    <aside class="column inspector-column" aria-label="统计、核验与助手">
+      <div class="column-label"><b>03</b>检查与探索</div>
+      <section class="panel"><div class="panel-head"><h2>曲线与法术力</h2><span class="tag">随牌表更新</span></div><div id="stats"></div></section>
+      <section class="panel inspector-content">
+        <nav class="inspector-tabs" aria-label="检查与探索工具">
+          <button class="inspectbtn active" data-view="checks" aria-pressed="true">核验</button>
+          <button class="inspectbtn" data-view="assistant" aria-pressed="false">助手</button>
+          <button class="inspectbtn" data-view="explore" aria-pressed="false">候选</button>
+        </nav>
+        <div class="inspect-view" data-view="checks">
+          <div class="tool-section"><h3>门禁体检</h3><div class="note">检查张数、赛制合法性与轮替存活。</div>
+            <div class="form-grid"><label class="field" for="auditFormat">赛制<input id="auditFormat" type="text" value="pioneer"></label>
+              <label class="check"><input id="auditBo3" type="checkbox">BO3</label>
+              <label class="check full"><input id="auditLimited" type="checkbox">限制赛口径（40 / 41 张）</label></div>
+            <button id="auditBtn">运行体检</button><div id="auditBox" class="statline" aria-live="polite"></div>
+          </div>
+          <div class="mode-panel" data-mode="constructed" hidden>
+            <div class="tool-section"><h3>角色分布与缺口</h3><button id="rolesBtn">刷新角色</button><div id="rolesBox" class="statline"></div></div>
+            <details class="fold"><summary>组合技 · Commander Spellbook</summary>
+              <div class="form-grid"><label class="field" for="cbFormat">赛制<input id="cbFormat" type="text" value="pioneer"></label>
+                <label class="field" for="cbPlatform">平台<select id="cbPlatform"><option value="arena">MTG Arena</option><option value="paper">实体牌</option><option value="mtgo">MTGO</option></select></label>
+                <label class="field" for="cbLimit">查询条数<input id="cbLimit" type="number" min="1" value="20"></label></div>
+              <div class="note">查询需要等待；主牌、换备与缺组件结果分开显示。</div>
+              <div class="actions"><button id="combosBtn">查询组合技</button></div><div id="combosBox" class="statline"></div>
+            </details>
+            <details class="fold"><summary>套牌造价</summary><button id="costBtn">核算造价</button><div id="costBox" class="statline"></div></details>
+          </div>
+        </div>
+        <div class="inspect-view" data-view="assistant" hidden>
+          <div class="tool-section"><h3>Agent 助手</h3><div class="note">由连接的 Agent 查证并给出带依据的建议。</div>
+            <div class="form-grid"><label class="field full" for="agentKind">希望获得什么帮助？<select id="agentKind"><option value="next_move">建议下一步</option><option value="explain">规则与配合解释</option><option value="novel_synergies">协同候选提案</option><option value="handoff">全流程体检</option></select></label>
+              <label class="field full" for="agentNote">补充说明（可选）<textarea id="agentNote" placeholder="例如：希望保留核心配合，先改善前期曲线"></textarea></label></div>
+            <details class="fold"><summary>高级请求设置</summary>
+              <label class="field" for="agentTimeout">超时（秒）<input id="agentTimeout" type="number" min="1" value="300"></label>
+              <label class="field" for="agentPayload">额外参数（JSON 对象）<textarea id="agentPayload" placeholder='{"note":"补充上下文"}'></textarea></label>
+            </details>
+            <button id="agentReqBtn" class="primary">提交请求</button>
+            <div id="agentReqInfo" class="statline" aria-live="polite"></div><div id="agentResult" class="statline"></div><div id="bridgeStatus" class="note"></div>
+          </div>
+          <div class="tool-section"><h3>智能点评</h3><div class="note">直连工具：快速点评不调用查证工具；离线时保留机器统计。</div>
+            <div class="actions"><button id="adviceBtn">获取点评</button></div><div id="adviceBox" class="statline"></div></div>
+        </div>
+        <div class="inspect-view" data-view="explore" hidden>
+          <div class="tool-section"><h3>卡牌检索</h3>
+            <div class="form-grid"><label class="field full" for="findQ">Scryfall 查询式<input id="findQ" type="text" placeholder="f:pioneer t:creature cmc<=2"></label>
+              <label class="field" for="findLimit">条数<input id="findLimit" type="number" min="1" value="20"></label></div>
+            <button id="findBtn">检索</button><div id="findBox" class="statline"></div>
+          </div>
+          <div class="tool-section"><h3>Agent 回写候选</h3><div class="note">候选来自实际检索；未核验的牌名会明确标注。</div><div id="avenueList" class="statline"></div>
+            <details class="fold"><summary>手动新增探索方向</summary>
+              <div class="form-grid"><label class="field full" for="avTitle">标题<input id="avTitle" type="text"></label><label class="field full" for="avNote">备注<input id="avNote" type="text"></label>
+                <label class="field full" for="avCands">候选：每行「牌名 | 理由」<textarea id="avCands"></textarea></label></div>
+              <button id="avenueBtn">新增候选</button>
+            </details>
+          </div>
+        </div>
+      </section>
+    </aside>
   </div>
-</div>
-<div class="panel"><h2>当前牌表（可手动微调）</h2><div id="zones">—</div></div>
-<div class="cols">
-  <div class="col">
-    <div class="panel"><h2>导入/导出牌表</h2>
-      <textarea id="decktext" placeholder="粘贴牌表文本（Deck/Sideboard 段头）"></textarea>
-      <button id="importBtn">导入牌表</button>
-      <button id="exportBtn">导出当前牌表</button>
-    </div>
-  </div>
-  <div class="col">
-    <div class="panel"><h2>门禁体检（张数/合法性 + 轮替存活）</h2>
-      <div class="row">赛制：<input id="auditFormat" type="text" value="pioneer" style="width:80px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;">
-        <label><input id="auditLimited" type="checkbox">限制赛口径（40/41 张）</label>
-        <label><input id="auditBo3" type="checkbox">BO3</label></div>
-      <button id="auditBtn">跑门禁</button>
-      <div id="auditBox" class="statline"></div>
-    </div>
-  </div>
-</div>
-<div class="cols">
-  <div class="col"><div class="panel"><h2>警告</h2><div id="warnings">—</div></div></div>
-  <div class="col"><div class="panel"><h2>错误</h2><div id="errors">—</div></div></div>
-</div>
-<div class="panel"><h2>Agent 助手</h2>
-  <div class="note">向 Agent 会话提问，由它调用工具链查证后回执。流程：入队 → 认领 → 查证 → 回执。</div>
-  <div class="row">问题类型：<select id="agentKind" style="flex:1;min-width:0;max-width:680px;">
-      <option value="next_move">建议下一步 —— Agent 读当前牌表统计后给出带证据的微调建议</option>
-      <option value="explain">规则与配合解释 —— 路由：规则查询工具 + 官方 CR 原文</option>
-      <option value="novel_synergies">协同候选提案 —— 路由：检索落地成真卡 → 回写候选区</option>
-      <option value="handoff">全流程体检 —— 路由：构筑工作流阶段 0b–5</option>
-    </select>
-    超时：<input id="agentTimeout" type="text" value="300" style="width:60px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"> 秒</div>
-  补充说明（可选，JSON 对象）：<br>
-  <textarea id="agentPayload" style="width:100%;height:50px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;" placeholder='{"note": "补充上下文"}'></textarea>
-  <button id="agentReqBtn">提交请求</button>
-  <div id="agentReqInfo" class="statline"></div>
-  <div id="agentResult" class="statline"></div>
-  <div id="bridgeStatus" class="statline"></div>
-  <h2 class="sub">直连工具</h2>
-  <div class="note">以下工具由工作台直接执行，不经 Agent 会话。</div>
-  <h3 class="sub2">卡牌检索</h3>
-  <div class="row">查询式：<input id="findQ" type="text" style="flex:1;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;" placeholder="f:pioneer t:creature cmc<=2">
-    条数：<input id="findLimit" type="text" value="20" style="width:50px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"></div>
-  <div class="note">铁律契约：后续提案的一切候选牌必须来自实际检索结果。</div>
-  <button id="findBtn">检索</button>
-  <div id="findBox" class="statline"></div>
-  <h3 class="sub2">智能点评</h3>
-  <div class="note">嵌入式 LLM 辅助通道；离线时显示机器兜底内容（确定性统计）并标注。</div>
-  <button id="adviceBtn">获取点评</button>
-  <div id="adviceBox" class="statline"></div>
-  <h2 class="sub">Agent 回写候选</h2>
-  <div class="note">Agent 提案的探索方向；候选牌名由写入方负责经卡牌检索或 mtg_tool search 核验（铁律），服务端不联网验证。</div>
-  <div class="row">标题：<input id="avTitle" type="text" style="flex:1;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"></div>
-  <div class="row">备注：<input id="avNote" type="text" style="flex:1;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"></div>
-  候选（每行 "牌名 | 理由"）：<br>
-  <textarea id="avCands" style="width:100%;height:50px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"></textarea>
-  <button id="avenueBtn">新增候选</button>
-  <div id="avenueList" class="statline">—</div>
-</div>
+</main>
 <script>
 const ZONES = ['commander', 'companion', 'main', 'sideboard'];
 const ZH = {commander:'指挥官', companion:'伴侣', main:'主牌', sideboard:'备牌'};
 const COLORS = 'WUBRG';
 let lastSnap = null;
+let ticking = false;
+let busy = false;
+let agentPending = false;
+let lastRender = '';
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
-                                  .replace(/>/g,'&gt;'); }
-function showErrors(msg) { document.getElementById('errors').textContent = msg || '—'; }
+                                  .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+                                  .replace(/'/g,'&#39;'); }
+function formatTime(value) {
+  const date = new Date(value);
+  return isNaN(date.getTime()) ? String(value || '') : date.toLocaleString('zh-CN',
+    {timeZone:'Asia/Hong_Kong', hour12:false});
+}
+function showErrors(msg) {
+  document.getElementById('errors').textContent = msg || '';
+  document.getElementById('errorPanel').hidden = !msg;
+}
+function openImport() {
+  const box = document.getElementById('deckImport');
+  box.open = true;
+  box.scrollIntoView({block:'center'});
+  document.getElementById('decktext').focus({preventScroll:true});
+}
+function setInspector(view) {
+  for (const panel of document.querySelectorAll('.inspect-view'))
+    panel.hidden = panel.dataset.view !== view;
+  for (const button of document.querySelectorAll('.inspectbtn')) {
+    const active = button.dataset.view === view;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  }
+}
+function cardButton(action, name, section, to, text) {
+  return '<button type="button" data-card-action="' + action
+    + '" data-name="' + esc(name) + '" data-section="' + section
+    + '" data-to="' + (to || '') + '" aria-label="' + esc(name + '：' + text)
+    + '">' + text + '</button>';
+}
 async function postJSON(url, obj) {
   const r = await fetch(url, {method:'POST',
     headers:{'Content-Type':'application/json; charset=utf-8'},
@@ -2269,85 +2416,106 @@ function buildColorOptions() {
   sel.innerHTML = html;
 }
 function cardStatus(name, snap) {
-  for (const z of ['main', 'sideboard']) {
-    const hit = (snap.sections[z] || []).find(c => c.name === name);
-    if (hit) return z;
-  }
-  return 'out';
+  const main = (snap.sections.main || []).some(c => c.name === name);
+  const side = (snap.sections.sideboard || []).some(c => c.name === name);
+  return main && side ? 'both' : main ? 'main' : side ? 'sideboard' : 'out';
 }
 function renderPool(snap) {
   const filter = document.getElementById('poolFilter').value;
+  const search = document.getElementById('poolSearch').value.trim().toLowerCase();
   const entries = (snap.pool && snap.pool.entries) || [];
   let html = '', shown = 0;
   for (const e of entries) {
     const st = cardStatus(e.name, snap);
-    if (filter !== 'all' && st !== filter) continue;
+    if (filter !== 'all' && st !== filter && !(st === 'both' && filter !== 'out')) continue;
+    if (search && !e.name.toLowerCase().includes(search)) continue;
     shown++;
     const stTxt = {main:'<span class="ok">主</span>',
                    sideboard:'<span class="warn">备</span>',
+                   both:'<span class="ok">主/备</span>',
                    out:'<span class="ts">裁</span>'}[st];
     html += '<div class="row"><span class="tag">' + e.qty + '×</span>'
       + '<span class="nm">' + esc(e.name)
       + ' <span class="ts">' + (e.cmc != null ? e.cmc + '费' : '') + '</span></span>'
       + stTxt
-      + '<button onclick="doAdd(\\'' + esc(e.name).replace(/'/g, '') + '\\',\\'main\\')">主+1</button>'
-      + '<button onclick="doAdd(\\'' + esc(e.name).replace(/'/g, '') + '\\',\\'sideboard\\')">备+1</button></div>';
+      + '<span class="card-actions">' + cardButton('add', e.name, 'main', '', '主+1')
+      + cardButton('add', e.name, 'sideboard', '', '备+1') + '</span></div>';
   }
   document.getElementById('poolList').innerHTML =
-    shown ? html : '<div class="ts">（无匹配条目）</div>';
+    shown ? html : '<div class="note">' + (entries.length ? '没有匹配的卡牌。' : '导入牌池后，可在这里逐张加入主牌或备牌。') + '</div>';
   const c = (snap.pool && snap.pool.counts) || {};
   document.getElementById('poolCount').textContent =
     (c.names || 0) + ' 种 / ' + (c.cards || 0) + ' 张'
-    + (c.unresolved_names ? '，未水合 ' + c.unresolved_names + ' 种' : '');
+    + (c.unresolved_names ? '，缺少数据 ' + c.unresolved_names + ' 种' : '');
 }
 function renderDeck(snap) {
+  document.getElementById('deckTotal').textContent = '共 ' + snap.total + ' 张';
+  if (!snap.total) {
+    document.getElementById('zones').innerHTML = '<div class="empty-state">'
+      + '<span class="empty-glyph" aria-hidden="true">[ + ]</span><strong>从一份牌表开始</strong>'
+      + '<span class="note">导入已有牌表，或从牌池生成套牌。<br>主牌和备牌将在这里显示。</span>'
+      + '<div class="actions"><button type="button" data-open-import>导入已有牌表</button></div></div>';
+    return;
+  }
   let html = '';
   for (const z of ZONES) {
     const items = (snap.sections && snap.sections[z]) || [];
     const count = (snap.counts && snap.counts[z]) || 0;
     if (z === 'commander' || z === 'companion') {
-      html += '<div class="zone"><b>' + ZH[z] + '</b>（' + count + ' 张）<ul>'
+      if (!items.length) continue;
+      html += '<div class="zone"><div class="zone-head"><b>' + ZH[z] + '</b><span class="tag">' + count + ' 张</span></div><ul>'
         + items.map(c => '<li>' + c.qty + ' × ' + esc(c.name) + '</li>').join('')
         + (items.length ? '' : '<li class="ts">（空）</li>') + '</ul></div>';
       continue;
     }
-    const btns = z === 'main'
-      ? c => '<button onclick="doMove(\\'' + esc(c.name).replace(/'/g,'') + '\\',\\'main\\',\\'sideboard\\')">→备</button>'
-           + '<button onclick="doRemove(\\'' + esc(c.name).replace(/'/g,'') + '\\',\\'main\\')">−1</button>'
-      : c => '<button onclick="doMove(\\'' + esc(c.name).replace(/'/g,'') + '\\',\\'sideboard\\',\\'main\\')">→主</button>'
-           + '<button onclick="doRemove(\\'' + esc(c.name).replace(/'/g,'') + '\\',\\'sideboard\\')">−1</button>';
-    html += '<div class="zone"><b>' + ZH[z] + '</b>（' + count + ' 张）'
+    const btns = c => '<span class="card-actions">'
+      + cardButton('move', c.name, z, z === 'main' ? 'sideboard' : 'main', z === 'main' ? '入备' : '入主')
+      + cardButton('remove', c.name, z, '', '-1') + '</span>';
+    html += '<div class="zone"><div class="zone-head"><b>' + ZH[z] + '</b><span class="tag">' + count + ' 张</span></div>'
       + items.map(c => '<div class="row"><span class="tag">' + c.qty + '×</span>'
         + '<span class="nm">' + esc(c.name) + '</span>' + btns(c) + '</div>').join('')
-      + (items.length ? '' : '<div class="ts">（空）</div>') + '</div>';
+      + (items.length ? '' : '<div class="note">暂无' + ZH[z] + '</div>') + '</div>';
   }
-  html += '<div class="zone"><b>合计</b>：' + snap.total + ' 张</div>';
   document.getElementById('zones').innerHTML = html;
 }
 function renderStats(snap) {
   const s = snap.stats || {};
+  const counts = snap.counts || {};
+  document.getElementById('mainMetric').textContent = counts.main || 0;
+  document.getElementById('sideMetric').textContent = counts.sideboard || 0;
+  document.getElementById('landMetric').textContent = s.lands || 0;
+  const curve = s.curve || {};
+  const known = Object.keys(curve).length > 0;
+  document.getElementById('cmcMetric').textContent = known ? s.average_cmc : '—';
+  if (!s.main) {
+    document.getElementById('stats').innerHTML = '<div class="note">加入主牌后显示费用曲线、法术力来源与地数检查。</div>';
+    return;
+  }
   const lc = s.land_check || {};
   const p3 = (lc.p3 != null) ? (lc.p3 * 100).toFixed(1) + '%' : '—';
   const p5 = (lc.p5 != null) ? (lc.p5 * 100).toFixed(1) + '%' : '—';
-  let html = '<div class="statline">主牌 ' + (s.main || 0) + ' 张：地 '
-    + (s.lands || 0) + ' / 非地 ' + (s.nonlands || 0)
-    + '；平均 CMC ' + (s.average_cmc || 0) + '（' + esc(s.curve_label || '') + '）</div>';
-  html += '<div class="statline">曲线：';
-  const curve = s.curve || {};
-  const keys = Object.keys(curve);
-  html += keys.length
-    ? keys.map(k => k + '费×' + curve[k]
-        + ' <span class="bar" style="width:' + (curve[k] * 10) + 'px"></span>').join('　')
-    : '<span class="ts">（空）</span>';
-  html += '</div><div class="statline">法术力：pips '
-    + esc(JSON.stringify(s.pips || {})) + '；来源 '
-    + esc(JSON.stringify(s.mana_sources || {})) + '</div>';
-  html += '<div class="statline">land_check（' + (lc.deck_size || 40) + ' 张口径，'
-    + (lc.lands || 0) + ' 地）：3回合≥2地 ' + p3 + '，5回合≥4地 ' + p5
-    + '，<span class="' + (lc.ok ? 'ok">通过' : 'bad">未通过') + '</span></div>';
+  let html = '<div><div class="statline">地 ' + (s.lands || 0) + ' / 非地 ' + (s.nonlands || 0)
+    + (known ? ' · ' + esc(s.curve_label || '') : '') + '</div>';
+  // deck_core groups costs <=1 and >=5 into the first/last buckets.
+  const slots = ['1','2','3','4','5'];
+  const max = Math.max(1, ...Object.values(curve));
+  html += known ? '<div class="curve" aria-label="法术力曲线">' + slots.map(k =>
+    '<div class="curve-col"><b>' + (curve[k] || 0) + '</b><span class="curve-bar" style="height:'
+    + Math.max(2, (curve[k] || 0) / max * 60) + 'px"></span>' + (k === '1' ? '0–1' : k === '5' ? '5+' : k) + '费</div>'
+    ).join('') + '</div>' : '<div class="note">暂无可统计的费用数据。</div>';
+  html += '</div><div>';
+  const pips = s.pips || {}, sources = s.mana_sources || {};
+  const colors = [...COLORS].filter(c => pips[c] || sources[c]);
+  html += colors.length ? '<div class="note">颜色 · 费用符号 / 地牌来源</div>' + colors.map(c =>
+    '<div class="mana-row"><span class="mana-symbol mana-' + c + '">' + c
+    + '</span><span>' + (pips[c] || 0) + ' 符号 / ' + (sources[c] || 0) + ' 来源</span></div>').join('')
+    : '<div class="note">暂无有色法术力数据。</div>';
+  html += '<div class="card">地数检查 <span class="' + (lc.ok ? 'ok">通过' : 'warn">需要留意')
+    + '</span><br><span class="note">按 ' + (lc.deck_size || 40) + ' 张 / ' + (lc.lands || 0)
+    + ' 地计算</span><br>第 3 回合 ≥ 2 地：' + p3 + '<br>第 5 回合 ≥ 4 地：' + p5 + '</div>';
   if (s.warnings && s.warnings.length)
     html += '<div class="note">' + s.warnings.map(esc).join('<br>') + '</div>';
-  document.getElementById('stats').innerHTML = html;
+  document.getElementById('stats').innerHTML = html + '</div>';
 }
 function renderSeed(snap) {
   const seed = snap.seed;
@@ -2636,8 +2804,8 @@ function renderAudit(snap) {
 }
 function renderBridge(snap) {
   const b = snap.bridges || {};
-  let txt = '桥状态：队列 ' + (b.queue_depth || 0) + ' / 在途 '
-    + (b.in_flight || 0) + ' / 就绪结果 ' + (b.results_ready || 0);
+  let txt = '等待 ' + (b.queue_depth || 0) + ' / 处理中 '
+    + (b.in_flight || 0) + ' / 已完成 ' + (b.results_ready || 0);
   const inflight = b.in_flight_requests || [];
   if (inflight.length)
     txt += '；在途：' + inflight.map(x => x.request_id
@@ -2647,9 +2815,9 @@ function renderBridge(snap) {
 function renderAvenues(snap) {
   const list = snap.avenues || [];
   const box = document.getElementById('avenueList');
-  if (!list.length) { box.textContent = '—'; return; }
+  if (!list.length) { box.innerHTML = '<div class="note">暂无探索方向。检索卡牌或向助手请求协同候选。</div>'; return; }
   box.innerHTML = list.map(a =>
-    '<div class="row"' + (a.focused ? ' style="background:#21262d"' : '') + '>'
+    '<div class="card"' + (a.focused ? ' style="border-color:var(--accent)"' : '') + '>'
     + '<span class="nm"><b>' + esc(a.title) + '</b>'
     + (a.note ? ' <span class="tag">' + esc(a.note) + '</span>' : '')
     + (a.unverified_card_names ? ' <span class="warn">候选未核验</span>' : '')
@@ -2657,8 +2825,8 @@ function renderAvenues(snap) {
         + (c.reason ? ' <span class="ts">(' + esc(c.reason) + ')</span>' : ''))
         .join('、')
     + '</span>'
-    + '<button onclick="doFocusAvenue(\\'' + a.id + '\\')">聚焦</button>'
-    + '<button onclick="doDeleteAvenue(\\'' + a.id + '\\')">删</button></div>'
+    + '<div class="actions"><button data-avenue-action="focus" data-id="' + esc(a.id) + '">聚焦</button>'
+    + '<button data-avenue-action="delete" data-id="' + esc(a.id) + '">删除</button></div></div>'
   ).join('');
 }
 async function pollAgentResult(rid) {
@@ -2686,7 +2854,7 @@ async function pollAgentResult(rid) {
            ? renderValue(d.result, 0) : '');
     } else {
       infoBox.textContent = '回执完成（' + (d.agent || d.claimed_by || '?')
-        + (d.completed_at ? '，' + d.completed_at : '') + '）';
+        + (d.completed_at ? '，' + formatTime(d.completed_at) : '') + '）';
       box.innerHTML = renderAgentPayload(d);
     }
     return;
@@ -2706,35 +2874,72 @@ function doDeleteAvenue(id) {
   });
 }
 async function tick() {
+  if (ticking) return;
+  ticking = true;
   try {
-    const r = await fetch('/api/snapshot');
-    const d = await r.json();
-    showErrors('');
+    const d = await fetchJSON('/api/snapshot');
+    const connection = document.getElementById('connection');
+    connection.textContent = busy ? '正在处理…' : '本地已连接';
+    connection.className = 'connection';
     lastSnap = d;
     const s = d.session || {};
     document.getElementById('session').textContent = s.import_seq
       ? '导入 #' + s.import_seq + '　' + (s.source_name ? '来源 ' + s.source_name + '　' : '')
-        + '时间 ' + s.imported_at
+        + '时间 ' + formatTime(s.imported_at)
       : '尚未导入牌表';
-    renderPool(d);
-    renderDeck(d);
-    renderStats(d);
-    renderSeed(d);
-    renderConstructed(d);
-    renderRoles(d);
-    renderCombos(d);
-    renderCost(d);
-    renderAudit(d);
-    renderBridge(d);
-    renderAvenues(d);
+    const signature = JSON.stringify(d);
+    if (signature !== lastRender) {
+      const zones = document.getElementById('zones');
+      const pool = document.getElementById('poolList');
+      const zoneScroll = zones.scrollTop, poolScroll = pool.scrollTop;
+      renderPool(d);
+      renderDeck(d);
+      renderStats(d);
+      renderSeed(d);
+      renderConstructed(d);
+      renderRoles(d);
+      renderCombos(d);
+      renderCost(d);
+      renderAudit(d);
+      renderBridge(d);
+      renderAvenues(d);
+      zones.scrollTop = zoneScroll;
+      pool.scrollTop = poolScroll;
+      updateDisabled();
+      lastRender = signature;
+    }
     const warns = [].concat(d.warnings || [], (d.pool && d.pool.warnings) || []);
     document.getElementById('warnings').textContent =
-      warns.length ? warns.join('\\n') : '—';
-  } catch (e) { showErrors('轮询失败: ' + e); }
+      warns.join('\\n');
+    document.getElementById('warningPanel').hidden = !warns.length;
+    document.getElementById('warningSummary').textContent = '需要留意 · ' + warns.length + ' 条';
+  } catch (e) {
+    const connection = document.getElementById('connection');
+    connection.textContent = '连接中断';
+    connection.className = 'connection warn';
+    connection.title = String(e.message || e);
+  } finally { ticking = false; }
+}
+function updateDisabled() {
+  for (const id of ['poolBtn','importBtn','seedBtn','ccBtn','rolesBtn','combosBtn',
+                    'costBtn','auditBtn','findBtn','adviceBtn','avenueBtn'])
+    document.getElementById(id).disabled = busy;
+  document.getElementById('agentReqBtn').disabled = busy || agentPending;
+  for (const button of document.querySelectorAll('[data-card-action],[data-avenue-action]'))
+    button.disabled = busy;
 }
 async function run(action) {
-  try { await action(); showErrors(''); } catch (e) { showErrors(String(e.message || e)); }
-  tick();
+  if (busy) return;
+  busy = true;
+  document.body.classList.add('busy');
+  updateDisabled();
+  document.getElementById('connection').textContent = '正在处理…';
+  let success = false;
+  try { await action(); showErrors(''); success = true; }
+  catch (e) { showErrors(String(e.message || e)); }
+  finally { busy = false; document.body.classList.remove('busy'); updateDisabled(); }
+  await tick();
+  return success;
 }
 function doAdd(name, section) { run(() => postJSON('/api/deck/add', {name:name, section:section, qty:1})); }
 function doRemove(name, section) { run(() => postJSON('/api/deck/remove', {name:name, section:section, qty:1})); }
@@ -2744,12 +2949,15 @@ function setMode(mode) {
   try { localStorage.setItem('workbench-mode', mode); } catch (e) {}
   const panels = document.querySelectorAll('.mode-panel');
   for (let i = 0; i < panels.length; i++)
-    panels[i].style.display =
-      panels[i].getAttribute('data-mode') === mode ? '' : 'none';
+    panels[i].hidden = panels[i].getAttribute('data-mode') !== mode;
   const tabs = document.querySelectorAll('.tabbtn');
-  for (let i = 0; i < tabs.length; i++)
-    tabs[i].classList.toggle('active',
-                             tabs[i].getAttribute('data-mode') === mode);
+  for (let i = 0; i < tabs.length; i++) {
+    const active = tabs[i].getAttribute('data-mode') === mode;
+    tabs[i].classList.toggle('active', active);
+    tabs[i].setAttribute('aria-pressed', String(active));
+  }
+  document.getElementById('modeHint').textContent = mode === 'limited'
+    ? '限制赛 · 默认 41 张，可选 40 张' : '构筑 · 从核心牌与候选开始';
   const al = document.getElementById('auditLimited');
   if (al) al.checked = (mode === 'limited');   // 限制赛默认 40/41 口径，构筑默认关闭
 }
@@ -2760,10 +2968,29 @@ function initMode() {
 }
 document.getElementById('tabLimited').onclick = () => setMode('limited');
 document.getElementById('tabConstructed').onclick = () => setMode('constructed');
-document.getElementById('poolBtn').onclick = () => run(
-  () => postText('/api/pool', document.getElementById('pooltext').value, 'srcname'));
-document.getElementById('importBtn').onclick = () => run(
-  () => postText('/api/builds/import', document.getElementById('decktext').value));
+document.getElementById('openImport').onclick = openImport;
+document.getElementById('dismissError').onclick = () => showErrors('');
+for (const button of document.querySelectorAll('.inspectbtn'))
+  button.onclick = () => setInspector(button.dataset.view);
+document.addEventListener('click', event => {
+  const button = event.target.closest('button');
+  if (!button || button.disabled) return;
+  if (button.hasAttribute('data-open-import')) openImport();
+  const d = button.dataset;
+  if (d.cardAction === 'add') doAdd(d.name, d.section);
+  if (d.cardAction === 'remove') doRemove(d.name, d.section);
+  if (d.cardAction === 'move') doMove(d.name, d.section, d.to);
+  if (d.avenueAction === 'focus') doFocusAvenue(d.id);
+  if (d.avenueAction === 'delete') doDeleteAvenue(d.id);
+});
+document.getElementById('poolBtn').onclick = async () => {
+  const ok = await run(() => postText('/api/pool', document.getElementById('pooltext').value, 'srcname'));
+  if (ok) document.getElementById('poolImport').open = false;
+};
+document.getElementById('importBtn').onclick = async () => {
+  const ok = await run(() => postText('/api/builds/import', document.getElementById('decktext').value));
+  if (ok) document.getElementById('deckImport').open = false;
+};
 document.getElementById('exportBtn').onclick = () => { window.open('/api/export'); };
 document.getElementById('seedBtn').onclick = () => run(async () => {
   const raw = document.getElementById('seedColors').value;
@@ -2799,15 +3026,21 @@ document.getElementById('agentReqBtn').onclick = () => run(async () => {
   let payload = {};
   const raw = document.getElementById('agentPayload').value.trim();
   if (raw) payload = JSON.parse(raw);
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload))
+    throw new Error('额外参数需为 JSON 对象。');
+  const note = document.getElementById('agentNote').value.trim();
+  if (note) payload.note = note;
   const body = {kind: document.getElementById('agentKind').value,
     payload: payload,
     timeout_sec: parseInt(document.getElementById('agentTimeout').value, 10) || 300};
   const d = await postJSON('/api/agent/request', body);
-  const t = (d.queued_at || '').slice(11, 16);
+  const t = formatTime(d.queued_at);
   document.getElementById('agentReqInfo').textContent =
     '已入队 ' + d.request_id + '（' + t + '）';
   document.getElementById('agentResult').textContent = '等待回执…';
-  pollAgentResult(d.request_id).catch(e => showErrors(String(e.message || e)));
+  agentPending = true;
+  pollAgentResult(d.request_id).catch(e => showErrors(String(e.message || e)))
+    .finally(() => { agentPending = false; updateDisabled(); });
 });
 document.getElementById('findBtn').onclick = () => run(async () => {
   const q = document.getElementById('findQ').value.trim();
@@ -2844,7 +3077,8 @@ document.getElementById('avenueBtn').onclick = () => run(async () => {
     note: document.getElementById('avNote').value,
     candidates: candidates});
 });
-document.getElementById('poolFilter').onchange = () => { if (lastSnap) renderPool(lastSnap); };
+document.getElementById('poolFilter').onchange = () => { if (lastSnap) { renderPool(lastSnap); updateDisabled(); } };
+document.getElementById('poolSearch').oninput = () => { if (lastSnap) { renderPool(lastSnap); updateDisabled(); } };
 buildColorOptions();
 initMode();
 setInterval(tick, """ + str(POLL_INTERVAL_MS) + """); tick();

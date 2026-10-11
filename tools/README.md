@@ -412,7 +412,7 @@ python tools/mtga_db_tool.py "C:\path\to\Raw_CardDatabase_xxx.mtga"
 
 # tools/deck_workbench.py
 
-网页工作台 hub（Phase 0，开发计划见 `MtgWorkbenchPlan.md`）：纯标准库
+网页工作台 hub（Phase 0–3，开发计划见 `MtgWorkbenchPlan.md`）：纯标准库
 `ThreadingHTTPServer` 于 127.0.0.1，默认端口 **8644**（避开 8642 监控台 /
 8643 轮抓面板）。单页内嵌 HTML + `/api/snapshot` / `/api/builds/import` /
 `/api/export`，持有一份权威 `deck_model.Deck` 状态；确定性引擎函数纯、
@@ -433,7 +433,12 @@ curl -s http://127.0.0.1:8644/api/export
 
 导入的 skipped 行进 `warnings`（成功但带警告）；完全解析不出条目返回 400。
 
-Phase 1（限制赛组牌）已加入：牌池/种子/统计/手动微调端点，页面为牌池 + 牌表双栏。
+页面在桌面分为准备与组牌、当前牌表、检查与探索三栏；笔记本两栏，手机优先展示
+牌表并纵向排列。顶部提供模式切换、导入/导出和主备牌/地数/平均费用概况。检查区的
+核验、助手、候选各用一个标签；高级配置折叠。牌池可按名称与分区筛选；Agent 补充
+说明可直接输入普通文本。操作进行中会禁用重复提交，错误保留到关闭或下一次成功操作。
+
+Phase 1（限制赛组牌）已加入：牌池/种子/统计/手动微调端点。
 
 ```bash
 # 牌池导入（按行水合，查不到的牌名聚合计数进 unresolved，不阻断导入）
