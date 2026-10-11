@@ -461,7 +461,22 @@ curl -s http://127.0.0.1:8644/api/cost           # 造价签名；tools/data 快
 curl -s -X POST http://127.0.0.1:8644/api/audit -d '{"format":"pioneer","limited":false}'
 ```
 
-后续阶段加入 Agent 桥（计划 §5）。
+Phase 3（Agent 桥）已加入——网页与 Agent 会话是同一状态的两个操作界面：
+
+```bash
+# 网页侧发起判断请求；Agent 侧（技能 skills/mtg-workbench）长轮询领取并回证据
+curl -s -X POST http://127.0.0.1:8644/api/agent/request -d '{"kind":"next_move"}'
+curl -s "http://127.0.0.1:8644/api/agent/next?agent=kimi"   # 认领，60s 租约
+curl -s -X POST http://127.0.0.1:8644/api/agent/result -d '{"request_id":"req-1","status":"ok","result":{}}'
+curl -s http://127.0.0.1:8644/api/agent/result/req-1        # 网页轮询，TTL 300s
+
+# 铁律落地：LLM 提案的牌必须来自 find 或 mtg_tool search 的真实结果
+curl -s "http://127.0.0.1:8644/api/find?q=f:pioneer%20t:creature&limit=20"
+# 反向通路：Agent 写回候选/探索方向（unverified_card_names 明示铁律责任）
+curl -s -X POST http://127.0.0.1:8644/api/avenues -d '{"title":"低费曲线","candidates":[{"name":"X","reason":"..."}]}'
+# 嵌入式 LLM 点评（llm_config 直连；失败显式 offline + 机器兜底，不重试）
+curl -s -X POST http://127.0.0.1:8644/api/advice
+```
 
 # tools/deck_version.py
 

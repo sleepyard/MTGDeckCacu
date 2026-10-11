@@ -103,7 +103,10 @@ phase-rs Rust sidecar；CI 无 Windows 矩阵。**结论：不照搬实现，移
 （真实 FRA 牌池冒烟通过，导出经 `mtg_tool validate --limited` 门禁，该开关为本阶段
 新增）。Phase 2 已交付（构筑 seed/roles/combos/cost/audit 五端点；DeckList 真实交付
 对拍：roles/validate/rot/cost 与 CLI 逐项一致，combos 真实查询零命中属正常口径）。
-Phase 3（Agent 桥）未开始。
+Phase 3 已交付（Agent 桥四 kind 长轮询协议 + `/api/find` 铁律端点 + avenues 反向通路
++ 嵌入式 advice 通道 + `skills/mtg-workbench` 技能；真实桥接冒烟走通：网页请求 →
+Agent 认领 → find 真实候选 → 带证据回执 → avenues 回写可见）。Phase 4 为可选扩展，
+另立需求。
 
 ### Phase 0：hub 骨架与协议（1 个交付周期）
 

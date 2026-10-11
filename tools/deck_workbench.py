@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """网页套牌工作台 hub（MtgWorkbenchPlan Phase 0 hub + Phase 1 限制赛 +
-Phase 2 构筑模式与核验接入）。
+Phase 2 构筑模式与核验接入 + Phase 3 Agent 桥与双 LLM 通道）。
 
 分层（决策 B：引擎先行，UI 最薄）：
   引擎纯函数    build_snapshot / serialize_deck / build_stats /
                 hydrate_pool / apply_add|remove|move /
-                build_roles / parse_cost_output / parse_rotation_output —— 可独立单测
+                build_roles / parse_cost_output / parse_rotation_output /
+                AgentBridge（请求队列+认领+结果槽位）/ avenues / find / advice
+                —— 可独立单测
   权威状态      WorkbenchState —— 持锁；牌表 + 水合牌池 + 卡片库 + 最近 seed
                 + 核验缓存槽位（roles/combos/cost/audit/constructed）
+                + Agent 桥 + avenues 持久列表
   HTTP 层       make_handler —— 解析请求 → 调引擎 → 序列化，不含任何牌规则
 
 端点：
@@ -53,6 +56,36 @@ Phase 2 构筑模式与核验接入）。
                             rot_audit deck 两个子进程门禁；交通灯结构
                             {validate, rotation, ok}；子进程失败 = 门禁
                             unknown（null），不是通过
+  POST /api/agent/request   body {"kind", "payload", "timeout_sec"}；kind 限定
+                            next_move/explain/novel_synergies/handoff 四种，
+                            未知 kind → 400；入队返回 {"request_id", "queued_at"}
+  GET  /api/agent/next?agent=<name>&wait=1   Agent 侧长轮询（认领语义，同一
+                            请求同一时间只派给一个 agent）；队空挂起最长 60s
+                            返回 {"status":"wait"} 心跳；wait=0 立即返回（测试用）
+  POST /api/agent/result    body {"request_id", "status": "ok"|"error",
+                            "result", "message"}；未认领/重复提交 → 409，
+                            未知 id → 404，已过 TTL 清理 → 410
+  GET  /api/agent/result/{id}  网页侧轮询：未就绪 202 {"status":"pending"}，
+                            就绪 200，TTL 过期 410，未知 404
+  POST /api/agent/heartbeat body {"request_id", "agent"}；认领后 60s 内无
+                            结果且无心跳 → 请求重新入队可再认领（防 Agent
+                            崩溃挂死请求）
+  GET  /api/agent/status    桥诊断：队列深度/在途/就绪结果数/kind 集合
+  GET  /api/find?q=...&limit=20   包装 mtg_tool.scryfall_search（进程内，
+                            磁盘缓存，oracle 去重）；铁律契约落地端点——
+                            LLM 提案的一切卡牌必须来自这里的实际结果；
+                            语法错误 400，网络失败 500，零命中 = ok + 空列表
+  POST /api/avenues         body {"title", "note", "candidates":[{name,reason}]}
+                            反向通路：Agent 写入探索方向（服务端不联网验证
+                            候选牌名，响应标 unverified_card_names 明示铁律
+                            责任在写入方）；GET 列表；DELETE /api/avenues/{id}；
+                            POST /api/avenues/{id}/focus 单焦点高亮
+  POST /api/advice          嵌入式 LLM 轴（决策 D 辅助通道）：读
+                            tools/llm_config.json（DEEPSEEK_API_KEY 可覆盖
+                            api_key），OpenAI 兼容 chat；配置缺失/请求失败/
+                            超时 → 显式 offline + machine_fallback（stats 与
+                            已缓存 roles 缺口的确定性结论）；LLM 输出原文
+                            展示并标 verified=false（未经工具核验）；不重试
 
 错误信封与 mtg_rules_tool 同构：
   {"status": "error", "error": {"type": ..., "message": ...}}
@@ -61,12 +94,14 @@ Phase 2 构筑模式与核验接入）。
 明确分离。Ctrl+C 干净退出；CLI 出口接 runlog 留痕。
 """
 import argparse
+import collections
 import json
 import re
 import subprocess
 import sys
 import tempfile
 import threading
+import time
 import traceback
 from collections.abc import Mapping
 from datetime import datetime, timezone
@@ -81,6 +116,7 @@ import deck_pooper
 import limited_strategy as LS
 import mtg_combo_tool
 import mtg_tool
+import mtga_auto_tool as AUTO
 import mtga_draft_tool
 import roles as role_tags
 import runlog
@@ -113,6 +149,16 @@ SUBPROCESS_TIMEOUT = 180            # cost/audit 单个子进程的上限秒数
 # 角色缺口基准：constructed_strategy 的 M1-M9 模块配额（deck_config 的
 # STRATEGY_TARGETS 骨架只服务限制赛深度检查，不作构筑基准；basis 字段明说）
 GAP_MODULES = tuple(CS.REQUIRED_MODULES)    # ("M1", "M2", "M3", "M5", "M8")
+
+# ---- Phase 3 Agent 桥与双 LLM 通道 ----
+AGENT_KINDS = ("next_move", "explain", "novel_synergies", "handoff")
+AGENT_RESULT_TTL = 300.0            # 结果槽位 TTL（秒）：浏览器放弃的结果被清理
+AGENT_CLAIM_LEASE = 60.0            # 认领租约（秒）：无结果且无心跳则重新入队
+AGENT_POLL_MAX = 60.0               # next 长轮询单次挂起上限（wait 心跳周期）
+FIND_DEFAULT_LIMIT = 20
+FIND_MAX_LIMIT = 100                # 铁律契约的搜索包装：单页上限，防巨量响应
+ADVICE_LLM_TIMEOUT = 60             # advice 嵌入式 LLM 调用超时（不重试）
+LLM_CONFIG_JSON = TOOL_DIR / "llm_config.json"
 
 # 基本地 → 颜色（mana_sources 统计用；Wastes 无色不列入）
 _BASIC_LAND_COLORS = {
@@ -691,6 +737,376 @@ def parse_rotation_output(stdout):
             "ok": main["rotating"] == 0 and side["rotating"] == 0}
 
 
+# ------------------------------------------------------------------ Agent 桥（Phase 3）
+
+class AgentBridge:
+    """进程内请求/结果队列：网页（人）出题，交互式 Agent 会话答题。
+
+    借鉴上游 deck-forge AgentBridge 的协议语义（0BSD），asyncio.Future
+    改为 Condition + dict 以适配 ThreadingHTTPServer 的多线程模型：
+
+    - submit 入队；next_request 是认领语义——同一请求同一时间只派给
+      一个 agent，拿到即 in_flight；
+    - 认领后 claim_lease（60s）内未提交结果且无心跳 → 重新入队可再认领
+      （防 Agent 崩溃把请求挂死）；
+    - 结果槽位 TTL（300s）后清理：迟到的 result → 410，未取的 GET → 410，
+      tombstone 再保留一个 TTL 周期以区分"从未存在"（404）；
+    - 时间一律走注入的 clock（缺省 time.monotonic），测试用假时钟驱动
+      租约/TTL 过期；对外时间戳仍是 ISO。
+    """
+
+    def __init__(self, result_ttl=AGENT_RESULT_TTL,
+                 claim_lease=AGENT_CLAIM_LEASE, clock=None):
+        self._cond = threading.Condition()
+        self._result_ttl = float(result_ttl)
+        self._claim_lease = float(claim_lease)
+        self._clock = clock or time.monotonic
+        self._counter = 0
+        self._queue = collections.deque()      # 待认领 request_id（FIFO）
+        self._records = {}                     # request_id → record
+        self._gone = {}                        # 已清理 id → 清理时刻（410 tombstone）
+
+    def _sweep_locked(self):
+        """锁内清理：过期结果 → tombstone；过期 tombstone 遗忘；在途认领
+        租约过期 → 重新入队。"""
+        now = self._clock()
+        for rid in [rid for rid, rec in self._records.items()
+                    if rec["state"] == "done"
+                    and now - rec["completed_at"] > self._result_ttl]:
+            self._records.pop(rid)
+            self._gone[rid] = now
+        for rid in [rid for rid, t in self._gone.items()
+                    if now - t > self._result_ttl]:
+            self._gone.pop(rid)
+        for rec in self._records.values():
+            if rec["state"] == "in_flight" \
+                    and now - rec["claimed_at"] > self._claim_lease:
+                rec["state"] = "queued"
+                rec["claimed_by"] = None
+                rec["claimed_at"] = None
+                self._queue.append(rec["id"])
+
+    def submit(self, kind, payload, timeout_sec=None):
+        """入队一个 reasoning 请求，返回 {"request_id", "queued_at"}。"""
+        with self._cond:
+            self._sweep_locked()
+            self._counter += 1
+            rid = "req-{}".format(self._counter)
+            self._records[rid] = {
+                "id": rid, "kind": kind, "payload": payload,
+                "timeout_sec": timeout_sec,
+                "queued_at": _now_iso(),
+                "state": "queued",
+                "claimed_by": None, "claimed_at": None,
+                "completed_iso": None, "completed_at": None,
+                "result_status": None, "result": None, "message": None,
+            }
+            self._queue.append(rid)
+            self._cond.notify()
+            return {"request_id": rid,
+                    "queued_at": self._records[rid]["queued_at"]}
+
+    @staticmethod
+    def _request_view(rec):
+        return {"request_id": rec["id"], "kind": rec["kind"],
+                "payload": rec["payload"], "queued_at": rec["queued_at"],
+                "timeout_sec": rec["timeout_sec"]}
+
+    def next_request(self, agent, wait=True, poll_max=AGENT_POLL_MAX):
+        """Agent 侧长轮询：拿到请求返回 {"status":"ok","request":{...}}；
+        队空返回 {"status":"wait"}（wait=True 时最多挂起 poll_max 秒）。"""
+        deadline = self._clock() + poll_max
+        with self._cond:
+            while True:
+                self._sweep_locked()
+                if self._queue:
+                    rid = self._queue.popleft()
+                    rec = self._records.get(rid)
+                    if rec is None or rec["state"] != "queued":
+                        continue            # 已被认领/清理（防御，跳过）
+                    rec["state"] = "in_flight"
+                    rec["claimed_by"] = agent
+                    rec["claimed_at"] = self._clock()
+                    return {"status": "ok", "request": self._request_view(rec)}
+                if not wait:
+                    return {"status": "wait"}
+                remaining = deadline - self._clock()
+                if remaining <= 0:
+                    return {"status": "wait"}
+                self._cond.wait(timeout=remaining)
+
+    def complete(self, request_id, status, result, message):
+        """Agent 提交结果。返回 "ok" / "missing"（未知 id）/ "gone"（已
+        过 TTL 清理）/ "not_claimed"（未在认领态）/ "done"（重复提交）。"""
+        with self._cond:
+            self._sweep_locked()
+            rec = self._records.get(request_id)
+            if rec is None:
+                return "gone" if request_id in self._gone else "missing"
+            if rec["state"] == "done":
+                return "done"
+            if rec["state"] != "in_flight":
+                return "not_claimed"
+            rec["state"] = "done"
+            rec["completed_at"] = self._clock()
+            rec["completed_iso"] = _now_iso()
+            rec["result_status"] = status
+            rec["result"] = result
+            rec["message"] = message
+            self._cond.notify()
+            return "ok"
+
+    def get_result(self, request_id):
+        """网页侧取结果：返回 ("ok", view) / ("pending", None) /
+        ("missing", None) / ("gone", None)。"""
+        with self._cond:
+            self._sweep_locked()
+            rec = self._records.get(request_id)
+            if rec is None:
+                return ("gone", None) if request_id in self._gone \
+                    else ("missing", None)
+            if rec["state"] != "done":
+                return "pending", None
+            return "ok", {"request_id": rec["id"], "kind": rec["kind"],
+                          "status": rec["result_status"],
+                          "result": rec["result"], "message": rec["message"],
+                          "agent": rec["claimed_by"],
+                          "completed_at": rec["completed_iso"]}
+
+    def heartbeat(self, request_id, agent):
+        """认领方续租：返回 "ok" / "missing" / "gone" / "not_claimed"。"""
+        with self._cond:
+            self._sweep_locked()
+            rec = self._records.get(request_id)
+            if rec is None:
+                return "gone" if request_id in self._gone else "missing"
+            if rec["state"] != "in_flight" or rec["claimed_by"] != agent:
+                return "not_claimed"
+            rec["claimed_at"] = self._clock()
+            return "ok"
+
+    def status(self):
+        """桥诊断：队列深度、在途请求数、就绪结果数、kind 集合。"""
+        with self._cond:
+            self._sweep_locked()
+            states = [rec["state"] for rec in self._records.values()]
+            return {"status": "ok",
+                    "queue_depth": len(self._queue),
+                    "in_flight": states.count("in_flight"),
+                    "results_ready": states.count("done"),
+                    "tracked_requests": len(self._records),
+                    "kinds": list(AGENT_KINDS)}
+
+
+def parse_agent_request_body(body):
+    """POST /api/agent/request 请求体校验 → (kind, payload, timeout_sec)。"""
+    kind = body.get("kind")
+    if kind not in AGENT_KINDS:
+        raise ValueError("kind 只支持 {}，收到: {!r}".format(
+            "/".join(AGENT_KINDS), kind))
+    payload = body.get("payload")
+    if payload is None:
+        payload = {}
+    if not isinstance(payload, dict):
+        raise ValueError("payload 必须是 JSON 对象，收到: {!r}".format(payload))
+    timeout_sec = body.get("timeout_sec")
+    if timeout_sec is not None:
+        if not isinstance(timeout_sec, (int, float)) \
+                or isinstance(timeout_sec, bool) or timeout_sec <= 0:
+            raise ValueError("timeout_sec 必须是正数（秒），收到: {!r}"
+                             .format(timeout_sec))
+        timeout_sec = float(timeout_sec)
+    return kind, payload, timeout_sec
+
+
+def parse_agent_result_body(body):
+    """POST /api/agent/result 请求体校验 → (request_id, status, result, msg)。"""
+    request_id = body.get("request_id")
+    if not isinstance(request_id, str) or not request_id.strip():
+        raise ValueError("request_id 必须是非空字符串，收到: {!r}"
+                         .format(request_id))
+    status = body.get("status")
+    if status not in ("ok", "error"):
+        raise ValueError("status 必须是 'ok' 或 'error'，收到: {!r}"
+                         .format(status))
+    result = body.get("result")
+    if result is None:
+        result = {}
+    if not isinstance(result, dict):
+        raise ValueError("result 必须是 JSON 对象，收到: {!r}".format(result))
+    message = body.get("message", "")
+    if not isinstance(message, str):
+        raise ValueError("message 必须是字符串，收到: {!r}".format(message))
+    return request_id.strip(), status, result, message
+
+
+def parse_agent_heartbeat_body(body):
+    """POST /api/agent/heartbeat 请求体校验 → (request_id, agent)。"""
+    request_id = body.get("request_id")
+    if not isinstance(request_id, str) or not request_id.strip():
+        raise ValueError("request_id 必须是非空字符串，收到: {!r}"
+                         .format(request_id))
+    agent = body.get("agent")
+    if not isinstance(agent, str) or not agent.strip():
+        raise ValueError("agent 必须是非空字符串，收到: {!r}".format(agent))
+    return request_id.strip(), agent.strip()
+
+
+# ------------------------------------------------------------------ avenues（Phase 3 反向通路）
+
+def parse_avenue_body(body):
+    """POST /api/avenues 请求体校验 → (title, note, candidates)。
+
+    candidates[].name 必须是非空字符串；服务端不联网验证牌名（铁律责任
+    在写入方，响应以 unverified_card_names 明示）。输入错误抛 ValueError。"""
+    title = body.get("title")
+    if not isinstance(title, str) or not title.strip():
+        raise ValueError("title 必须是非空字符串，收到: {!r}".format(title))
+    note = body.get("note", "")
+    if not isinstance(note, str):
+        raise ValueError("note 必须是字符串，收到: {!r}".format(note))
+    raw_candidates = body.get("candidates")
+    if raw_candidates is None:
+        raw_candidates = []
+    if not isinstance(raw_candidates, list):
+        raise ValueError("candidates 必须是数组，收到: {!r}"
+                         .format(raw_candidates))
+    candidates = []
+    for item in raw_candidates:
+        if not isinstance(item, Mapping):
+            raise ValueError("candidates 只接受对象记录，收到: {!r}".format(item))
+        name = item.get("name")
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError("候选 name 必须是非空字符串，收到: {!r}"
+                             .format(name))
+        reason = item.get("reason", "")
+        if not isinstance(reason, str):
+            raise ValueError("候选 reason 必须是字符串，收到: {!r}"
+                             .format(reason))
+        candidates.append({"name": name.strip(), "reason": reason})
+    return title.strip(), note, candidates
+
+
+# ------------------------------------------------------------------ find（铁律契约落地端点）
+
+def find_cards(query, limit):
+    """包装 mtg_tool.scryfall_search（进程内调用 + 磁盘缓存，不走子进程）。
+
+    铁律契约：LLM 提案的一切卡牌必须来自这里（或 mtg_tool CLI）的实际
+    结果。oracle 去重（与 CLI search 默认一致），截断到 limit。
+    QuerySyntaxError 由 HTTP 层映射 400；其余 MtgToolError 映射 500；
+    真实零命中是空列表而非异常。
+    """
+    cards, total, warnings = mtg_tool.scryfall_search(query, unique="oracle")
+    records = [mtg_tool.normalize_card(card) for card in cards[:limit]]
+    return {"status": "ok", "query": query, "total_cards": total,
+            "returned": len(records), "cards": records,
+            "warnings": list(warnings)}
+
+
+# ------------------------------------------------------------------ advice（决策 D 嵌入式 LLM 轴）
+
+ADVICE_SYSTEM = (
+    "你是万智牌套牌构筑顾问。根据用户给出的牌表与确定性统计，给出下一步"
+    "构筑/微调建议。纪律：点名具体卡牌时必须来自牌表本身或用户明确给出"
+    "的检索证据，不得凭记忆编造牌名；建议要具体、可执行，用中文，3-5 条。")
+
+# 重试策略：不重试（0 次）。advice 是网页按钮触发的辅助通道，失败语义是
+# 显式 offline + machine_fallback 兜底——用户立刻拿到确定性结论；一次重试
+# 对超时/网络类瞬态故障收益边际，却双倍延迟与计费，且违背"禁止静默重试
+# 风暴"的红线。需要更健壮、可核验的 LLM 驱动请走 Agent 桥主通道。
+
+
+def build_machine_fallback(state):
+    """纯机器兜底：stats + 已缓存 roles 缺口的确定性结论（无任何网络）。
+
+    roles 只读缓存槽位（不触发水合）；槽位缺失/失败时 role_gaps=None 明示
+    unknown，不编造。
+    """
+    stats = state.stats()
+    fallback = {"main": stats["main"], "lands": stats["lands"],
+                "nonlands": stats["nonlands"],
+                "average_cmc": stats["average_cmc"],
+                "curve_label": stats["curve_label"], "curve": stats["curve"],
+                "mana_sources": stats["mana_sources"], "pips": stats["pips"],
+                "land_check": stats["land_check"], "role_gaps": None,
+                "notes": []}
+    if not stats["land_check"]["ok"]:
+        fallback["notes"].append(
+            "land_check 未通过（{} 张口径，{} 地）：3回合≥2地 {:.0%}，"
+            "5回合≥4地 {:.0%}".format(
+                stats["land_check"]["deck_size"], stats["lands"],
+                stats["land_check"]["p3"] or 0.0,
+                stats["land_check"]["p5"] or 0.0))
+    if stats["unknown"]:
+        fallback["notes"].append("以下牌未水合，曲线/配比未计入: "
+                                 + "、".join(stats["unknown"]))
+    roles_slot = state.slot("roles")
+    if roles_slot and roles_slot.get("status") == "ok":
+        fallback["role_gaps"] = roles_slot["result"].get("gaps") or []
+    return fallback
+
+
+def build_advice_prompt(state):
+    """当前牌表的紧凑 prompt：牌表行 + stats 摘要 + 已缓存 roles 缺口。
+
+    只塞确定性结论，不塞原始大数据；roles 缺口只来自缓存槽位（不触发
+    网络水合），槽位缺失就如实不写。
+    """
+    lines = []
+    text = state.export_text().strip()
+    lines.append("当前牌表：\n" + text if text else "当前牌表为空。")
+    stats = state.stats()
+    lines.append(
+        "统计（deck_core 口径）：主牌 {main} 张，地 {lands} / 非地 {nonlands}，"
+        "平均 CMC {cmc}（{label}）；曲线 {curve}；land_check {lc}".format(
+            main=stats["main"], lands=stats["lands"], nonlands=stats["nonlands"],
+            cmc=stats["average_cmc"], label=stats["curve_label"],
+            curve=json.dumps(stats["curve"], ensure_ascii=False),
+            lc=json.dumps(stats["land_check"], ensure_ascii=False)))
+    roles_slot = state.slot("roles")
+    if roles_slot and roles_slot.get("status") == "ok":
+        gaps = roles_slot["result"].get("gaps") or []
+        lines.append("角色缺口："
+                     + ("；".join("{module} 缺 {deficit}（有 {have} / 目标 {want}）"
+                                  .format(**gap) for gap in gaps)
+                        if gaps else "无（M1/M2/M3/M5/M8 均达 wanted 配额）"))
+    lines.append("请给出下一步构筑/微调建议（3-5 条，每条一句，可执行）。")
+    return "\n\n".join(lines)
+
+
+def build_advice(state):
+    """嵌入式 LLM 点评（决策 D 辅助通道）。
+
+    配置缺失/请求失败/超时 → {"status": "offline", "advice": None,
+    "offline_reason": ..., "machine_fallback": ...}；成功 → status ok +
+    LLM 原文（verified=False 明示未经工具核验）。任何失败路径都带纯机器
+    兜底，绝不留空。不重试（见 ADVICE_SYSTEM 上方注释）。
+    """
+    payload = {"status": "offline", "advice": None, "model": None,
+               "verified": False, "offline_reason": None,
+               "machine_fallback": build_machine_fallback(state),
+               "checked_at": _now_iso()}
+    try:
+        cfg = AUTO.load_llm_config(LLM_CONFIG_JSON)
+    except Exception as exc:
+        # 配置缺失/损坏/无 key 一律显式 offline（load_llm_config 自身抛
+        # AutoToolError；json 损坏等异常同样吞为 offline 理由，不 500）
+        payload["offline_reason"] = str(exc)
+        return payload
+    messages = [{"role": "system", "content": ADVICE_SYSTEM},
+                {"role": "user", "content": build_advice_prompt(state)}]
+    try:
+        text = AUTO.llm_chat(cfg, messages, timeout=ADVICE_LLM_TIMEOUT)
+    except Exception as exc:
+        # llm_chat 把 HTTP/网络/超时/解析失败统一抛 AutoToolError；宽捕是
+        # 为了让辅助通道任何失败都显式 offline，而不是 500 吓到网页
+        payload["offline_reason"] = str(exc)
+        return payload
+    payload.update({"status": "ok", "advice": text, "model": cfg.get("model")})
+    return payload
+
+
 # ------------------------------------------------------------------ 权威状态
 
 class WorkbenchState:
@@ -716,10 +1132,60 @@ class WorkbenchState:
         # 每项 {"status": "ok"/"error", "checked_at": iso, "result"/"error": ...}
         self._slots = {name: None for name in
                        ("roles", "combos", "cost", "audit", "constructed")}
+        # Phase 3：Agent 桥（请求/结果队列）+ avenues 持久列表（反向通路）
+        self.bridge = AgentBridge()
+        self._avenues = []
+        self._avenue_seq = 0
 
     def _record_slot(self, name, entry):
         with self._lock:
             self._slots[name] = entry
+
+    def slot(self, name):
+        """读取核验槽位的副本（advice 兜底/prompt 用；不触发水合）。"""
+        with self._lock:
+            entry = self._slots.get(name)
+            return dict(entry) if entry else None
+
+    # -------------------------------------------------- Phase 3 avenues
+
+    def avenue_add(self, title, note, candidates):
+        """新增探索方向；unverified_card_names 随记录持久化（铁律责任在
+        写入方，服务端不联网验证候选牌名）。"""
+        with self._lock:
+            self._avenue_seq += 1
+            avenue = {"id": "av-{}".format(self._avenue_seq),
+                      "title": title, "note": note, "candidates": candidates,
+                      "unverified_card_names": bool(candidates),
+                      "focused": False, "created_at": _now_iso()}
+            self._avenues.append(avenue)
+            return dict(avenue)
+
+    def avenue_list(self):
+        with self._lock:
+            return [dict(avenue) for avenue in self._avenues]
+
+    def avenue_delete(self, avenue_id):
+        with self._lock:
+            for index, avenue in enumerate(self._avenues):
+                if avenue["id"] == avenue_id:
+                    self._avenues.pop(index)
+                    return True
+        return False
+
+    def avenue_focus(self, avenue_id):
+        """单焦点语义：点亮目标、清除其余。不存在返回 None。"""
+        with self._lock:
+            target = None
+            for avenue in self._avenues:
+                if avenue["id"] == avenue_id:
+                    target = avenue
+                    break
+            if target is None:
+                return None
+            for avenue in self._avenues:
+                avenue["focused"] = avenue is target
+            return dict(target)
 
     def _session_locked(self):
         return {"imported_at": self._imported_at,
@@ -737,6 +1203,8 @@ class WorkbenchState:
             snap["seed"] = self._last_seed
             snap["checks"] = {name: (dict(entry) if entry else None)
                               for name, entry in self._slots.items()}
+            snap["bridges"] = self.bridge.status()
+            snap["avenues"] = [dict(avenue) for avenue in self._avenues]
             return snap
 
     def export_text(self):
@@ -1177,6 +1645,17 @@ def make_handler(state):
                     self._handle_combos()
                 elif path == "/api/cost":
                     self._handle_cost()
+                elif path == "/api/agent/next":
+                    self._handle_agent_next()
+                elif path == "/api/agent/status":
+                    self._send_json(200, state.bridge.status())
+                elif path.startswith("/api/agent/result/"):
+                    self._handle_agent_result_get(path.rsplit("/", 1)[1])
+                elif path == "/api/find":
+                    self._handle_find()
+                elif path == "/api/avenues":
+                    self._send_json(200, {"status": "ok",
+                                          "avenues": state.avenue_list()})
                 else:
                     self._send_json(404, _error_envelope(
                         "NotFoundError", "未知路径: {}".format(path)))
@@ -1198,6 +1677,30 @@ def make_handler(state):
                     self._handle_audit()
                 elif path in ("/api/deck/add", "/api/deck/remove", "/api/deck/move"):
                     self._handle_deck_edit(path.rsplit("/", 1)[1])
+                elif path == "/api/agent/request":
+                    self._handle_agent_request()
+                elif path == "/api/agent/result":
+                    self._handle_agent_result()
+                elif path == "/api/agent/heartbeat":
+                    self._handle_agent_heartbeat()
+                elif path == "/api/avenues":
+                    self._handle_avenue_add()
+                elif path.startswith("/api/avenues/") and path.endswith("/focus"):
+                    self._handle_avenue_focus(path[len("/api/avenues/"):
+                                                   -len("/focus")])
+                elif path == "/api/advice":
+                    self._send_json(200, build_advice(state))
+                else:
+                    self._send_json(404, _error_envelope(
+                        "NotFoundError", "未知路径: {}".format(path)))
+            except Exception as exc:
+                self._unhandled(exc)
+
+        def do_DELETE(self):
+            try:
+                path = urlsplit(self.path).path
+                if path.startswith("/api/avenues/"):
+                    self._handle_avenue_delete(path[len("/api/avenues/"):])
                 else:
                     self._send_json(404, _error_envelope(
                         "NotFoundError", "未知路径: {}".format(path)))
@@ -1339,6 +1842,144 @@ def make_handler(state):
                 return
             self._send_json(200, snap)
 
+        # -------------------------------------------------- Phase 3 Agent 桥
+
+        def _handle_agent_request(self):
+            try:
+                body = self._read_json_body()
+                kind, payload, timeout_sec = parse_agent_request_body(body)
+            except ValueError as exc:
+                self._bad_request(exc)
+                return
+            self._send_json(200, state.bridge.submit(kind, payload, timeout_sec))
+
+        def _handle_agent_next(self):
+            query = parse_qs(urlsplit(self.path).query)
+            agent = (query.get("agent") or ["agent"])[0].strip() or "agent"
+            wait = (query.get("wait") or ["1"])[0] != "0"
+            payload = state.bridge.next_request(agent, wait=wait)
+            self._send_json(200, payload)
+
+        def _handle_agent_result(self):
+            try:
+                body = self._read_json_body()
+                request_id, status, result, message = parse_agent_result_body(body)
+            except ValueError as exc:
+                self._bad_request(exc)
+                return
+            outcome = state.bridge.complete(request_id, status, result, message)
+            if outcome == "ok":
+                self._send_json(200, {"status": "ok",
+                                      "request_id": request_id})
+                return
+            if outcome == "missing":
+                self._send_json(404, _error_envelope(
+                    "NotFoundError", "未知 request_id: {}".format(request_id)))
+            elif outcome == "gone":
+                self._send_json(410, _error_envelope(
+                    "ResultExpiredError",
+                    "请求结果已超过 TTL 被清理: {}".format(request_id)))
+            elif outcome == "done":
+                self._send_json(409, _error_envelope(
+                    "ResultConflictError",
+                    "请求已有结果，重复提交: {}".format(request_id)))
+            else:  # not_claimed
+                self._send_json(409, _error_envelope(
+                    "ResultConflictError",
+                    "请求未被任何 agent 认领（或认领已过期重派）: {}"
+                    .format(request_id)))
+
+        def _handle_agent_result_get(self, request_id):
+            outcome, view = state.bridge.get_result(request_id)
+            if outcome == "ok":
+                self._send_json(200, view)
+            elif outcome == "pending":
+                self._send_json(202, {"status": "pending",
+                                      "request_id": request_id})
+            elif outcome == "gone":
+                self._send_json(410, _error_envelope(
+                    "ResultExpiredError",
+                    "请求结果已超过 TTL 被清理: {}".format(request_id)))
+            else:
+                self._send_json(404, _error_envelope(
+                    "NotFoundError", "未知 request_id: {}".format(request_id)))
+
+        def _handle_agent_heartbeat(self):
+            try:
+                body = self._read_json_body()
+                request_id, agent = parse_agent_heartbeat_body(body)
+            except ValueError as exc:
+                self._bad_request(exc)
+                return
+            outcome = state.bridge.heartbeat(request_id, agent)
+            if outcome == "ok":
+                self._send_json(200, {"status": "ok"})
+            elif outcome == "missing":
+                self._send_json(404, _error_envelope(
+                    "NotFoundError", "未知 request_id: {}".format(request_id)))
+            elif outcome == "gone":
+                self._send_json(410, _error_envelope(
+                    "ResultExpiredError",
+                    "请求结果已超过 TTL 被清理: {}".format(request_id)))
+            else:
+                self._send_json(409, _error_envelope(
+                    "HeartbeatConflictError",
+                    "请求不在该 agent 的认领之下: {}".format(request_id)))
+
+        # -------------------------------------------------- Phase 3 avenues / find
+
+        def _handle_avenue_add(self):
+            try:
+                body = self._read_json_body()
+                title, note, candidates = parse_avenue_body(body)
+            except ValueError as exc:
+                self._bad_request(exc)
+                return
+            self._send_json(200, state.avenue_add(title, note, candidates))
+
+        def _handle_avenue_focus(self, avenue_id):
+            avenue = state.avenue_focus(avenue_id)
+            if avenue is None:
+                self._send_json(404, _error_envelope(
+                    "NotFoundError", "未知 avenue id: {}".format(avenue_id)))
+                return
+            self._send_json(200, avenue)
+
+        def _handle_avenue_delete(self, avenue_id):
+            if state.avenue_delete(avenue_id):
+                self._send_json(200, {"status": "ok", "id": avenue_id})
+            else:
+                self._send_json(404, _error_envelope(
+                    "NotFoundError", "未知 avenue id: {}".format(avenue_id)))
+
+        def _handle_find(self):
+            query = parse_qs(urlsplit(self.path).query)
+            q = (query.get("q") or [""])[0].strip()
+            raw_limit = (query.get("limit") or [str(FIND_DEFAULT_LIMIT)])[0]
+            if not q:
+                self._bad_request(ValueError("缺少查询参数 q（Scryfall 查询式）"))
+                return
+            try:
+                limit = int(raw_limit)
+                if not 1 <= limit <= FIND_MAX_LIMIT:
+                    raise ValueError(
+                        "limit 必须在 1..{}，收到: {!r}".format(FIND_MAX_LIMIT,
+                                                             raw_limit))
+            except ValueError as exc:
+                self._bad_request(exc)
+                return
+            try:
+                payload = find_cards(q, limit)
+            except mtg_tool.QuerySyntaxError as exc:
+                self._send_json(400, _error_envelope("QuerySyntaxError",
+                                                     str(exc)))
+                return
+            except mtg_tool.MtgToolError as exc:
+                self._send_json(500, _error_envelope(type(exc).__name__,
+                                                     "find 查询失败: {}".format(exc)))
+                return
+            self._send_json(200, payload)
+
         def _unhandled(self, exc):
             traceback.print_exc()   # traceback 进 stderr，不回浏览器
             try:
@@ -1398,7 +2039,7 @@ PAGE_HTML = """<!DOCTYPE html>
 </style>
 </head>
 <body>
-<h1>MTG 套牌工作台（Phase 2 构筑模式）</h1>
+<h1>MTG 套牌工作台（Phase 3 Agent 桥）</h1>
 <div class="panel"><h2>会话</h2><div id="session">尚未导入牌表</div></div>
 <div class="cols">
   <div class="col">
@@ -1477,7 +2118,47 @@ PAGE_HTML = """<!DOCTYPE html>
         <label><input id="auditLimited" type="checkbox">limited（40/41 口径）</label>
         <label><input id="auditBo3" type="checkbox">BO3</label></div>
       <button id="auditBtn">跑门禁</button>
-      <div id="auditBox" class="statline">—</div>
+      <div id="auditBox" class="statline"></div>
+    </div>
+  </div>
+</div>
+<div class="cols">
+  <div class="col">
+    <div class="panel"><h2>Agent 桥（网页出题 → Agent 会话答题）</h2>
+      <div class="row">kind：<select id="agentKind">
+          <option value="next_move">next_move（建议下一步）</option>
+          <option value="explain">explain（规则/配合解释）</option>
+          <option value="novel_synergies">novel_synergies（协同提案）</option>
+          <option value="handoff">handoff（转其他技能/全流程）</option>
+        </select>
+        timeout：<input id="agentTimeout" type="text" value="300" style="width:60px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"> 秒</div>
+      payload（JSON 对象，可空）：<br>
+      <textarea id="agentPayload" style="width:100%;height:50px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;" placeholder='{"note": "补充上下文"}'></textarea>
+      <button id="agentReqBtn">提交请求</button>
+      <div id="agentReqInfo" class="statline"></div>
+      <div id="agentResult" class="statline"></div>
+      <div id="bridgeStatus" class="statline"></div>
+    </div>
+    <div class="panel"><h2>Find（铁律契约：候选必须来自实际检索）</h2>
+      <div class="row">q：<input id="findQ" type="text" style="flex:1;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;" placeholder="f:pioneer t:creature cmc<=2">
+        limit：<input id="findLimit" type="text" value="20" style="width:50px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"></div>
+      <button id="findBtn">检索</button>
+      <div id="findBox" class="statline"></div>
+    </div>
+    <div class="panel"><h2>AI 点评（嵌入式 LLM，决策 D 辅助通道）</h2>
+      <button id="adviceBtn">获取点评</button>
+      <div id="adviceBox" class="statline"></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="panel"><h2>Avenues（Agent 反向通路）</h2>
+      <div class="note">候选牌名由写入方负责经 /api/find 或 mtg_tool search 核验（铁律）；服务端不联网验证，unverified_card_names 明示。</div>
+      <div class="row">标题：<input id="avTitle" type="text" style="flex:1;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"></div>
+      <div class="row">备注：<input id="avNote" type="text" style="flex:1;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"></div>
+      候选（每行 "牌名 | 理由"）：<br>
+      <textarea id="avCands" style="width:100%;height:50px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"></textarea>
+      <button id="avenueBtn">新增 avenue</button>
+      <div id="avenueList" class="statline">—</div>
     </div>
   </div>
 </div>
@@ -1742,6 +2423,58 @@ function renderAudit(snap) {
     + esc(r.validate.error) + '</span>';
   box.innerHTML = html;
 }
+function renderBridge(snap) {
+  const b = snap.bridges || {};
+  document.getElementById('bridgeStatus').textContent =
+    '桥状态：队列 ' + (b.queue_depth || 0) + ' / 在途 ' + (b.in_flight || 0)
+    + ' / 就绪结果 ' + (b.results_ready || 0);
+}
+function renderAvenues(snap) {
+  const list = snap.avenues || [];
+  const box = document.getElementById('avenueList');
+  if (!list.length) { box.textContent = '—'; return; }
+  box.innerHTML = list.map(a =>
+    '<div class="row"' + (a.focused ? ' style="background:#21262d"' : '') + '>'
+    + '<span class="nm"><b>' + esc(a.title) + '</b>'
+    + (a.note ? ' <span class="tag">' + esc(a.note) + '</span>' : '')
+    + (a.unverified_card_names ? ' <span class="warn">unverified</span>' : '')
+    + '<br>' + (a.candidates || []).map(c => esc(c.name)
+        + (c.reason ? ' <span class="ts">(' + esc(c.reason) + ')</span>' : ''))
+        .join('、')
+    + '</span>'
+    + '<button onclick="doFocusAvenue(\\'' + a.id + '\\')">focus</button>'
+    + '<button onclick="doDeleteAvenue(\\'' + a.id + '\\')">删</button></div>'
+  ).join('');
+}
+async function pollAgentResult(rid) {
+  const box = document.getElementById('agentResult');
+  for (let i = 0; i < 120; i++) {
+    const r = await fetch('/api/agent/result/' + encodeURIComponent(rid));
+    if (r.status === 202) { await new Promise(res => setTimeout(res, 3000)); continue; }
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error ? d.error.type + ': ' + d.error.message
+                                       : JSON.stringify(d));
+    box.innerHTML = '<b>' + esc(d.kind) + '</b> → ' + esc(d.status)
+      + '（agent: ' + esc(d.agent || '?') + '）'
+      + (d.message ? '<br>' + esc(d.message) : '')
+      + (d.result ? '<br><pre style="white-space:pre-wrap">'
+        + esc(JSON.stringify(d.result, null, 1)) + '</pre>' : '');
+    return;
+  }
+  box.textContent = '轮询超时（Agent 未在期限内作答）';
+}
+function doFocusAvenue(id) {
+  run(() => postJSON('/api/avenues/' + encodeURIComponent(id) + '/focus', {}));
+}
+function doDeleteAvenue(id) {
+  run(async () => {
+    const r = await fetch('/api/avenues/' + encodeURIComponent(id),
+                          {method: 'DELETE'});
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error ? d.error.type + ': ' + d.error.message
+                                       : JSON.stringify(d));
+  });
+}
 async function tick() {
   try {
     const r = await fetch('/api/snapshot');
@@ -1762,6 +2495,8 @@ async function tick() {
     renderCombos(d);
     renderCost(d);
     renderAudit(d);
+    renderBridge(d);
+    renderAvenues(d);
     const warns = [].concat(d.warnings || [], (d.pool && d.pool.warnings) || []);
     document.getElementById('warnings').textContent =
       warns.length ? warns.join('\\n') : '—';
@@ -1809,6 +2544,53 @@ document.getElementById('auditBtn').onclick = () => run(() => postJSON('/api/aud
   format: document.getElementById('auditFormat').value.trim() || 'pioneer',
   limited: document.getElementById('auditLimited').checked,
   bo3: document.getElementById('auditBo3').checked}));
+document.getElementById('agentReqBtn').onclick = () => run(async () => {
+  let payload = {};
+  const raw = document.getElementById('agentPayload').value.trim();
+  if (raw) payload = JSON.parse(raw);
+  const body = {kind: document.getElementById('agentKind').value,
+    payload: payload,
+    timeout_sec: parseInt(document.getElementById('agentTimeout').value, 10) || 300};
+  const d = await postJSON('/api/agent/request', body);
+  document.getElementById('agentReqInfo').textContent =
+    '已入队 ' + d.request_id + '（' + d.queued_at + '），等待 Agent 认领…';
+  document.getElementById('agentResult').textContent = '等待结果…';
+  pollAgentResult(d.request_id).catch(e => showErrors(String(e.message || e)));
+});
+document.getElementById('findBtn').onclick = () => run(async () => {
+  const q = document.getElementById('findQ').value.trim();
+  const limit = document.getElementById('findLimit').value.trim() || '20';
+  const r = await fetch('/api/find?q=' + encodeURIComponent(q)
+    + '&limit=' + encodeURIComponent(limit));
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error ? d.error.type + ': ' + d.error.message
+                                     : JSON.stringify(d));
+  document.getElementById('findBox').innerHTML = '命中 ' + d.returned
+    + ' / 共 ' + d.total_cards + '：<br>'
+    + (d.cards || []).map(c => esc(c.name)).join('、');
+});
+document.getElementById('adviceBtn').onclick = () => run(async () => {
+  const d = await postJSON('/api/advice', {});
+  const box = document.getElementById('adviceBox');
+  if (d.status === 'offline') {
+    box.innerHTML = '<span class="warn">LLM 离线：'
+      + esc(d.offline_reason || '未知原因') + '</span><br>机器兜底：<pre style="white-space:pre-wrap">'
+      + esc(JSON.stringify(d.machine_fallback, null, 1)) + '</pre>';
+  } else {
+    box.innerHTML = '<span class="tag">[' + esc(d.model || 'llm')
+      + '，未经工具核验]</span><br>' + esc(d.advice);
+  }
+});
+document.getElementById('avenueBtn').onclick = () => run(async () => {
+  const candidates = document.getElementById('avCands').value.split('\\n')
+    .map(line => line.split('|').map(s => s.trim()))
+    .filter(parts => parts[0])
+    .map(parts => ({name: parts[0], reason: parts.slice(1).join('|') || ''}));
+  await postJSON('/api/avenues', {
+    title: document.getElementById('avTitle').value,
+    note: document.getElementById('avNote').value,
+    candidates: candidates});
+});
 document.getElementById('poolFilter').onchange = () => { if (lastSnap) renderPool(lastSnap); };
 buildColorOptions();
 setInterval(tick, """ + str(POLL_INTERVAL_MS) + """); tick();

@@ -9,7 +9,9 @@ import io
 import json
 import socket
 import sys
+import tempfile
 import threading
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -790,12 +792,12 @@ class Phase1HttpTests(unittest.TestCase):
             self.assertEqual(snap["stats"]["main"], 41)
             self.assertEqual(snap["pool"]["counts"]["cards"], 34)
 
-    def test_root_page_phase2_markers(self):
+    def test_root_page_phase3_markers(self):
         with ServerFixture() as fx:
             status, body = fx.get("/")
             self.assertEqual(status, 200)
             text = body.decode("utf-8")
-            self.assertIn("Phase 2", text)
+            self.assertIn("Phase 3", text)
             for marker in ("/api/seed", "/api/pool", "/api/deck/move",
                            "/api/deck/add", "/api/seed-constructed",
                            "/api/roles", "/api/combos", "/api/cost",
@@ -1398,6 +1400,708 @@ class AuditTests(unittest.TestCase):
                 "/api/audit", {"format": "pioneer", "limited": False})
             self.assertEqual(status, 500)
             self.assertEqual(payload["error"]["type"], "EmptyDeckError")
+
+
+# ---------------------------------------------------------------- Phase 3 fixtures
+
+class FakeClock:
+    """可控单调时钟：测试驱动认领租约 / 结果 TTL 过期。"""
+
+    def __init__(self):
+        self.now = 1000.0
+
+    def __call__(self):
+        return self.now
+
+    def advance(self, seconds):
+        self.now += seconds
+
+
+def make_bridge(**kwargs):
+    return workbench.AgentBridge(**kwargs)
+
+
+class AgentBridgeUnitTests(unittest.TestCase):
+    """AgentBridge 纯语义：认领 / 心跳 / 租约重派 / TTL（假时钟驱动）。"""
+
+    def test_submit_returns_request_id_and_queued_at(self):
+        bridge = make_bridge()
+        out = bridge.submit("next_move", {"note": "x"}, timeout_sec=300)
+        self.assertEqual(out["request_id"], "req-1")
+        self.assertTrue(out["queued_at"])
+        status = bridge.status()
+        self.assertEqual(status["queue_depth"], 1)
+        self.assertEqual(status["in_flight"], 0)
+
+    def test_next_wait0_empty_queue_returns_wait(self):
+        bridge = make_bridge()
+        self.assertEqual(bridge.next_request("agent-a", wait=False),
+                         {"status": "wait"})
+
+    def test_next_claims_request_with_kind_and_payload(self):
+        bridge = make_bridge()
+        bridge.submit("explain", {"card": "Lightning Bolt"})
+        out = bridge.next_request("agent-a", wait=False)
+        self.assertEqual(out["status"], "ok")
+        req = out["request"]
+        self.assertEqual(req["kind"], "explain")
+        self.assertEqual(req["payload"], {"card": "Lightning Bolt"})
+        self.assertEqual(req["request_id"], "req-1")
+        self.assertEqual(bridge.status()["in_flight"], 1)
+
+    def test_single_claim_semantics(self):
+        bridge = make_bridge()
+        bridge.submit("next_move", {})
+        first = bridge.next_request("agent-a", wait=False)
+        self.assertEqual(first["status"], "ok")
+        # 同一请求同一时间只派给一个 agent：第二个 agent 拿不到
+        second = bridge.next_request("agent-b", wait=False)
+        self.assertEqual(second, {"status": "wait"})
+
+    def test_next_blocks_until_submit(self):
+        bridge = make_bridge()
+
+        def later_submit():
+            time.sleep(0.2)
+            bridge.submit("next_move", {})
+
+        thread = threading.Thread(target=later_submit, daemon=True)
+        thread.start()
+        out = bridge.next_request("agent-a", wait=True, poll_max=5.0)
+        self.assertEqual(out["status"], "ok")
+        self.assertEqual(out["request"]["kind"], "next_move")
+        thread.join(timeout=5)
+
+    def test_all_four_kinds_accepted(self):
+        for kind in ("next_move", "explain", "novel_synergies", "handoff"):
+            kind, payload, timeout = workbench.parse_agent_request_body(
+                {"kind": kind, "payload": {}, "timeout_sec": 60})
+            self.assertIn(kind, workbench.AGENT_KINDS)
+            self.assertEqual(payload, {})
+            self.assertEqual(timeout, 60.0)
+
+    def test_unknown_kind_rejected(self):
+        for body in ({"kind": "bogus"}, {"kind": None}, {}):
+            with self.assertRaises(ValueError):
+                workbench.parse_agent_request_body(body)
+
+    def test_payload_must_be_object(self):
+        with self.assertRaises(ValueError):
+            workbench.parse_agent_request_body(
+                {"kind": "explain", "payload": [1, 2]})
+
+    def test_timeout_sec_must_be_positive_number(self):
+        for bad in (0, -1, "300", True):
+            with self.assertRaises(ValueError):
+                workbench.parse_agent_request_body(
+                    {"kind": "explain", "timeout_sec": bad})
+
+    def test_complete_unknown_returns_missing(self):
+        bridge = make_bridge()
+        self.assertEqual(bridge.complete("req-999", "ok", {}, ""), "missing")
+        self.assertEqual(bridge.get_result("req-999"), ("missing", None))
+
+    def test_result_roundtrip_ok(self):
+        bridge = make_bridge()
+        rid = bridge.submit("next_move", {})["request_id"]
+        bridge.next_request("agent-a", wait=False)
+        self.assertEqual(bridge.complete(rid, "ok", {"advice": "cut a land"},
+                                         "done"), "ok")
+        outcome, view = bridge.get_result(rid)
+        self.assertEqual(outcome, "ok")
+        self.assertEqual(view["status"], "ok")
+        self.assertEqual(view["result"], {"advice": "cut a land"})
+        self.assertEqual(view["message"], "done")
+        self.assertEqual(view["agent"], "agent-a")
+        self.assertTrue(view["completed_at"])
+
+    def test_result_pending_before_complete(self):
+        bridge = make_bridge()
+        rid = bridge.submit("explain", {})["request_id"]
+        self.assertEqual(bridge.get_result(rid), ("pending", None))
+        bridge.next_request("agent-a", wait=False)
+        self.assertEqual(bridge.get_result(rid), ("pending", None))
+
+    def test_error_status_result_roundtrip(self):
+        bridge = make_bridge()
+        rid = bridge.submit("handoff", {})["request_id"]
+        bridge.next_request("agent-a", wait=False)
+        self.assertEqual(bridge.complete(rid, "error", {}, "no tool fit"), "ok")
+        outcome, view = bridge.get_result(rid)
+        self.assertEqual(outcome, "ok")
+        self.assertEqual(view["status"], "error")
+        self.assertEqual(view["message"], "no tool fit")
+
+    def test_complete_requires_claim(self):
+        bridge = make_bridge()
+        rid = bridge.submit("next_move", {})["request_id"]
+        self.assertEqual(bridge.complete(rid, "ok", {}, ""), "not_claimed")
+
+    def test_double_complete_returns_done(self):
+        bridge = make_bridge()
+        rid = bridge.submit("next_move", {})["request_id"]
+        bridge.next_request("agent-a", wait=False)
+        self.assertEqual(bridge.complete(rid, "ok", {}, ""), "ok")
+        self.assertEqual(bridge.complete(rid, "ok", {}, "again"), "done")
+
+    def test_heartbeat_extends_lease(self):
+        clock = FakeClock()
+        bridge = make_bridge(clock=clock)
+        rid = bridge.submit("next_move", {})["request_id"]
+        bridge.next_request("agent-a", wait=False)
+        clock.advance(50)                       # 未到 60s 租约
+        self.assertEqual(bridge.heartbeat(rid, "agent-a"), "ok")
+        clock.advance(50)                       # 共 100s，但心跳续租
+        self.assertEqual(bridge.heartbeat(rid, "agent-a"), "ok")
+        self.assertEqual(bridge.complete(rid, "ok", {}, ""), "ok")
+
+    def test_heartbeat_wrong_agent_rejected(self):
+        clock = FakeClock()
+        bridge = make_bridge(clock=clock)
+        rid = bridge.submit("next_move", {})["request_id"]
+        bridge.next_request("agent-a", wait=False)
+        self.assertEqual(bridge.heartbeat(rid, "agent-b"), "not_claimed")
+
+    def test_lease_expiry_redispatches_without_heartbeat(self):
+        clock = FakeClock()
+        bridge = make_bridge(clock=clock)
+        rid = bridge.submit("next_move", {})["request_id"]
+        bridge.next_request("agent-a", wait=False)
+        clock.advance(workbench.AGENT_CLAIM_LEASE + 1)
+        # agent-a 崩溃挂死：租约过期后请求重新入队，agent-b 可认领
+        out = bridge.next_request("agent-b", wait=False)
+        self.assertEqual(out["status"], "ok")
+        self.assertEqual(out["request"]["request_id"], rid)
+        self.assertEqual(bridge.status()["in_flight"], 1)
+        self.assertEqual(bridge.status()["queue_depth"], 0)
+
+    def test_result_ttl_expiry_get_gone(self):
+        clock = FakeClock()
+        bridge = make_bridge(clock=clock)
+        rid = bridge.submit("next_move", {})["request_id"]
+        bridge.next_request("agent-a", wait=False)
+        bridge.complete(rid, "ok", {}, "")
+        clock.advance(workbench.AGENT_RESULT_TTL + 1)
+        outcome, _ = bridge.get_result(rid)
+        self.assertEqual(outcome, "gone")
+
+    def test_complete_after_ttl_returns_gone(self):
+        clock = FakeClock()
+        bridge = make_bridge(clock=clock)
+        rid = bridge.submit("next_move", {})["request_id"]
+        bridge.next_request("agent-a", wait=False)
+        bridge.complete(rid, "ok", {}, "")
+        clock.advance(workbench.AGENT_RESULT_TTL + 1)
+        self.assertEqual(bridge.complete(rid, "ok", {}, "late"), "gone")
+
+    def test_ttl_sweep_runs_on_submit_and_next(self):
+        clock = FakeClock()
+        bridge = make_bridge(clock=clock)
+        rid = bridge.submit("next_move", {})["request_id"]
+        bridge.next_request("agent-a", wait=False)
+        bridge.complete(rid, "ok", {}, "")
+        clock.advance(workbench.AGENT_RESULT_TTL + 1)
+        bridge.submit("explain", {})          # submit 触发清扫
+        self.assertEqual(bridge.status()["results_ready"], 0)
+        self.assertEqual(bridge.complete(rid, "ok", {}, "late"), "gone")
+
+    def test_status_diagnostics(self):
+        bridge = make_bridge()
+        for kind in workbench.AGENT_KINDS:
+            bridge.submit(kind, {})
+        bridge.next_request("agent-a", wait=False)
+        status = bridge.status()
+        self.assertEqual(status["queue_depth"], 3)
+        self.assertEqual(status["in_flight"], 1)
+        self.assertEqual(status["results_ready"], 0)
+        self.assertEqual(status["tracked_requests"], 4)
+        self.assertEqual(status["kinds"], list(workbench.AGENT_KINDS))
+
+
+class AgentBridgeHttpTests(unittest.TestCase):
+    """Agent 桥端点：request / next / result / heartbeat / status。"""
+
+    def test_request_unknown_kind_400(self):
+        with ServerFixture() as fx:
+            for kind in ("bogus", None):
+                status, payload = fx.post_obj(
+                    "/api/agent/request", {"kind": kind, "payload": {}})
+                self.assertEqual(status, 400, kind)
+                self.assertEqual(payload["error"]["type"], "BadRequest")
+
+    def test_request_bad_payload_400(self):
+        with ServerFixture() as fx:
+            status, payload = fx.post_obj(
+                "/api/agent/request",
+                {"kind": "explain", "payload": "not-a-dict"})
+            self.assertEqual(status, 400)
+            status, payload = fx.post_obj("/api/agent/request",
+                                          raw='"just a string"')
+            self.assertEqual(status, 400)
+
+    def test_request_ok_then_agent_next_claims(self):
+        with ServerFixture() as fx:
+            status, out = fx.post_obj("/api/agent/request",
+                                      {"kind": "next_move",
+                                       "payload": {"note": "suggestion?"}})
+            self.assertEqual(status, 200)
+            rid = out["request_id"]
+            self.assertTrue(out["queued_at"])
+            status, claimed = fx.get_json("/api/agent/next?agent=kimi")
+            self.assertEqual(status, 200)
+            self.assertEqual(claimed["status"], "ok")
+            self.assertEqual(claimed["request"]["request_id"], rid)
+            self.assertEqual(claimed["request"]["payload"], {"note": "suggestion?"})
+
+    def test_next_wait0_returns_wait_immediately(self):
+        with ServerFixture() as fx:
+            status, payload = fx.get_json("/api/agent/next?agent=kimi&wait=0")
+            self.assertEqual(status, 200)
+            self.assertEqual(payload, {"status": "wait"})
+
+    def test_result_unknown_id_404(self):
+        with ServerFixture() as fx:
+            status, payload = fx.post_obj(
+                "/api/agent/result",
+                {"request_id": "req-999", "status": "ok", "result": {}})
+            self.assertEqual(status, 404)
+            self.assertEqual(payload["error"]["type"], "NotFoundError")
+
+    def test_result_bad_body_400(self):
+        with ServerFixture() as fx:
+            for body in ({}, {"request_id": "req-1"},
+                         {"request_id": "req-1", "status": "maybe"},
+                         {"request_id": "", "status": "ok"},
+                         {"request_id": "req-1", "status": "ok", "result": []}):
+                status, payload = fx.post_obj("/api/agent/result", body)
+                self.assertEqual(status, 400, body)
+                self.assertEqual(payload["error"]["type"], "BadRequest")
+
+    def test_result_before_claim_409(self):
+        with ServerFixture() as fx:
+            _, out = fx.post_obj("/api/agent/request",
+                                 {"kind": "next_move", "payload": {}})
+            status, payload = fx.post_obj(
+                "/api/agent/result",
+                {"request_id": out["request_id"], "status": "ok", "result": {}})
+            self.assertEqual(status, 409)
+            self.assertEqual(payload["error"]["type"], "ResultConflictError")
+
+    def test_full_roundtrip_web_agent_web(self):
+        with ServerFixture() as fx:
+            _, out = fx.post_obj("/api/agent/request",
+                                 {"kind": "novel_synergies",
+                                  "payload": {"theme": "graveyard"}})
+            rid = out["request_id"]
+            status, pending = fx.get_json("/api/agent/result/{}".format(rid))
+            self.assertEqual(status, 202)
+            self.assertEqual(pending, {"status": "pending", "request_id": rid})
+            status, claimed = fx.get_json("/api/agent/next?agent=kimi&wait=0")
+            self.assertEqual(claimed["status"], "ok")
+            status, done = fx.post_obj(
+                "/api/agent/result",
+                {"request_id": rid, "status": "ok",
+                 "result": {"synergies": ["A + B"]},
+                 "message": "两个协同均经 /api/find 核验"})
+            self.assertEqual(status, 200)
+            status, view = fx.get_json("/api/agent/result/{}".format(rid))
+            self.assertEqual(status, 200)
+            self.assertEqual(view["status"], "ok")
+            self.assertEqual(view["result"], {"synergies": ["A + B"]})
+            self.assertEqual(view["agent"], "kimi")
+            # 重复提交 → 409
+            status, payload = fx.post_obj(
+                "/api/agent/result",
+                {"request_id": rid, "status": "ok", "result": {}})
+            self.assertEqual(status, 409)
+
+    def test_get_result_unknown_404(self):
+        with ServerFixture() as fx:
+            status, payload = fx.get_json("/api/agent/result/req-42")
+            self.assertEqual(status, 404)
+            self.assertEqual(payload["error"]["type"], "NotFoundError")
+
+    def test_result_ttl_expired_410(self):
+        state = workbench.WorkbenchState()
+        clock = FakeClock()
+        state.bridge = make_bridge(clock=clock)
+        with ServerFixture(state) as fx:
+            _, out = fx.post_obj("/api/agent/request",
+                                 {"kind": "next_move", "payload": {}})
+            rid = out["request_id"]
+            fx.get_json("/api/agent/next?agent=kimi&wait=0")
+            fx.post_obj("/api/agent/result",
+                        {"request_id": rid, "status": "ok", "result": {}})
+            clock.advance(workbench.AGENT_RESULT_TTL + 1)
+            status, payload = fx.get_json("/api/agent/result/{}".format(rid))
+            self.assertEqual(status, 410)
+            self.assertEqual(payload["error"]["type"], "ResultExpiredError")
+            status, payload = fx.post_obj(
+                "/api/agent/result",
+                {"request_id": rid, "status": "ok", "result": {}, "message": "late"})
+            self.assertEqual(status, 410)
+
+    def test_heartbeat_endpoint_ok_and_conflict(self):
+        with ServerFixture() as fx:
+            _, out = fx.post_obj("/api/agent/request",
+                                 {"kind": "next_move", "payload": {}})
+            rid = out["request_id"]
+            status, payload = fx.post_obj("/api/agent/heartbeat",
+                                          {"request_id": rid, "agent": "kimi"})
+            self.assertEqual(status, 409)       # 未认领，不能心跳
+            self.assertEqual(payload["error"]["type"], "HeartbeatConflictError")
+            fx.get_json("/api/agent/next?agent=kimi&wait=0")
+            status, payload = fx.post_obj("/api/agent/heartbeat",
+                                          {"request_id": rid, "agent": "kimi"})
+            self.assertEqual(status, 200)
+            self.assertEqual(payload, {"status": "ok"})
+            status, payload = fx.post_obj("/api/agent/heartbeat",
+                                          {"request_id": rid, "agent": "other"})
+            self.assertEqual(status, 409)
+            status, payload = fx.post_obj("/api/agent/heartbeat",
+                                          {"request_id": "req-999",
+                                           "agent": "kimi"})
+            self.assertEqual(status, 404)
+
+    def test_agent_status_endpoint(self):
+        with ServerFixture() as fx:
+            _, out = fx.post_obj("/api/agent/request",
+                                 {"kind": "explain", "payload": {}})
+            status, payload = fx.get_json("/api/agent/status")
+            self.assertEqual(status, 200)
+            self.assertEqual(payload["queue_depth"], 1)
+            self.assertEqual(payload["in_flight"], 0)
+            self.assertEqual(payload["kinds"], list(workbench.AGENT_KINDS))
+
+    def test_snapshot_contains_bridges_and_avenues_slots(self):
+        with ServerFixture() as fx:
+            status, snap = fx.get_json("/api/snapshot")
+            self.assertEqual(status, 200)
+            self.assertIn("bridges", snap)
+            self.assertEqual(snap["bridges"]["queue_depth"], 0)
+            self.assertIn("avenues", snap)
+            self.assertEqual(snap["avenues"], [])
+
+
+class FindTests(unittest.TestCase):
+    """GET /api/find：包装 mtg_tool.scryfall_search（mock，无网络）。"""
+
+    RAW_CARDS = [{"name": "Bolt A", "cmc": 1, "oracle_id": "o1"},
+                 {"name": "Bolt B", "cmc": 1, "oracle_id": "o2"},
+                 {"name": "Bolt C", "cmc": 2, "oracle_id": "o3"}]
+
+    def _patch_search(self, return_value=None, side_effect=None):
+        return mock.patch.object(
+            mtg_tool, "scryfall_search",
+            return_value=return_value, side_effect=side_effect)
+
+    def test_find_wraps_scryfall_search(self):
+        with self._patch_search((list(self.RAW_CARDS), 3, ["warn-1"])):
+            with ServerFixture() as fx:
+                status, payload = fx.get_json("/api/find?q=f:pioneer&limit=20")
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["status"], "ok")
+        self.assertEqual(payload["total_cards"], 3)
+        self.assertEqual(payload["returned"], 3)
+        self.assertEqual(payload["warnings"], ["warn-1"])
+        self.assertEqual([c["name"] for c in payload["cards"]],
+                         ["Bolt A", "Bolt B", "Bolt C"])
+
+    def test_find_limit_caps_results(self):
+        with self._patch_search((list(self.RAW_CARDS), 3, [])):
+            with ServerFixture() as fx:
+                status, payload = fx.get_json("/api/find?q=f:pioneer&limit=2")
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["returned"], 2)
+        self.assertEqual(payload["total_cards"], 3)   # 总数如实，截断明示
+
+    def test_find_syntax_error_400(self):
+        with self._patch_search(side_effect=mtg_tool.QuerySyntaxError("bad q")):
+            with ServerFixture() as fx:
+                status, payload = fx.get_json("/api/find?q=(((")
+        self.assertEqual(status, 400)
+        self.assertEqual(payload["error"]["type"], "QuerySyntaxError")
+
+    def test_find_network_error_500(self):
+        with self._patch_search(
+                side_effect=mtg_tool.NetworkError("timeout")):
+            with ServerFixture() as fx:
+                status, payload = fx.get_json("/api/find?q=f:pioneer")
+        self.assertEqual(status, 500)
+        self.assertEqual(payload["status"], "error")
+        self.assertIn("find 查询失败", payload["error"]["message"])
+
+    def test_find_empty_hits_ok_empty_list(self):
+        with self._patch_search(([], 0, [])):
+            with ServerFixture() as fx:
+                status, payload = fx.get_json(
+                    "/api/find?q=f:pioneer%20o:definitelynotextant&limit=20")
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["status"], "ok")
+        self.assertEqual(payload["cards"], [])
+        self.assertEqual(payload["returned"], 0)
+
+    def test_find_missing_q_400(self):
+        with ServerFixture() as fx:
+            for path in ("/api/find", "/api/find?q=%20%20"):
+                status, payload = fx.get_json(path)
+                self.assertEqual(status, 400, path)
+                self.assertEqual(payload["error"]["type"], "BadRequest")
+
+    def test_find_bad_limit_400(self):
+        with ServerFixture() as fx:
+            for limit in ("0", "-1", "abc", "99999"):
+                status, payload = fx.get_json("/api/find?q=x&limit=" + limit)
+                self.assertEqual(status, 400, limit)
+                self.assertEqual(payload["error"]["type"], "BadRequest")
+
+
+class AvenueTests(unittest.TestCase):
+    """avenues 反向通路：增 / 列 / 删 / focus / unverified 标记。"""
+
+    BODY = {"title": "低费生物曲线", "note": "aggro 方向",
+            "candidates": [{"name": "Bolt A", "reason": "1费 3/2"}]}
+
+    def test_add_and_list_persisted(self):
+        with ServerFixture() as fx:
+            status, avenue = fx.post_obj("/api/avenues", self.BODY)
+            self.assertEqual(status, 200)
+            self.assertEqual(avenue["title"], "低费生物曲线")
+            self.assertEqual(avenue["candidates"],
+                             [{"name": "Bolt A", "reason": "1费 3/2"}])
+            self.assertFalse(avenue["focused"])
+            status, listed = fx.get_json("/api/avenues")
+            self.assertEqual(status, 200)
+            self.assertEqual(len(listed["avenues"]), 1)
+            self.assertEqual(listed["avenues"][0]["id"], avenue["id"])
+
+    def test_add_missing_title_400(self):
+        with ServerFixture() as fx:
+            for body in ({}, {"title": ""}, {"title": "  "},
+                         {"title": None}, {"note": "只有备注"}):
+                status, payload = fx.post_obj("/api/avenues", body)
+                self.assertEqual(status, 400, body)
+                self.assertEqual(payload["error"]["type"], "BadRequest")
+
+    def test_add_candidate_name_must_be_nonempty_string(self):
+        with ServerFixture() as fx:
+            for candidates in ([{"name": ""}], [{"name": "  "}],
+                               [{"name": None}], [{"reason": "没名字"}],
+                               ["Bolt A"], [{"name": 42}]):
+                body = dict(self.BODY, candidates=candidates)
+                status, payload = fx.post_obj("/api/avenues", body)
+                self.assertEqual(status, 400, candidates)
+                self.assertEqual(payload["error"]["type"], "BadRequest")
+
+    def test_add_note_and_reason_type_checked(self):
+        with ServerFixture() as fx:
+            status, _ = fx.post_obj("/api/avenues", dict(self.BODY, note=123))
+            self.assertEqual(status, 400)
+            status, _ = fx.post_obj(
+                "/api/avenues",
+                {"title": "t", "candidates": [{"name": "X", "reason": 1}]})
+            self.assertEqual(status, 400)
+
+    def test_unverified_card_names_marker(self):
+        with ServerFixture() as fx:
+            status, with_cards = fx.post_obj("/api/avenues", self.BODY)
+            self.assertTrue(with_cards["unverified_card_names"])
+            status, no_cards = fx.post_obj(
+                "/api/avenues", {"title": "无候选", "candidates": []})
+            self.assertFalse(no_cards["unverified_card_names"])
+            status, snap = fx.get_json("/api/snapshot")
+            markers = {a["title"]: a["unverified_card_names"]
+                       for a in snap["avenues"]}
+            self.assertEqual(markers,
+                             {"低费生物曲线": True, "无候选": False})
+
+    def test_delete_avenue_and_unknown_404(self):
+        with ServerFixture() as fx:
+            _, avenue = fx.post_obj("/api/avenues", self.BODY)
+            status, _ = fx.get_json("/api/avenues")
+            self.assertEqual(len(_["avenues"]), 1)
+            status, payload = fx._request(
+                "DELETE", "/api/avenues/" + avenue["id"])
+            self.assertEqual(status, 200)
+            self.assertEqual(json.loads(payload.decode("utf-8"))["status"], "ok")
+            status, listed = fx.get_json("/api/avenues")
+            self.assertEqual(listed["avenues"], [])
+            status, payload = fx._request("DELETE", "/api/avenues/av-999")
+            self.assertEqual(status, 404)
+            self.assertEqual(payload and json.loads(
+                payload.decode("utf-8"))["error"]["type"], "NotFoundError")
+
+    def test_focus_single_highlight(self):
+        with ServerFixture() as fx:
+            _, first = fx.post_obj("/api/avenues", {"title": "A"})
+            _, second = fx.post_obj("/api/avenues", {"title": "B"})
+            status, focused = fx.post_obj(
+                "/api/avenues/{}/focus".format(first["id"]))
+            self.assertEqual(status, 200)
+            self.assertTrue(focused["focused"])
+            status, snap = fx.get_json("/api/snapshot")
+            states = {a["title"]: a["focused"] for a in snap["avenues"]}
+            self.assertEqual(states, {"A": True, "B": False})
+            # 单焦点语义：点亮 B 后 A 熄灭
+            fx.post_obj("/api/avenues/{}/focus".format(second["id"]))
+            status, snap = fx.get_json("/api/snapshot")
+            states = {a["title"]: a["focused"] for a in snap["avenues"]}
+            self.assertEqual(states, {"A": False, "B": True})
+            status, payload = fx.post_obj("/api/avenues/av-999/focus")
+            self.assertEqual(status, 404)
+
+    def test_avenues_visible_in_snapshot(self):
+        with ServerFixture() as fx:
+            fx.post_obj("/api/avenues", self.BODY)
+            status, snap = fx.get_json("/api/snapshot")
+            self.assertEqual(status, 200)
+            self.assertEqual(len(snap["avenues"]), 1)
+            entry = snap["avenues"][0]
+            self.assertEqual(entry["title"], "低费生物曲线")
+            self.assertEqual(entry["candidates"][0]["name"], "Bolt A")
+
+    def test_bad_json_body_400(self):
+        with ServerFixture() as fx:
+            status, payload = fx.post_obj("/api/avenues", raw='"not an object"')
+            self.assertEqual(status, 400)
+
+
+class AdviceTests(unittest.TestCase):
+    """POST /api/advice：嵌入式 LLM 轴（全 mock，无网络）。"""
+
+    CFG = {"base_url": "https://example.test", "model": "test-model",
+           "api_key": "test-key"}
+
+    def _patch_llm(self, chat_return="建议...", chat_side_effect=None):
+        load = mock.patch.object(workbench.AUTO, "load_llm_config",
+                                 return_value=dict(self.CFG))
+        chat = mock.patch.object(workbench.AUTO, "llm_chat",
+                                 return_value=chat_return,
+                                 side_effect=chat_side_effect)
+        return load, chat
+
+    def test_config_missing_offline_with_machine_fallback(self):
+        with mock.patch.object(workbench.AUTO, "load_llm_config",
+                               side_effect=workbench.AUTO.AutoToolError(
+                                   "LLM 配置不存在")):
+            with ServerFixture() as fx:
+                status, payload = fx.post_obj("/api/advice", {})
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["status"], "offline")
+        self.assertIsNone(payload["advice"])
+        self.assertIn("LLM 配置不存在", payload["offline_reason"])
+        self.assertTrue(payload["machine_fallback"])
+
+    def test_env_key_override_success(self):
+        # 真实 load_llm_config：配置文件无 api_key，DEEPSEEK_API_KEY 环境变量覆盖
+        import mtga_auto_tool as auto_tool
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg_path = Path(tmp) / "llm_config.json"
+            cfg_path.write_text(json.dumps(
+                {"base_url": "https://example.test", "model": "env-model"}),
+                encoding="utf-8")
+            with mock.patch.object(workbench, "LLM_CONFIG_JSON", cfg_path), \
+                    mock.patch.dict("os.environ",
+                                    {"DEEPSEEK_API_KEY": "env-key"}), \
+                    mock.patch.object(workbench.AUTO, "llm_chat",
+                                      return_value="env 建议") as chat:
+                with ServerFixture() as fx:
+                    status, payload = fx.post_obj("/api/advice", {})
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["status"], "ok")
+        self.assertEqual(payload["advice"], "env 建议")
+        self.assertEqual(payload["model"], "env-model")
+        self.assertEqual(chat.call_count, 1)
+        cfg_used = chat.call_args[0][0]
+        self.assertEqual(cfg_used["api_key"], "env-key")
+
+    def test_llm_success_advice_unverified(self):
+        load, chat = self._patch_llm(chat_return="1. 加地；2. 剪曲线顶")
+        with load, chat, ServerFixture() as fx:
+            status, payload = fx.post_obj("/api/advice", {})
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["status"], "ok")
+        self.assertEqual(payload["advice"], "1. 加地；2. 剪曲线顶")
+        self.assertFalse(payload["verified"])       # 明示未经工具核验
+        self.assertEqual(payload["model"], "test-model")
+        self.assertIsNone(payload["offline_reason"])
+        self.assertTrue(payload["machine_fallback"])
+
+    def test_llm_http_error_offline_with_fallback(self):
+        load, chat = self._patch_llm(
+            chat_side_effect=workbench.AUTO.AutoToolError("LLM HTTP 500"))
+        with load, chat, ServerFixture() as fx:
+            status, payload = fx.post_obj("/api/advice", {})
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["status"], "offline")
+        self.assertIn("LLM HTTP 500", payload["offline_reason"])
+        self.assertIsNone(payload["advice"])
+        fallback = payload["machine_fallback"]
+        self.assertIn("land_check", fallback)
+        self.assertIn("curve", fallback)
+
+    def test_llm_timeout_offline(self):
+        load, chat = self._patch_llm(chat_side_effect=OSError("timed out"))
+        with load, chat, ServerFixture() as fx:
+            status, payload = fx.post_obj("/api/advice", {})
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["status"], "offline")
+        self.assertIn("timed out", payload["offline_reason"])
+        self.assertTrue(payload["machine_fallback"])
+
+    def test_no_retry_on_failure(self):
+        load, chat = self._patch_llm(
+            chat_side_effect=workbench.AUTO.AutoToolError("boom"))
+        with load, chat as chat_mock, ServerFixture() as fx:
+            fx.post_obj("/api/advice", {})
+        self.assertEqual(chat_mock.call_count, 1)   # 不重试
+
+    def test_machine_fallback_contents(self):
+        state = workbench.WorkbenchState()
+        state.import_text(SAMPLE_TEXT)
+        state._record_slot("roles", {
+            "status": "ok", "checked_at": "t",
+            "result": {"gaps": [{"module": "M1", "have": 0, "want": 8,
+                                 "deficit": 8}]}})
+        fallback = workbench.build_machine_fallback(state)
+        self.assertEqual(fallback["main"], 12)
+        self.assertEqual(fallback["lands"], 7)
+        self.assertEqual(fallback["nonlands"], 5)
+        self.assertEqual(fallback["role_gaps"],
+                         [{"module": "M1", "have": 0, "want": 8,
+                           "deficit": 8}])
+        self.assertIn("land_check", fallback)
+
+    def test_machine_fallback_role_gaps_none_without_slot(self):
+        state = workbench.WorkbenchState()
+        fallback = workbench.build_machine_fallback(state)
+        self.assertIsNone(fallback["role_gaps"])
+        self.assertEqual(fallback["main"], 0)
+
+    def test_advice_prompt_uses_deck_and_cached_roles_only(self):
+        state = workbench.WorkbenchState()
+        state.import_text(SAMPLE_TEXT)
+        state._record_slot("roles", {"status": "ok", "checked_at": "t",
+                                     "result": {"gaps": []}})
+        prompt = workbench.build_advice_prompt(state)
+        self.assertIn("Lightning Bolt", prompt)
+        self.assertIn("land_check", prompt)
+        self.assertIn("角色缺口：无", prompt)
+        empty_prompt = workbench.build_advice_prompt(
+            workbench.WorkbenchState())
+        self.assertIn("当前牌表为空", empty_prompt)
+        self.assertNotIn("角色缺口", empty_prompt)   # 无缓存槽位就不编
+
+    def test_page_renders_agent_section(self):
+        with ServerFixture() as fx:
+            status, body = fx.get("/")
+            self.assertEqual(status, 200)
+            text = body.decode("utf-8")
+            self.assertIn("Agent 桥", text)
+            self.assertIn("/api/agent/request", text)
+            self.assertIn("/api/avenues", text)
+            self.assertIn("/api/advice", text)
+            self.assertIn("/api/find", text)
 
 
 if __name__ == "__main__":
