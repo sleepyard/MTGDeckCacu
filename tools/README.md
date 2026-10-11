@@ -32,6 +32,128 @@ python tools/mtg_tool.py baseline --format pioneer --date 2026-08-08
 
 ---
 
+# tools/mtg_rules_tool.py
+
+综合规则（CR）与逐牌裁定查询，仅 Python 3.7+ 标准库；复用 `mtg_tool` 的 HTTP
+限流、User-Agent 和重试。CR 解析参考
+[mtg-skills 的 rules_lookup.py](https://github.com/dan-blanchard/mtg-skills/blob/eaae97c7b74f016c03a4da99497eb403990a9ee7/mtg-utils/src/mtg_utils/rules_lookup.py)
+（0BSD），已适配本项目缓存、JSON 输出和错误码。
+
+```powershell
+# 首次查询会自动下载 Wizards 官方规则页所链接的最新 CR TXT
+python tools/mtg_rules_tool.py fetch
+python tools/mtg_rules_tool.py rule 702.19 --section
+python tools/mtg_rules_tool.py term trample --json
+python tools/mtg_rules_tool.py grep "replacement effect" --limit 10
+python tools/mtg_rules_tool.py rulings "Slime Against Humanity" --json
+
+# 强制检查更新、纯离线查询、查询指定历史版本
+python tools/mtg_rules_tool.py fetch --refresh
+python tools/mtg_rules_tool.py term trample --offline
+python tools/mtg_rules_tool.py rule 702.19 --rules-file path/to/comprehensive-rules.txt
+
+# 所有子命令均可写完整 JSON；--cache-dir 可隔离缓存
+python tools/mtg_rules_tool.py term trample --json --out AuditReport/trample_rules.json
+```
+
+默认缓存位于 `tools/cache/rules/`：规则 TXT 按生效日期保存，`current.json` 记录
+来源、抓取/检查时间和内容 SHA-256；解析缓存用内容哈希与解析器版本标识。
+规则缓存 24 小时后自动检查更新，逐牌 rulings 缓存 30 天；刷新时会重新取得牌名
+身份与 rulings，避免命中共享 HTTP 层的永久旧缓存。写缓存采用同目录临时文件替换。
+
+成功结果包含 `status`、`source`、`source_url`、`effective_date`、`fetched_at`、
+`freshness`、`stale`、`warnings`。CR 另含 `checked_at`；本地指定文件的来源标为
+`local-cr-file`、新鲜度 `unknown`、`stale: true`，不声称已验证其官方来源或当前版本。
+Scryfall 逐牌裁定保留各条 `source` 和 `published_at`，无统一 CR 生效日期。
+规则查询返回全文、示例和交叉引用；术语查询同时返回其引用的规则。
+`--section` 展开规则的下级条文；`--limit` 控制结果数，超过时输出 `truncated` 与总命中数。
+
+刷新失败而已有有效缓存时返回旧数据，并保留 `stale: true`、警告原因及
+`refresh_failed_at`，直到成功刷新后清除；无可用缓存时
+返回错误。`--offline` 不访问网络；不能同时指定 `--refresh`，指定 `--rules-file`
+时同样不能 `--refresh`。查询未命中为 `status: not_found`；逐牌裁定成功但没有注释
+为 `status: ok`、`ruling_count: 0`；网络失败或响应/分页不完整不会作为零结果放行。
+`--out` 在业务失败时也写入本次错误结果，避免继续读取上次成功的文件。
+
+退出码：`0` 有可用结果（需检查 `stale`），`1` 网络/HTTP/分页失败，`2` 本地文件、
+规则/响应格式、正则或参数错误，`3` 规则/术语/牌名未命中。运行留痕写入现有
+`tools/data/run_log.jsonl`。本工具不合并社区数字机制补充；Arena 数字机制的官方说明
+需单独核验。Agent 入口为 `skills/mtg-rules/SKILL.md`。
+
+回归：`python -m unittest discover -s tools -p test_mtg_rules_tool.py`，HTTP 全 mock。
+
+---
+
+# tools/mtg_combo_tool.py
+
+组合技检索与发现（仅标准库），参考 mtg-skills 的 Spellbook 接入方式，使用
+[官方 API](https://spacecowmedia.github.io/commander-spellbook-backend/api.html)。
+读取牌表统一经 `deck_model`，按 Oracle ID 发送数量；行侣不作为已上场组件。
+
+```powershell
+python tools/mtg_combo_tool.py search deck.txt --format pioneer --platform arena --out AuditReport/combos.json
+python tools/mtg_combo_tool.py search deck.txt --postboard swapped.txt --format pioneer --platform arena
+python tools/mtg_combo_tool.py discover --card "All Will Be One" --format pioneer --platform arena --limit 10
+python tools/mtg_combo_tool.py discover --result "Infinite damage" --colors BR --format pioneer --platform arena
+```
+
+默认平台 `arena`；可选 `paper`、`mtgo`、`any`。`--format` 必填，支持 standard /
+pioneer / explorer / modern / legacy / vintage / commander / brawl / standardbrawl /
+historic / timeless / alchemy / pauper；队列特例、行侣条件和整副牌合法性仍走原工作流。
+`discover --card` 可重复，或使用 `--result`；`--colors` 约束外部搜索的颜色身份。
+
+输出 `main_available`（主牌/指挥官组件齐全）、`sideboard_candidates`（主备合计
+组件齐全，尚无实际换备方案）、`postboard_available`（显式换备后牌表组件齐全）、
+`missing_components`、`needs_verification` 与 `excluded`。`--postboard` 必须保留
+原牌表总库存、各分区张数、指挥官和行侣；仍须复核换备后行侣条件与赛制门禁。
+结果保留每个组件的数量、所在区域与状态、前置条件、启动费用、步骤、结果及来源 URL；
+`rules_verified: false` 表示仅检查组件可用性，尚未证明实战线路。
+
+通用组件模板只确认 AND 连接的类型、Oracle 文本、关键词条件。未知语法、缺少步骤、
+指挥官要求不符或证据陈旧的结果进入待核验；模板与具名组件消耗独立牌张数量。
+当前卡牌合法性由 `mtg_card_facts.py` 查询 Scryfall，平台可用性会查其他印刷，
+不以最新印刷恰好没有 Arena 为由误拒。Commander 类另校验组件颜色身份。
+
+Spellbook 缓存 `tools/cache/combos/`、Oracle 证据缓存 `tools/cache/card_facts/`，
+均为 24 小时有效期；`--offline` 禁止联网，`--refresh` 强制刷新，两者互斥。
+失败且有缓存时显式保留陈旧状态及原因，直到成功刷新；无缓存失败返回错误，不伪装成零结果。
+完整跟随分页，响应不完整或分页失败不写成功缓存；真实牌表接口可能不提供总数
+（`api_count: null`），此时以拉完分页的去重数量为 `variant_count`。
+
+`--limit` 默认只分析 20 个候选，优先 API 报告赛制可用且组件已齐的组，再按热度；
+通过逐牌证据复核后才归类。`truncated`、`analyzed_variant_count`、
+`unexamined_variant_count` 明确报告未分析部分，不能把限制后的空组当作完整结论。
+`--json` 输出完整结构，`--out` 在失败时也写当次错误；退出码 `0` 有可用查询结果、
+`1` 外部请求/分页失败、`2` 输入或响应错误。Agent 规范见 `skills/mtg-combo/SKILL.md`。
+
+---
+
+# tools/mtg_guide_audit.py
+
+打法指南的登记事实复算：牌数/类型数、循环资源费用与收益、重复数字的一致性、
+Oracle/CR 原文引用。仅标准库，牌表使用 `deck_model`，证据复用上面两层缓存。
+
+```powershell
+python tools/mtg_guide_audit.py deck.txt guide.md --claims guide.claims.json --out AuditReport/guide_audit.json
+python tools/mtg_guide_audit.py deck.txt guide.md --claims guide.claims.json --offline --json
+```
+
+claims 格式见 `skills/mtg-guide-review/references/claims.md`：数字用具名捕获组
+`(?P<value>...)` 定位正文与摘要的每次出现，牌数从牌表独立计算；循环按顺序支付、
+检查前提、产生收益，并多轮追踪有限资源。每步引用实际牌名与 Oracle 条款；规则引用
+核对实际 CR 编号与原文。错误包括缺资源、错误数字、重复冲突、引用不符或应有文本缺失。
+JSON 包含定位行、复算值、逐步资源状态与来源证据。
+
+机器 `pass` 限定为 `coverage: registered-claims-only`，始终保留
+`semantic_review_required: true`；有限轮算术不证明无限循环，也不能自动理解未登记
+自然语言、条件色源、合法目标、时序或译文。整篇核验由
+`skills/mtg-guide-review/SKILL.md` 逐项审阅、修正所有重复位置并列出残余限制。
+退出码 `0` 登记项通过、`1` 网络失败、`2` 输入错误/证据不完整、`4` 登记项失败。
+
+回归测试：`test_mtg_combo_tool.py` / `test_mtg_guide_audit.py`，HTTP 全 mock。
+
+---
+
 # tools/mcp_server.py
 
 MCP server（stdio，零依赖）：把只读 CLI 能力以 MCP 工具形式暴露给聊天型 Agent 客户端（CherryStudio / WorkBuddy / DeepSeek Harness 等）。协议为换行分隔的 JSON-RPC 2.0，实现 initialize / ping / tools/list / tools/call 最小集；工具执行 = 子进程调用对应 CLI（UTF-8 强制、180s 超时、50K 字符截断），非零退出码映射 `isError`。暴露 6 个只读工具：`mtg_search` / `mtg_check` / `mtg_baseline` / `deck_validate` / `deck_cost` / `rot_audit`。有 Shell 能力的编程 Agent 直接用 CLI + `skills/`，无需经此。
@@ -59,6 +181,8 @@ MCP server（stdio，零依赖）：把只读 CLI 能力以 MCP 工具形式暴�
 
 DeckPooper 的限制赛组牌入口（P1）。它要求本地预生成评分表，并只接受牌池文本或
 含 `DraftStatus=Complete/Completed` 的轮抓录样 JSONL；没有终态牌池时不会使用中间态数据。
+
+限制赛组牌纪律：通常按 **17 地 + 24 张其他牌 = 41 张**组牌，最终交付 **41/40 张**均可，注明实际组成和最后一张的取舍理由（详见 `draft_methodology.md` §4）。CLI 当前默认总张数为 40；生成 41 张候选可加 `--deck-size 41`，地数仍需按实际输出复核。
 
 ```bash
 python tools/deck_pooper.py limited --pool pool.txt --set HOB \
@@ -239,7 +363,7 @@ python tools/mtga_auto_tool.py draft --watch [--set HOB] [--port 8643]
 - `advise` 对局结束自动检测：增量载荷出现 finalMatchResult 即播报比分胜负并自动执行 scan+opponent+replay+risk 回收（启动追平的历史载荷不触发，避免重复回收）。
 - `advise --llm` 口径：局面快照由日志精确重建（双方战场/堆叠/坟墓场、我方手牌逐牌附费用+类型+oracle 文本、生命、回合阶段、我方未横置地数与本回合是否已下地、**服务器判定的当前合法动作列表**（actionsAvailableReq，含结构化费用，施放/下地/异能/历险施放——LLM 建议只允许从中选择，费用幻觉的事实锚点；Activate_Mana/FloatMana 噪音已过滤）），oracle 文本走 Scryfall 磁盘缓存、战场牌截断 800 字符（截太短会切掉关键异能——The Great Henge 抓牌触发器、Hunter's Talent 三级抓牌条款两次实测踩坑）；历险/MDFC 子物件（带 parentId 的影子物件）一律排除，不污染战场与手牌计数；grpId 未解析的物件按 superTypes/cardTypes/subtypes 降级渲染（如"未解析 Basic Land Forest #100131"），禁止 LLM 安牌名。**对手手牌只报张数并显式标注"身份未知，禁止假设具体牌"**——服务器未下发的信息模型无从得知，prompt 层强制防脑补。LLM 建议连同完整快照落盘 `tools/auto/llm_advice.jsonl`（含 prompt 字段，供赛后诊断 AI 到底"看到"了什么）。LLM 配置 `tools/llm_config.json`（OpenAI 兼容端点，默认 DeepSeek `deepseek-chat`，可改 `deepseek-reasoner` 换推理强度换延迟；`api_key` 可用环境变量 `DEEPSEEK_API_KEY` 覆盖；该文件已被 .gitignore 排除，**不得提交**）。
 - Windows 控制台中文输出需 `PYTHONIOENCODING=utf-8`（同既有工具坑位）。
-- 轮抓 `draft --watch` 面板口径：启动先回扫日志最后 200KB 恢复当前包状态，抓不到就等下一条；每条 BotDraftDraftStatus 响应更新包号/抓号/当前包/已抓池并在控制台打印 `[draft] P<包>Pick<抓> 包内 N 张 | 已抓 M 张`；排名主键字母等级（S→F，mtga_draft_tool 预生成评分表）、次键社区分，curve_fit（deck_core）作第三参考提示（补 N 费缺口/N 费已溢出）；未评级牌显示 `?` 排最后，grpId 解析失败显示 `<grpId N>`，均不丢牌；DraftStatus 非 PickNext（如 Complete/Completed）时面板只显示对应状态。17Lands 数据（`load_ratings`，Quick/Premier 按 EventName 推导）已进入推荐：signal 轴按真实 ALSA 判定颜色开放（无 ALSA 时降级为本包高等级牌计数快照），LLM 离线 raw_power 锚点按 0.6 等级 + 0.4 GIH 归一化（deck_core.gih_anchor，按系列非空 GIH WR 的 min/max 线性归一到 0..1）混合，LLM prompt 行附 `gih_wr_pct` 百分比，面板两套表在"社区分"后加 GIH 列（无数据显示 `-`）；17Lands 不可用（无网/无缓存/无系列码）时锚点退回纯等级、signal 轴退回等级锚点、GIH 列全 `-`，只告警不阻断轮抓。推荐为九轴 WASPAS（新增确定性 color_fit 主色契合轴：已抓有色 ≥5 张后，牌色 ⊆ 计数前二主色 1.0 / 有交集 0.5 / 完全脱色 0.15 / 无色 0.6 / 方向未明 0.5；权重见 draft_methodology.md §2），离线理由附「贴合主色/脱离主色」。pick 推荐 prompt 已瘦身（oracle_text 截 300 字符、已抓牌池改摘要 JSON：colors/curve/key_cards 封顶 10，并要求脱色牌 synergy ≤0.3），调用强制 `response_format=json_object`（`parse_llm_scores` 兼容裸数组与 {"picks": [...]} 两种顶层形态，防 2026-09 实测的空体解析失败）。LLM 推荐状态为 offline 时（单次失败即锁定，下一抓自动重试），可点面板"重试推荐"按钮（POST `/api/advice/retry`）立即重推当前包。
+- 轮抓 `draft --watch` 面板口径：启动先回扫日志最后 200KB 恢复当前包状态，抓不到就等下一条；每条 BotDraftDraftStatus 响应更新包号/抓号/当前包/已抓池并在控制台打印 `[draft] P<包>Pick<抓> 包内 N 张 | 已抓 M 张`；排名主键字母等级（S→F，mtga_draft_tool 预生成评分表）、次键社区分，curve_fit（deck_core）作第三参考提示（补 N 费缺口/N 费已溢出）；未评级牌显示 `?` 排最后，grpId 解析失败显示 `<grpId N>`，均不丢牌；DraftStatus 非 PickNext（如 Complete/Completed）时面板只显示对应状态。17Lands 数据（`load_ratings`，Quick/Premier 按 EventName 推导）已进入推荐：signal 轴按真实 ALSA 判定颜色开放（无 ALSA 时降级为本包高等级牌计数快照），LLM 离线 raw_power 锚点按 0.6 等级 + 0.4 GIH 归一化（deck_core.gih_anchor，按系列非空 GIH WR 的 min/max 线性归一到 0..1）混合，LLM prompt 行附 `gih_wr_pct` 百分比，面板两套表在"社区分"后加 GIH 列（无数据显示 `-`）；17Lands 不可用（无网/无缓存/无系列码）时锚点退回纯等级、signal 轴退回等级锚点、GIH 列全 `-`，只告警不阻断轮抓。推荐为九轴 WASPAS（新增确定性 color_fit 主色契合轴：已抓有色 ≥5 张后，牌色 ⊆ 计数前二主色 1.0 / 有交集 0.5 / 完全脱色 0.15 / 无色 0.6 / 方向未明 0.5；权重见 draft_methodology.md §2），离线理由附「贴合主色/脱离主色」。pick 推荐 prompt 已瘦身（oracle_text 截 300 字符、已抓牌池改摘要 JSON：colors/curve/key_cards 封顶 10，并要求脱色牌 synergy ≤0.3），调用强制 `response_format=json_object`（`parse_llm_scores` 兼容裸数组与 {"picks": [...]} 两种顶层形态，防 2026-09 实测的空体解析失败）。LLM 推荐状态为 offline 时（单次失败即锁定，下一抓自动重试），可点面板"重试推荐"按钮（POST `/api/advice/retry`）立即重推当前包。外部锚点（17Lands 之外三路，`mtga_draft_tool.load_external_anchors` 聚合：MTGA Assistant AI/Pro 双 0-5 评分缓存 1 天、draftsim pick order 评分缓存 3 天、17Lands public dataset 自算 ATA/ASA 缓存 7 天，单源失败只告警）在 GIH 缺失时按 0.6 等级 + 0.4 外部均值混入离线 raw_power 锚点，面板"外部"列以 `A·P·D·T` 紧凑标签展示（A=Assistant AI · P=Pro · D=draftsim · T=自算 ATA）；基本地不参与推荐（不进 prompt、综合分置空沉底，理由"基本地不参与轮抓推荐"）。
 - 回归测试：`python tools/test_mtga_auto.py`（63 例，覆盖增量读取/截断、分块 JSON 提取、状态跟踪（含 Bo3 局级隔离/deckMessage 牌表事实源/主阶段 step 清理）、调度口径、快照渲染、LLM 客户端与配置加载（含 response_format 透传）、watch/run/draft 录样与 pick 面板状态机（字符串化 Payload 解析/pack-pick 推进/排名渲染/17Lands GIH-ALSA 注入与失败降级/json_object 强制）；网络与子进程全部 mock，不触真实 MTGA/LLM）。
 
 ## 退出码
@@ -275,10 +399,11 @@ python tools/mtga_draft_tool.py ratings --set FDN [--format QuickDraft] [--refre
 
 # tools/mtga_db_tool.py
 
-MTGA 客户端卡库直查：读取客户端 SQLite 卡库（`Raw_CardDatabase_*.mtga`），自动嗅探表 / 列结构，按 grpId 反查英文牌名 / 系列 / 编号 / 稀有度，作 Scryfall 查不到 arena_id 时的兜底数据源。仅 Python 标准库。
+MTGA 客户端卡库直查：读取客户端 SQLite 卡库（`Raw_CardDatabase_*.mtga`），自动嗅探表 / 列结构，按 grpId 反查英文牌名 / 系列 / 编号 / 稀有度，作 Scryfall 查不到 arena_id 时的兜底数据源。卡库路径可自动定位（注册表 SteamPath + libraryfolders.vdf 扫描各 Steam 库，取最新一份；环境变量 `MTGA_CARD_DATABASE` 可指定文件覆盖），并已接入 `mtga_log_tool.resolve_grp_meta`：Scryfall 无 arena_id（新系列上线初期）时自动经客户端卡库反查牌名并升级 grp 缓存。仅 Python 标准库。
 
 ```bash
-# 1. 按 grpId 反查牌名 / 系列 / 编号 / 稀有度
+# 1. 按 grpId 反查牌名 / 系列 / 编号 / 稀有度（auto = 自动定位卡库）
+python tools/mtga_db_tool.py auto 12345 67890
 python tools/mtga_db_tool.py "C:\path\to\Raw_CardDatabase_xxx.mtga" 12345 67890
 
 # 2. 无 grpId 时列出库内表名（用于嗅探结构）

@@ -80,7 +80,7 @@ python tools/deck_pooper.py draft --watch --set HOB --llm --port 8643
 | `AGENTS.md` | 仓库规范：结构、命令、风格、测试与提交约定 |
 | `CONTRIBUTING.md` | 贡献指南：反馈通道、PR 要求、升级方式 |
 | `CHANGELOG.md` | 版本变更记录 |
-| `skills/` | Agent 技能权威源（mtg-deckbuilding / mtg-set-review / mtg-limited-draft） |
+| `skills/` | Agent 技能权威源（构筑、系列评测、限制赛、规则查询、组合技检索与指南核验） |
 | `tools/README.md` | 工具手册：每个脚本的口径与用法 |
 | `MtgDeckCacuWorkFlow.md` | 构筑工作流（阶段 0–5 全流程规范） |
 | `MtgSetReviewWorkFlow.md` / `MtgSetReviewTemplate.md` | 新系列评测工作流与模板 |

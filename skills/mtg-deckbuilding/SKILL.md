@@ -12,6 +12,9 @@ whenToUse: 用户要求构筑新套牌、优化既有牌表、按主题种子补
 
 历史任务沉淀的关键教训，优先于记忆执行：
 
+- **规则与配合核验**：涉及堆叠、时序、替代效应、层或关键词交互时，按 `skills/mtg-rules/SKILL.md` 查询 `tools/mtg_rules_tool.py` 的官方 CR 原文和逐牌 rulings，记录来源与规则生效日期；陈旧缓存须标注，不凭记忆填写规则编号。
+- **组合技候选**：主题涉及组合技时，按 `skills/mtg-combo/SKILL.md` 查询 Spellbook；主牌已有、明确换备后可用、主备合计候选与缺组件分开报告，核对数量、前提和区域。命中仅作配合证据，不自动认可规则线路或替换牌表。
+- **指南事实核验**：交付留牌/打法指南或修订配合说明前，按 `skills/mtg-guide-review/SKILL.md` 独立核对牌数、色源条件、循环费用/收益及各章节重复结论；可登记 claims 用 `tools/mtg_guide_audit.py` 复算，机器通过仅覆盖登记项，仍需逐项规则适用性审阅。
 - **牌名锚点先行校验**：主题是具体牌名时（中英文皆可），先 mtgch 反查英文名 + `check` 核对赛制/平台，落到唯一卡牌再开工。"反人淤泥"= Slime Against Humanity 这类中文牌名容易被误读成主题描述。
 - **Explorer 合法性推导**：Scryfall 无 explorer 字段；`--format explorer` 已由工具按先驱别名推导，但 BO1/队列特例禁牌（如 Tibalt's Trickery）仍需人工查官方公告。
 - **"任意张数"牌**：Slime Against Humanity / Hare Apparent / Rat Colony 类牌面允许任意张数，`validate` 已支持自动豁免，不要误判违规。

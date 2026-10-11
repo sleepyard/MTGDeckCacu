@@ -1,0 +1,31 @@
+{
+  "count": 1,
+  "next": null,
+  "previous": null,
+  "results": {
+    "identity": "BR",
+    "included": [],
+    "includedByChangingCommanders": [],
+    "almostIncluded": [{
+      "id": "synthetic-alpha-beta",
+      "uses": [
+        {"card": {"name": "Alpha Engine"}, "quantity": 1, "mustBeCommander": false, "zoneLocations": ["B"]},
+        {"card": {"name": "Beta Trigger"}, "quantity": 1, "mustBeCommander": false, "zoneLocations": ["B"]}
+      ],
+      "requires": [],
+      "produces": [{"feature": {"name": "Synthetic resource gain"}, "quantity": 1}],
+      "manaNeeded": "{2}",
+      "manaValueNeeded": 2,
+      "easyPrerequisites": "Both components on the battlefield.",
+      "notablePrerequisites": "Synthetic fixture, not a real Magic combo.",
+      "description": "Perform the synthetic steps in order.",
+      "notes": "Test data only.",
+      "legalities": {"pioneer": true},
+      "identity": "BR",
+      "popularity": 10
+    }],
+    "almostIncludedByAddingColors": [],
+    "almostIncludedByChangingCommanders": [],
+    "almostIncludedByAddingColorsAndChangingCommanders": []
+  }
+}

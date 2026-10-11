@@ -103,23 +103,10 @@ def _is_retryable(status):
     return status == 429 or status >= 500
 
 
-def http_get_json(url, service, params=None, use_cache=True, timeout=30,
-                  offline=False):
-    """GET JSON：缓存 -> 节流 -> UA 请求 -> 429/5xx 指数退避重试。
-
-    返回 (http_status, payload)。2xx/4xx 确定性响应（含 404）会被缓存；
-    429/5xx 最终失败不缓存（避免旧失败永久命中）。
-    offline=True 时只读磁盘缓存，未命中直接抛 HttpError（pilot 等实时
-    循环用——一张未缓存的牌不能阻塞 31s 重试）。"""
+def http_request_text(url, params=None, timeout=30, accept="text/plain",
+                      method="GET", data=None):
+    """Shared throttle/retry transport; POST callers must use read-only endpoints."""
     params = params or {}
-    cpath = _cache_path(service, "GET", url, params)
-    if use_cache and os.path.exists(cpath):
-        with open(cpath, "r", encoding="utf-8") as fh:
-            entry = json.load(fh)
-        return entry["http_status"], entry["payload"]
-    if offline:
-        raise HttpError(f"offline 模式缓存未命中: {url}")
-
     full_url = url + ("?" + urllib.parse.urlencode(params) if params else "")
     attempt = 0
     delay = 1.0
@@ -127,8 +114,11 @@ def http_get_json(url, service, params=None, use_cache=True, timeout=30,
         _throttle()
         req = urllib.request.Request(
             full_url,
-            headers={"User-Agent": USER_AGENT, "Accept": "application/json"},
+            headers={"User-Agent": USER_AGENT, "Accept": accept},
+            method=method, data=data,
         )
+        if data is not None:
+            req.add_header("Content-Type", "application/json")
         try:
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 _last_request_at[0] = time.monotonic()
@@ -163,6 +153,45 @@ def http_get_json(url, service, params=None, use_cache=True, timeout=30,
             raise NetworkError(f"网络请求失败（重试 {MAX_RETRIES} 次后放弃）: {full_url}: {exc}") from exc
         break
 
+    if _is_retryable(status):
+        raise HttpError(f"HTTP {status}（重试 {MAX_RETRIES} 次后仍失败）: {full_url}")
+    return status, body
+
+
+def http_get_text(url, params=None, timeout=30, accept="text/plain"):
+    """GET text through the shared throttle/retry transport; no disk cache."""
+    return http_request_text(url, params, timeout, accept)
+
+
+def http_post_json(url, payload, params=None, timeout=30):
+    """Read-only JSON POST without caching; service callers own cache freshness."""
+    encoded = json.dumps(payload, ensure_ascii=True).encode("utf-8")
+    status, body = http_request_text(url, params, timeout, "application/json", "POST", encoded)
+    try:
+        return status, json.loads(body)
+    except ValueError as exc:
+        raise HttpError("Non-JSON POST response: " + url) from exc
+
+
+def http_get_json(url, service, params=None, use_cache=True, timeout=30,
+                  offline=False):
+    """GET JSON：缓存 -> 节流 -> UA 请求 -> 429/5xx 指数退避重试。
+
+    返回 (http_status, payload)。2xx/4xx 确定性响应（含 404）会被缓存；
+    429/5xx 最终失败不缓存（避免旧失败永久命中）。
+    offline=True 时只读磁盘缓存，未命中直接抛 HttpError（pilot 等实时
+    循环用——一张未缓存的牌不能阻塞 31s 重试）。"""
+    params = params or {}
+    cpath = _cache_path(service, "GET", url, params)
+    if use_cache and os.path.exists(cpath):
+        with open(cpath, "r", encoding="utf-8") as fh:
+            entry = json.load(fh)
+        return entry["http_status"], entry["payload"]
+    if offline:
+        raise HttpError(f"offline 模式缓存未命中: {url}")
+
+    full_url = url + ("?" + urllib.parse.urlencode(params) if params else "")
+    status, body = http_get_text(url, params, timeout, accept="application/json")
     try:
         payload = json.loads(body)
     except json.JSONDecodeError:
@@ -179,8 +208,6 @@ def http_get_json(url, service, params=None, use_cache=True, timeout=30,
         with open(cpath, "w", encoding="utf-8") as fh:
             json.dump(entry, fh, ensure_ascii=False, indent=1)
 
-    if _is_retryable(status):
-        raise HttpError(f"HTTP {status}（重试 {MAX_RETRIES} 次后仍失败）: {full_url}")
     return status, payload
 
 

@@ -36,6 +36,9 @@ tools/testdata/*
 !tools/testdata/mtga_log_sample2.txt
 !tools/testdata/mtga_inventory_sample.txt
 !tools/testdata/mtga_inventory_summary_only.txt
+!tools/testdata/comprehensive_rules_sample.txt
+!tools/testdata/spellbook_combo_sample.json
+!tools/testdata/guide_claims_sample.json
 !tools/testdata/decklists/
 
 # MTGA 客户端提取的野卡图标（WotC 素材，不随仓库分发；
