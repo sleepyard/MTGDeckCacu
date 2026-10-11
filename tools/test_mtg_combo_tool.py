@@ -206,6 +206,66 @@ class TestAvailability(TestCase):
             with self.subTest(quantity=quantity), self.assertRaises(ValueError):
                 self.analyze("Deck\n1 Alpha Engine\n1 Beta Trigger", variant)
 
+    def test_offline_uncached_component_degrades_only_that_combo(self):
+        second = copy.deepcopy(VARIANT)
+        second["id"], second["popularity"] = "second", 20
+        second["uses"][0] = dict(second["uses"][0], card={"name": "Gamma Piece"})
+
+        def get(name, *args, **kwargs):
+            if name == "Gamma Piece":
+                raise mtg_tool.HttpError("No card evidence cache in offline mode: " + name)
+            return evidence(name)
+
+        with mock.patch.object(facts, "card_facts", side_effect=get):
+            result = combos.analyze(deck("Deck\n1 Alpha Engine\n1 Beta Trigger"),
+                                    response(copy.deepcopy(VARIANT), second), "pioneer", offline=True)
+        self.assertEqual(len(result["needs_verification"]), 1)
+        self.assertEqual(result["needs_verification"][0]["id"], "second")
+        self.assertIn("Gamma Piece", result["needs_verification"][0]["evidence_error"])
+        self.assertEqual(len(result["main_available"]), 1)
+        self.assertTrue(any("downgraded to needs_verification" in warning for warning in result["warnings"]))
+
+    def test_unknown_component_card_degrades_to_needs_verification(self):
+        def get(name, *args, **kwargs):
+            if name == "Gamma Piece":
+                raise mtg_tool.CardNotFound("Card not found: " + name)
+            return evidence(name)
+
+        variant = copy.deepcopy(VARIANT)
+        variant["uses"][0] = dict(variant["uses"][0], card={"name": "Gamma Piece"})
+        with mock.patch.object(facts, "card_facts", side_effect=get):
+            result = combos.analyze(deck("Deck\n1 Alpha Engine\n1 Beta Trigger"),
+                                    response(variant), "pioneer")
+        self.assertEqual(len(result["needs_verification"]), 1)
+        self.assertIn("not found", result["needs_verification"][0]["evidence_error"])
+        self.assertEqual(result["main_available"], [])
+
+    def test_online_channel_failure_still_aborts_the_query(self):
+        def get(name, *args, **kwargs):
+            if name == "Gamma Piece":
+                raise mtg_tool.HttpError("Scryfall HTTP 503: /cards/named")
+            return evidence(name)
+
+        variant = copy.deepcopy(VARIANT)
+        variant["uses"][0] = dict(variant["uses"][0], card={"name": "Gamma Piece"})
+        with mock.patch.object(facts, "card_facts", side_effect=get):
+            with self.assertRaises(mtg_tool.HttpError):
+                combos.analyze(deck("Deck\n1 Alpha Engine\n1 Beta Trigger"), response(variant), "pioneer")
+
+    def test_all_variants_degraded_warns_that_evidence_is_unavailable(self):
+        def get(name, *args, **kwargs):
+            raise mtg_tool.HttpError("No card evidence cache in offline mode: " + name)
+
+        variant = copy.deepcopy(VARIANT)
+        variant["uses"][0] = dict(variant["uses"][0], card={"name": "Gamma Piece"})
+        deck_evidence = {name: evidence(name) for name in ("Alpha Engine", "Beta Trigger")}
+        with mock.patch.object(facts, "card_facts", side_effect=get):
+            result = combos.analyze(deck("Deck\n1 Alpha Engine\n1 Beta Trigger"),
+                                    response(variant), "pioneer", offline=True,
+                                    deck_evidence=deck_evidence)
+        self.assertEqual(len(result["needs_verification"]), 1)
+        self.assertTrue(any("nothing could be verified" in warning for warning in result["warnings"]))
+
 
 class TestApiCache(TestCase):
     def fetch(self, page=None, **kwargs):
@@ -370,6 +430,27 @@ class TestCli(TestCase):
             code = combos.main(["discover", "--card", "Alpha Engine", "--format", "unknown", "--json"])
         request.assert_not_called()
         self.assertEqual(code, 2)
+
+    def test_text_output_reports_truncation_only_when_truncated(self):
+        source = self.cache / "deck.txt"
+        source.write_text("Deck\n1 Alpha Engine", encoding="utf-8")
+
+        def run(truncated):
+            payload = {"variant_count": 3, "stale": False, "truncated": truncated,
+                       "analyzed_variant_count": 2, "unexamined_variant_count": 1,
+                       "group_counts": {key: 0 for key in combos.OUTPUT_BUCKETS}, "warnings": []}
+            payload.update({key: [] for key in combos.OUTPUT_BUCKETS})
+            stream = io.StringIO()
+            with mock.patch.object(combos, "search_deck", return_value=payload), contextlib.redirect_stdout(stream):
+                code = combos.main(["search", str(source), "--format", "pioneer"])
+            return code, stream.getvalue()
+
+        code, output = run(True)
+        self.assertEqual(code, 0)
+        self.assertIn("1 unexamined (truncated)", output)
+        code, output = run(False)
+        self.assertEqual(code, 0)
+        self.assertNotIn("truncated", output)
 
 
 if __name__ == "__main__":

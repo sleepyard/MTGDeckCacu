@@ -23,6 +23,15 @@ OPERATORS = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mu
              ast.FloorDiv: operator.floordiv}
 MAX_VALUE = 10 ** 12
 
+# Allowed keys per claim group; anything else is a structured input error so a
+# misspelled optional key cannot silently fall back to a default.
+CLAIM_KEYS = {
+    "counts": {"id", "sections", "cards", "type_pattern", "face", "unique", "text_patterns"},
+    "loops": {"id", "initial", "iterations", "steps", "resource", "metric", "text_patterns"},
+    "rules": {"id", "number", "quote"},
+}
+LOOP_STEP_KEYS = {"card", "oracle_quote", "require", "pay", "gain"}
+
 
 def _integer(value, name, minimum=0):
     if isinstance(value, bool) or not isinstance(value, int) or not minimum <= value <= MAX_VALUE:
@@ -120,7 +129,13 @@ def _count(deck, claim, evidence):
         known = {name.casefold() for _, name, _ in deck.entries()}
         if not allowed.issubset(known):
             raise ValueError("Count claim names are absent from the deck: " + ", ".join(sorted(allowed - known)))
-    type_pattern = re.compile(claim["type_pattern"], re.I) if "type_pattern" in claim else None
+    type_pattern = None
+    if "type_pattern" in claim:
+        try:
+            type_pattern = re.compile(claim["type_pattern"], re.I)
+        except re.error as exc:
+            raise ValueError("Count claim {} has an invalid type_pattern {!r}: {}".format(
+                claim.get("id"), claim["type_pattern"], exc)) from exc
     if claim.get("face", "front") not in ("front", "any"):
         raise ValueError("Count claim face must be front or any")
     quantity, matched, seen = 0, [], set()
@@ -149,13 +164,17 @@ def _count(deck, claim, evidence):
     return quantity, matched
 
 
-def _text_checks(text, claim, expected):
+def _text_checks(text, claim, expected, claim_id=None):
     patterns = claim.get("text_patterns")
     if not isinstance(patterns, list) or not patterns or not all(isinstance(pattern, str) for pattern in patterns):
         raise ValueError("Every count/loop claim needs text_patterns with a named value group")
     occurrences, findings = [], []
     for pattern in patterns:
-        compiled = re.compile(pattern, re.M)
+        try:
+            compiled = re.compile(pattern, re.M)
+        except re.error as exc:
+            raise ValueError("Claim '{}' has an invalid text_pattern {!r}: {}".format(
+                claim_id, pattern, exc)) from exc
         if "value" not in compiled.groupindex:
             raise ValueError("Claim pattern must capture (?P<value>...)")
         matches = list(compiled.finditer(text))
@@ -179,6 +198,32 @@ def _normalized(text):
     return " ".join(text.split())
 
 
+def _rule_citation_occurrences(text, number):
+    # The number itself or the number plus lowercase subrule letters, but never a
+    # digit continuation (claiming 603.1 must not be satisfied by a 603.10 cite).
+    return list(re.compile(r"(?<![\w.])" + re.escape(number) + r"[a-z]*(?![0-9])").finditer(text))
+
+
+def _rule_citation_sites(text, number):
+    # Every quote-bearing citation of the rule's base number, used for the
+    # cross-section drift check. A citation is quote-bearing when a ':'/'—'
+    # intro or a table-style line start marks the following prose as the quoted
+    # text; bare cross-references ("See rules 603.3 and 603.4.") are excluded.
+    base = re.sub(r"[a-z]+$", "", number)
+    pattern = re.compile(r"(?<![\w.])" + re.escape(base) + r"[a-z]*(?![0-9])")
+    sites = []
+    for match in pattern.finditer(text):
+        line_end = text.find("\n", match.end())
+        if line_end == -1:
+            line_end = len(text)
+        line_start = text.rfind("\n", 0, match.start()) + 1
+        tail = text[match.end():line_end].lstrip()
+        quote_bearing = tail[:1] in (":", "：", "—", "–") or not text[line_start:match.start()].strip()
+        sites.append({"citation": match.group(), "line": text.count("\n", 0, match.start()) + 1,
+                      "quote_bearing": quote_bearing, "tail": tail})
+    return sites
+
+
 def validate_claims(claims):
     if not isinstance(claims, dict) or claims.get("version") != 1:
         raise ValueError("Guide claims must have version: 1")
@@ -191,6 +236,29 @@ def validate_claims(claims):
     for claim in claims.get("loops", []):
         if not isinstance(claim.get("steps"), list) or not all(isinstance(step, dict) for step in claim["steps"]):
             raise ValueError("Loop steps must be a list of objects")
+    for group in ("counts", "loops", "rules"):
+        for index, claim in enumerate(claims.get(group, [])):
+            if not isinstance(claim, dict):
+                continue
+            unknown = sorted(set(claim) - CLAIM_KEYS[group])
+            if unknown:
+                raise ValueError("Unknown key {!r} in {} claim {}".format(
+                    unknown[0], group, _claim_label(claim, index)))
+            if group == "loops":
+                for step_index, step in enumerate(claim.get("steps") or []):
+                    if not isinstance(step, dict):
+                        continue
+                    unknown = sorted(set(step) - LOOP_STEP_KEYS)
+                    if unknown:
+                        raise ValueError("Unknown key {!r} in step {} of loops claim {}".format(
+                            unknown[0], step_index + 1, _claim_label(claim, index)))
+
+
+def _claim_label(claim, index):
+    label = "#{}".format(index + 1)
+    if isinstance(claim.get("id"), str) and claim["id"]:
+        label += " (id '{}')".format(claim["id"])
+    return label
 
 
 def audit(deck, text, claims, evidence=None, rules_document=None):
@@ -212,7 +280,7 @@ def audit(deck, text, claims, evidence=None, rules_document=None):
             if group == "counts":
                 expected, cards = _count(deck, claim, evidence)
                 check.update({"expected": expected, "cards": cards})
-                check["occurrences"], failures = _text_checks(text, claim, expected)
+                check["occurrences"], failures = _text_checks(text, claim, expected, claim["id"])
             elif group == "loops":
                 loop = simulate_loop(claim)
                 check["simulation"] = loop
@@ -233,7 +301,7 @@ def audit(deck, text, claims, evidence=None, rules_document=None):
                         failures.append({"kind": "variable_cycle_yield", "deltas": deltas})
                     expected = deltas[0] if deltas else 0
                 check["expected"] = expected
-                check["occurrences"], numerical = _text_checks(text, claim, expected)
+                check["occurrences"], numerical = _text_checks(text, claim, expected, claim["id"])
                 failures.extend(numerical)
                 for step in claim["steps"]:
                     name, quote = step.get("card"), step.get("oracle_quote")
@@ -257,8 +325,21 @@ def audit(deck, text, claims, evidence=None, rules_document=None):
                     failures.append({"kind": "rule_not_found", "number": number})
                 elif _normalized(quote) not in _normalized(entry["text"]):
                     failures.append({"kind": "rule_quote_mismatch", "number": number})
-                if number not in text or _normalized(quote) not in _normalized(text):
+                occurrences = _rule_citation_occurrences(text, number)
+                if not occurrences or _normalized(quote) not in _normalized(text):
                     failures.append({"kind": "rule_citation_missing_from_guide", "number": number})
+                quote_sites = [site for site in _rule_citation_sites(text, number) if site["quote_bearing"]]
+                citations = sorted({site["citation"] for site in quote_sites})
+                quote_lines = [site["line"] for site in quote_sites
+                               if re.sub(r"^\W+", "", site["tail"])
+                               and _normalized(quote) not in _normalized(site["tail"])]
+                if len(citations) > 1 or quote_lines:
+                    finding = {"kind": "inconsistent_repetition"}
+                    if len(citations) > 1:
+                        finding["citations"] = citations
+                    if quote_lines:
+                        finding["lines"] = quote_lines
+                    failures.append(finding)
                 if rules_document["stale"]:
                     incomplete.append("CR freshness/origin unverified")
                 check.update({"number": number, "effective_date": rules_document["effective_date"],

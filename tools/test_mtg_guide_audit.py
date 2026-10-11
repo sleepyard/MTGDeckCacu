@@ -166,6 +166,75 @@ class TestClaims(TestCase):
             with self.subTest(claims=claims), self.assertRaises(ValueError):
                 audit.audit(DECK, TEXT, claims)
 
+    def test_unknown_claim_keys_are_structured_input_errors(self):
+        cases = [
+            ({"version": 1, "counts": [{"id": "c", "type_patern": "Land",
+                                        "text_patterns": [r"Main deck: (?P<value>\d+) cards"]}]},
+             "type_patern", "counts claim #1 (id 'c')"),
+            ({"version": 1, "loops": [dict(copy.deepcopy(CLAIMS["loops"][0]), metricc="per_cycle")]},
+             "metricc", "loops claim #1 (id 'synthetic-loop')"),
+            ({"version": 1, "rules": [{"id": "citation", "number": "100.1a", "quote": "First subrule.",
+                                       "sections": ["main"]}]},
+             "sections", "rules claim #1 (id 'citation')"),
+        ]
+        for claims, key, label in cases:
+            with self.subTest(key=key), self.assertRaises(ValueError) as caught:
+                audit.audit(DECK, TEXT, claims)
+            self.assertIn(key, str(caught.exception))
+            self.assertIn(label, str(caught.exception))
+        claims = copy.deepcopy(CLAIMS)
+        claims["loops"][0]["steps"][0]["payy"] = {"mana": 1}
+        with self.assertRaises(ValueError) as caught:
+            audit.audit(DECK, TEXT, claims)
+        self.assertIn("payy", str(caught.exception))
+        self.assertIn("step 1 of loops claim #1", str(caught.exception))
+
+    def test_invalid_regex_is_a_structured_value_error(self):
+        claims = {"version": 1, "counts": [{"id": "typed", "type_pattern": "(unclosed",
+                   "text_patterns": [r"Main deck: (?P<value>\d+) cards"]}]}
+        with self.assertRaises(ValueError) as caught:
+            audit.audit(DECK, TEXT, claims)
+        self.assertIn("(unclosed", str(caught.exception))
+        self.assertIn("typed", str(caught.exception))
+        claims = {"version": 1, "counts": [{"id": "c", "text_patterns": ["(unclosed"]}]}
+        with self.assertRaises(ValueError) as caught:
+            audit.audit(DECK, TEXT, claims)
+        self.assertIn("(unclosed", str(caught.exception))
+        self.assertIn("'c'", str(caught.exception))
+
+    def test_rule_citation_drift_across_sections_is_found(self):
+        claims = {"version": 1, "rules": [{"id": "citation", "number": "100.1a", "quote": "First subrule."}]}
+        text = "Body: CR 100.1a: First subrule.\nQuick ref: 100.1b — First subrule.\n"
+        result = audit.audit(DECK, text, claims, rules_document=document())
+        finding = next(item for item in result["findings"] if item["kind"] == "inconsistent_repetition")
+        self.assertEqual(finding["citations"], ["100.1a", "100.1b"])
+        self.assertEqual(finding["claim"], "citation")
+
+    def test_rule_quote_drift_in_summary_is_found(self):
+        claims = {"version": 1, "rules": [{"id": "citation", "number": "100.1a", "quote": "First subrule."}]}
+        text = "Body: CR 100.1a: First subrule.\nSummary: 100.1a — First subrule, mostly.\n"
+        result = audit.audit(DECK, text, claims, rules_document=document())
+        finding = next(item for item in result["findings"] if item["kind"] == "inconsistent_repetition")
+        self.assertEqual(finding["lines"], [2])
+
+    def test_consistent_rule_repetition_and_cross_references_pass(self):
+        claims = {"version": 1, "rules": [{"id": "citation", "number": "100.1a", "quote": "First subrule."}]}
+        text = ("Body: CR 100.1a: First subrule.\nSummary: 100.1a — First subrule.\n"
+                "Cross-reference: see rules 100.1 and 600.2.\n")
+        result = audit.audit(DECK, text, claims, rules_document=document())
+        self.assertEqual(result["status"], "pass")
+
+    def test_rule_number_never_matches_a_longer_number(self):
+        claims = {"version": 1, "rules": [{"id": "citation", "number": "600.1",
+                                           "quote": "Casting a spell is defined here."}]}
+        result = audit.audit(DECK, "Timing: see rule 600.10.", claims, rules_document=document())
+        kinds = {item["kind"] for item in result["findings"]}
+        self.assertIn("rule_citation_missing_from_guide", kinds)
+        # A lowercase subrule cite still satisfies the parent number claim.
+        ok = audit.audit(DECK, "Body: 600.1a — Casting a spell is defined here.",
+                         claims, rules_document=document())
+        self.assertEqual(ok["status"], "pass")
+
 
 class TestCli(TestCase):
     def test_cli_failure_writes_fresh_report_and_passes_offline_flag(self):
@@ -182,6 +251,26 @@ class TestCli(TestCase):
             result = json.loads(stdout.getvalue())
             self.assertEqual(result, json.loads(report.read_text(encoding="utf-8")))
             self.assertTrue(self.lookup.call_args.kwargs["offline"])
+
+    def test_cli_invalid_regex_exits_2_without_traceback(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            deck, guide, claims, report = [root / name for name in ("deck.txt", "guide.md", "claims.json", "report.json")]
+            deck.write_text("Deck\n1 Alpha Engine\n2 Beta Trigger", encoding="utf-8")
+            guide.write_text(TEXT, encoding="utf-8")
+            claims.write_text(json.dumps({"version": 1, "counts": [{"id": "c", "text_patterns": ["(unclosed"]}]}),
+                              encoding="utf-8")
+            stdout, stderr = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                code = audit.main([str(deck), str(guide), "--claims", str(claims), "--offline",
+                                   "--json", "--out", str(report)])
+            self.assertEqual(code, 2)
+            result = json.loads(stdout.getvalue())
+            self.assertEqual(result["status"], "error")
+            self.assertEqual(result["error"]["type"], "ValueError")
+            self.assertIn("(unclosed", result["error"]["message"])
+            self.assertNotIn("Traceback", stderr.getvalue())
+            self.assertEqual(json.loads(report.read_text(encoding="utf-8")), result)
 
 
 if __name__ == "__main__":

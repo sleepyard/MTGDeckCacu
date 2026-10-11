@@ -340,15 +340,31 @@ def analyze(deck, response, format_name, platform="arena", postboard=None, refre
     result.update({key: val for key, val in response.items() if key != "variants"})
     result.update({"status": "ok", "format": format_name, "platform": platform,
                    "scope": "component-availability", "warnings": list(response.get("warnings", []))})
+    evidence_failed = 0
     for raw in sorted(response["variants"], key=lambda entry: entry.get("popularity") or 0, reverse=True):
         combo = normalize_variant(raw)
+        evidence_error = None
         for component in combo["components"]:
             name = component["name"]
             if name not in canonical:
-                item = facts.card_facts(name, platform, refresh, offline)
+                try:
+                    item = facts.card_facts(name, platform, refresh, offline)
+                except mtg_tool.CardNotFound as exc:
+                    evidence_error = "component card not found: {} ({})".format(name, exc)
+                    break
+                except (mtg_tool.HttpError, mtg_tool.NetworkError):
+                    if not offline:
+                        raise
+                    evidence_error = "component evidence unavailable in offline mode: " + name
+                    break
                 if item["card"]["name"].casefold() != name.casefold():
                     raise RulesDataError("Spellbook/Scryfall component identity mismatch: " + name)
                 canonical[name], records[name] = item, item["card"]
+        if evidence_error is not None:
+            combo["evidence_error"] = evidence_error
+            result["needs_verification"].append(combo)
+            evidence_failed += 1
+            continue
         combo["legality"] = _legal(combo, canonical, format_name, platform)
         if commanders and format_name in ("commander", "brawl", "standardbrawl"):
             allowed = set().union(*(set(records[name].get("color_identity", [])) for name in commanders))
@@ -377,6 +393,12 @@ def analyze(deck, response, format_name, platform="arena", postboard=None, refre
         else:
             bucket = "missing_components"
         result[bucket].append(combo)
+    if evidence_failed:
+        warning = ("Combo component evidence unavailable for every variant; "
+                   "nothing could be verified" if evidence_failed == len(response["variants"])
+                   else "Combo component evidence unavailable for {} of {} variant(s); "
+                        "downgraded to needs_verification".format(evidence_failed, len(response["variants"])))
+        result["warnings"].append(warning)
     result["card_evidence"] = canonical
     result["stale"] = response["stale"] or any(item.get("stale") for item in canonical.values())
     result["warnings"].extend(warning for item in canonical.values() for warning in item.get("warnings", []))
@@ -491,6 +513,9 @@ def main(argv=None):
             for combo in result[key]:
                 print("  {}: {} | {}".format(combo["id"], " + ".join(c["name"] for c in combo["components"]),
                                              combo["source_url"]))
+        if result.get("truncated"):
+            print("Analyzed {} of {} variants; {} unexamined (truncated). Increase --limit to analyze more.".format(
+                result.get("analyzed_variant_count", 0), result["variant_count"], result["unexamined_variant_count"]))
         print("Component availability only; verify prerequisites and rules before recommending a line.")
     for warning in result.get("warnings", []):
         print("[warn] " + warning, file=sys.stderr)

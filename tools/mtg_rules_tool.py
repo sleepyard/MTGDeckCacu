@@ -80,6 +80,23 @@ def _read_json(path):
         return None
 
 
+def _read_json_report(path):
+    """Read a cache JSON file, distinguishing "never cached" from "corrupt".
+
+    Returns (payload, error): (None, None) when the file is absent,
+    (None, reason) when it exists but cannot be decoded, else (payload, None).
+    """
+    try:
+        with Path(path).open(encoding="utf-8") as stream:
+            return json.load(stream), None
+    except FileNotFoundError:
+        return None, None
+    except OSError as exc:
+        return None, "cannot be read: " + str(exc)
+    except ValueError as exc:
+        return None, "is not valid JSON: " + str(exc)
+
+
 def _references(text, rules, own=None):
     return sorted({number for number in _REF_RE.findall(text)
                    if number != own and (number in rules or
@@ -105,7 +122,9 @@ def parse_rules(text):
     if glossary_start is None:
         raise RulesDataError("CR body has no glossary")
     end = next((i for i in range(glossary_start + 1, len(lines))
-                if lines[i].strip() == "Credits"), len(lines))
+                if lines[i].strip() == "Credits"), None)
+    if end is None:
+        raise RulesDataError("CR body has no credits section")
 
     sections, rules = {}, {}
     section, current, in_example = None, None, False
@@ -230,7 +249,9 @@ def _text_from_url(url, accept):
 
 
 def _cached_cr(cache_dir):
-    manifest = _read_json(cache_dir / "current.json")
+    manifest, error = _read_json_report(cache_dir / "current.json")
+    if error is not None:
+        raise RulesDataError("CR cache manifest " + error)
     if manifest is None:
         return None
     if (not isinstance(manifest, dict) or manifest.get("cache_version") != CACHE_VERSION
@@ -286,7 +307,8 @@ def load_document(cache_dir=None, rules_file=None, refresh=False, offline=False)
         cached = None
     if offline:
         if not cached:
-            raise RulesDataError("No valid CR cache available in offline mode")
+            detail = "; ".join(warnings) or "no CR cache has been downloaded yet"
+            raise RulesDataError("No valid CR cache available in offline mode: " + detail)
         return document
     if cached and not refresh and not document["stale"]:
         return document
@@ -310,6 +332,8 @@ def load_document(cache_dir=None, rules_file=None, refresh=False, offline=False)
         return _document(path, text, cache_dir, manifest, warnings)
     except (mtg_tool.MtgToolError, RulesDataError) as exc:
         if not cached:
+            if warnings:
+                raise RulesDataError("{}; prior cache state: {}".format(exc, "; ".join(warnings))) from exc
             raise
         manifest = dict(cached[2], refresh_error=str(exc), refresh_failed_at=_now().isoformat())
         _write_json(cache_dir / "current.json", manifest)
@@ -393,20 +417,29 @@ def lookup_rulings(name, cache_dir=None, refresh=False, offline=False):
     cache_dir = Path(cache_dir) if cache_dir is not None else CACHE_DIR
     key = hashlib.sha256(name.casefold().encode("utf-8")).hexdigest()
     path = cache_dir / "rulings" / (key + ".json")
-    cached = _read_json(path)
+    cached, read_error = _read_json_report(path)
+    invalid_reason = ("rulings cache " + read_error) if read_error is not None else None
     if cached is not None:
         try:
-            if (not isinstance(cached, dict) or cached.get("cache_version") != CACHE_VERSION
-                    or cached.get("query_name", "").casefold() != name.casefold()
+            if not isinstance(cached, dict):
+                raise RulesDataError("Rulings cache is not a JSON object")
+            query_name = cached.get("query_name")
+            if (cached.get("cache_version") != CACHE_VERSION
+                    or not isinstance(query_name, str)
+                    or query_name.casefold() != name.casefold()
                     or not all(cached.get(field) for field in
                                ("name", "oracle_id", "card_id", "source_url", "fetched_at"))):
                 raise RulesDataError("Invalid rulings cache")
             _validate_rulings(cached.get("rulings"))
-        except (RulesDataError, AttributeError):
+        except RulesDataError as exc:
+            invalid_reason = str(exc)
             cached = None
     if offline:
         if not cached:
-            raise mtg_tool.HttpError("No valid rulings cache available in offline mode: " + name)
+            message = "No valid rulings cache available in offline mode: " + name
+            if invalid_reason:
+                message += " (" + invalid_reason + ")"
+            raise mtg_tool.HttpError(message)
         return _rulings_result(cached)
     if (cached and not refresh and not cached.get("refresh_error")
             and _fresh(cached.get("fetched_at"), RULINGS_TTL)):
@@ -437,11 +470,18 @@ def lookup_rulings(name, cache_dir=None, refresh=False, offline=False):
                   "oracle_id": card["oracle_id"], "card_id": card["id"],
                   "source_url": url, "fetched_at": _now().isoformat(), "rulings": entries}
         _write_json(path, cached)
-        return _rulings_result(cached)
+        result = _rulings_result(cached)
+        if invalid_reason:
+            result["warnings"].append(
+                "Rulings cache discarded as invalid: " + invalid_reason)
+        return result
     except mtg_tool.CardNotFound:
         raise
     except (mtg_tool.MtgToolError, RulesDataError) as exc:
         if not cached:
+            if invalid_reason:
+                raise mtg_tool.HttpError("{}; prior rulings cache: {}".format(
+                    exc, invalid_reason)) from exc
             raise
         cached = dict(cached, refresh_error=str(exc), refresh_failed_at=_now().isoformat())
         _write_json(path, cached)
