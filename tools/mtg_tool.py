@@ -624,11 +624,15 @@ def cmd_validate(args):
           + f"（赛制 {args.format}" + ("，BO3" if args.bo3 else "") + "）", file=sys.stderr)
 
     # ---- 数量门禁
-    if main_count < 60:
+    if args.limited:
+        if main_count not in (40, 41):
+            vio(f"主牌 {main_count} 张，限制赛交付应为 40 或 41"
+                f"（通常 17 地 + 24 其他 = 41，调整须说明依据）")
+    elif main_count < 60:
         vio(f"主牌 {main_count} 张 < 60")
     if args.no_sideboard and sb_count > 0:
         vio(f"--no-sideboard 生效但备牌 {sb_count} 张")
-    if sb_count > 15:
+    if not args.limited and sb_count > 15:
         vio(f"备牌 {sb_count} 张 > 15")
 
     # ---- 逐牌核对（同名合并，复用 check 逻辑与缓存）
@@ -800,6 +804,8 @@ def build_parser():
                     help="平台可用性核对（默认 arena；实体牌可不传？默认 arena 因工作流默认 MTGA）")
     sp.add_argument("--bo3", action="store_true", help="BO3 对局（记录用）")
     sp.add_argument("--no-sideboard", action="store_true", help="不允许备牌")
+    sp.add_argument("--limited", action="store_true",
+                    help="限制赛口径：主牌 40/41 张，备牌（池内裁切）不受 15 张上限")
     sp.add_argument("--colors", help="颜色身份约束，如 ug（各牌 color_identity 须为其子集）")
     add_common(sp)
     sp.set_defaults(func=cmd_validate)

@@ -99,6 +99,10 @@ phase-rs Rust sidecar；CI 无 Windows 矩阵。**结论：不照搬实现，移
 
 ## 5. 分期计划
 
+进度（2026-10-11）：热身批次（§7 五项审核修复）与 Phase 0 已交付；Phase 1 已交付
+（真实 FRA 牌池冒烟通过，导出经 `mtg_tool validate --limited` 门禁，该开关为本阶段
+新增）。Phase 2/3 未开始。
+
 ### Phase 0：hub 骨架与协议（1 个交付周期）
 
 - `tools/deck_workbench.py`：ThreadingHTTPServer，127.0.0.1，默认端口 8644（避开

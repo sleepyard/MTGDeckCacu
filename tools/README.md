@@ -432,7 +432,22 @@ curl -s http://127.0.0.1:8644/api/export
 ```
 
 导入的 skipped 行进 `warnings`（成功但带警告）；完全解析不出条目返回 400。
-后续阶段加入牌池 seed、统计面板与 Agent 桥（计划 §5）。
+
+Phase 1（限制赛组牌）已加入：牌池/种子/统计/手动微调端点，页面为牌池 + 牌表双栏。
+
+```bash
+# 牌池导入（按行水合，查不到的牌名聚合计数进 unresolved，不阻断导入）
+curl -s -X POST http://127.0.0.1:8644/api/pool --data-binary @pool.txt
+# 种子（colors 缺省自动枚举；deck_size 41/40；set 提供时读评分表，缺失显式降级告警）
+curl -s -X POST http://127.0.0.1:8644/api/seed -d '{"colors":["B","R"],"deck_size":41,"set":"FRA"}'
+curl -s http://127.0.0.1:8644/api/stats
+# 手动微调（同名 ≤4，基本地/ANY_NUMBER 豁免；move 限 main↔sideboard）
+curl -s -X POST http://127.0.0.1:8644/api/deck/add -d '{"name":"Swamp","section":"main","qty":2}'
+```
+
+导出的限制赛牌表用 `python -X utf8 tools/mtg_tool.py validate <导出> --format <赛制> --limited`
+过门禁（主牌 40/41 张；备牌视为池内裁切，不受 15 张上限）。后续阶段加入构筑模式与
+Agent 桥（计划 §5）。
 
 # tools/deck_version.py
 
