@@ -452,8 +452,25 @@ curl -s http://127.0.0.1:8644/api/export
 这些后台线程执行确定性内核或脚本，不是 Agent。运行期间仍可切换标签和操作其他工具；
 任务使用开始时的牌表，期间修改会标注结果过期，不会把旧体检写回新牌表。
 
-助手请求仅入队，不自动唤醒 CLI、不启动子代理。当前会话需显式访问
-`/api/agent/next?agent=codex&wait=0` 领取，界面会显示请求号、领取者和回执状态。
+助手可点击「连接 Agent」接入持续接收端（`workbench_agent.py` 核心 + 后端注册表）。
+按钮文字随当前后端显示（默认 Codex）；`serve --agent-backend` 指定默认后端，
+离线状态下 `POST /api/agent/connect` 可带 `{"backend": "名字"}` 切换，`/api/agent/connection`
+列出可用后端。Codex 适配器（`workbench_agent_codex.py`）要求本机安装并登录
+Codex CLI；接收端使用已有模型、提供商及登录配置，不走 `llm_config.json`。
+通过 `codex app-server` 的 JSONL 接口创建一个工作台会话，之后自动领取每次网页任务，
+发送 `turn/start` 执行、维持租约并回写结果，不需再回到 CLI 发提示。待机不调用模型。
+页面显示连接/处理/审批状态、后端、模型、会话 ID、请求号与领取者；不启动子代理。
+断开会中断进行中的任务并显式回执；重连恢复 gitignored
+`tools/cache/workbench_agent_session.json` 中对应后端的会话，恢复失败不会偷偷另开会话。
+后端的原生操作审批（如 Codex 的命令/文件审批）在网页显示，可允许本次或拒绝，
+接收端不自动代批。`/api/agent/connect|disconnect|approval`（POST）与
+`/api/agent/connection`（GET）提供相同的程序化控制。Codex 接口按本机 CLI 0.118.0 实测，
+外部 HTTP/模型在回归测试中 mock。新后端按 `workbench_agent.py`  docstring 的契约实现
+（open/begin_session/run_turn/alive/interrupt/close + TurnHooks）并注册即可接入。
+
+没有连接接收端时，请求只入队；手动交互式 Agent 仍可访问
+`/api/agent/next?agent=codex&wait=0` 领取。自动接收复用专用工作台会话，不将提示注入
+正在开发的聊天窗口。请求处理期间牌表发生变化时，回执标注过期并保留领取时依据。
 高级 JSON 参数原样作为 `payload` 上下文交给 Agent，不是模型设置或 CLI 选项，通常留空。
 
 Phase 1（限制赛组牌）已加入：牌池/种子/统计/手动微调端点。

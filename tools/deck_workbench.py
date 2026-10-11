@@ -104,6 +104,7 @@ import tempfile
 import threading
 import time
 import traceback
+import uuid
 from collections.abc import Mapping
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -122,6 +123,7 @@ import mtga_draft_tool
 import roles as role_tags
 import runlog
 import workbench_jobs
+import workbench_agent
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8644
@@ -879,6 +881,7 @@ class AgentBridge:
                 "queued_at": _now_iso(),
                 "state": "queued",
                 "claimed_by": None, "claimed_at": None,
+                "claim_token": None,
                 "completed_iso": None, "completed_at": None,
                 "result_status": None, "result": None, "message": None,
             }
@@ -891,7 +894,7 @@ class AgentBridge:
     def _request_view(rec):
         return {"request_id": rec["id"], "kind": rec["kind"],
                 "payload": rec["payload"], "queued_at": rec["queued_at"],
-                "timeout_sec": rec["timeout_sec"]}
+                "timeout_sec": rec["timeout_sec"], "claim_token": rec["claim_token"]}
 
     def next_request(self, agent, wait=True, poll_max=AGENT_POLL_MAX):
         """Agent 侧长轮询：拿到请求返回 {"status":"ok","request":{...}}；
@@ -907,6 +910,7 @@ class AgentBridge:
                         continue            # 已被认领/清理（防御，跳过）
                     rec["state"] = "in_flight"
                     rec["claimed_by"] = agent
+                    rec["claim_token"] = uuid.uuid4().hex
                     rec["claimed_at"] = self._clock()
                     return {"status": "ok", "request": self._request_view(rec)}
                 if not wait:
@@ -916,7 +920,7 @@ class AgentBridge:
                     return {"status": "wait"}
                 self._cond.wait(timeout=remaining)
 
-    def complete(self, request_id, status, result, message):
+    def complete(self, request_id, status, result, message, agent=None, claim_token=None):
         """Agent 提交结果。返回 "ok" / "missing"（未知 id）/ "gone"（已
         过 TTL 清理）/ "not_claimed"（未在认领态）/ "done"（重复提交）。"""
         with self._cond:
@@ -927,6 +931,9 @@ class AgentBridge:
             if rec["state"] == "done":
                 return "done"
             if rec["state"] != "in_flight":
+                return "not_claimed"
+            if (agent is not None and rec["claimed_by"] != agent) or \
+                    (claim_token is not None and rec["claim_token"] != claim_token):
                 return "not_claimed"
             rec["state"] = "done"
             rec["completed_at"] = self._clock()
@@ -961,14 +968,15 @@ class AgentBridge:
                           "claimed_by": rec["claimed_by"],
                           "completed_at": rec["completed_iso"]}
 
-    def heartbeat(self, request_id, agent):
+    def heartbeat(self, request_id, agent, claim_token=None):
         """认领方续租：返回 "ok" / "missing" / "gone" / "not_claimed"。"""
         with self._cond:
             self._sweep_locked()
             rec = self._records.get(request_id)
             if rec is None:
                 return "gone" if request_id in self._gone else "missing"
-            if rec["state"] != "in_flight" or rec["claimed_by"] != agent:
+            if rec["state"] != "in_flight" or rec["claimed_by"] != agent or \
+                    (claim_token is not None and rec["claim_token"] != claim_token):
                 return "not_claimed"
             rec["claimed_at"] = self._clock()
             return "ok"
@@ -1217,7 +1225,7 @@ class WorkbenchState:
     并发导入因此是安全的串行化（最后一次成功写入获胜）。
     """
 
-    def __init__(self):
+    def __init__(self, agent_backend=workbench_agent.DEFAULT_BACKEND):
         self._lock = threading.Lock()
         self._deck = deck_model.Deck()
         self._imported_at = None
@@ -1235,6 +1243,7 @@ class WorkbenchState:
                        ("roles", "combos", "cost", "audit", "constructed")}
         # Phase 3：Agent 桥（请求/结果队列）+ avenues 持久列表（反向通路）
         self.bridge = AgentBridge()
+        self.receiver = workbench_agent.create_receiver(self, backend=agent_backend)
         self.jobs = workbench_jobs.JobRegistry()
         self._avenues = []
         self._avenue_seq = 0
@@ -1306,6 +1315,7 @@ class WorkbenchState:
             snap["checks"] = {name: (dict(entry) if entry else None)
                               for name, entry in self._slots.items()}
             snap["bridges"] = self.bridge.status()
+            snap["bridges"]["receiver"] = self.receiver.status()
             snap["avenues"] = [dict(avenue) for avenue in self._avenues]
             return snap
 
@@ -1849,7 +1859,13 @@ def make_handler(state):
                 elif path == "/api/agent/next":
                     self._handle_agent_next()
                 elif path == "/api/agent/status":
-                    self._send_json(200, state.bridge.status())
+                    payload = state.bridge.status()
+                    payload["receiver"] = state.receiver.status()
+                    self._send_json(200, payload)
+                elif path == "/api/agent/connection":
+                    payload = state.receiver.status()
+                    payload["backends"] = workbench_agent.backend_options()
+                    self._send_json(200, payload)
                 elif path.startswith("/api/agent/result/"):
                     self._handle_agent_result_get(path.rsplit("/", 1)[1])
                 elif path == "/api/find":
@@ -1884,6 +1900,12 @@ def make_handler(state):
                     self._handle_deck_edit(path.rsplit("/", 1)[1])
                 elif path == "/api/agent/request":
                     self._handle_agent_request()
+                elif path == "/api/agent/connect":
+                    self._handle_agent_connection("connect")
+                elif path == "/api/agent/disconnect":
+                    self._handle_agent_connection("disconnect")
+                elif path == "/api/agent/approval":
+                    self._handle_agent_connection("approval")
                 elif path == "/api/agent/result":
                     self._handle_agent_result()
                 elif path == "/api/agent/heartbeat":
@@ -2106,14 +2128,48 @@ def make_handler(state):
 
         # -------------------------------------------------- Phase 3 Agent 桥
 
+        def _handle_agent_connection(self, operation):
+            try:
+                self._check_agent_origin()
+                body = self._read_json_body(allow_empty=True)
+                if operation == "connect":
+                    host = self.server.server_address[0]
+                    if host not in ("127.0.0.1", "localhost", "::1"):
+                        raise ValueError("自动 Agent 接收端仅供本机回环工作台使用")
+                    requested = (body.get("backend") or "").strip()
+                    if requested and requested != state.receiver.backend_name:
+                        if state.receiver.status()["status"] not in ("offline", "error"):
+                            raise ValueError("接收端已连接，请先断开再切换后端")
+                        replacement = workbench_agent.create_receiver(state, backend=requested)
+                        state.receiver.close()
+                        state.receiver = replacement
+                    url = "http://127.0.0.1:{}".format(self.server.server_address[1])
+                    payload = state.receiver.connect(url)
+                elif operation == "disconnect":
+                    payload = state.receiver.disconnect()
+                else:
+                    payload = state.receiver.answer_approval(body.get("approval_id"), body.get("decision"))
+                self._send_json(200, payload)
+            except ValueError as exc:
+                self._bad_request(exc)
+
         def _handle_agent_request(self):
             try:
+                self._check_agent_origin()
                 body = self._read_json_body()
                 kind, payload, timeout_sec = parse_agent_request_body(body)
             except ValueError as exc:
                 self._bad_request(exc)
                 return
             self._send_json(200, state.bridge.submit(kind, payload, timeout_sec))
+
+        def _check_agent_origin(self):
+            origin = self.headers.get("Origin")
+            if origin:
+                parsed = urlsplit(origin)
+                if parsed.scheme != "http" or parsed.hostname not in ("127.0.0.1", "localhost", "::1") or \
+                        parsed.port != self.server.server_address[1]:
+                    raise ValueError("Agent 控制请求必须来自当前本机工作台")
 
         def _handle_agent_next(self):
             query = parse_qs(urlsplit(self.path).query)
@@ -2555,7 +2611,12 @@ PAGE_HTML = """<!DOCTYPE html>
           </div>
         </div>
         <div class="inspect-view" data-view="assistant" hidden>
-          <div class="tool-section"><h3>Agent 助手</h3><div class="note">提交后等待会话显式领取；网页不会自动唤醒 CLI 或启动子代理。当前会话需主动轮询并回执。</div>
+          <div class="tool-section"><h3>Agent 助手</h3>
+            <div id="agentConnection" class="job-status" aria-live="polite">接收端未连接</div>
+            <div class="actions"><button id="agentConnectBtn">连接 Agent</button><button id="agentDisconnectBtn" hidden>断开</button></div>
+            <div class="note">连接一次后持续接收网页任务，自动领取、查证并回执。复用工作台专用会话与本机 Agent CLI 的登录和配置，待机不调用模型。</div>
+            <div id="agentApproval" class="card" hidden><strong>Agent 操作需要批准</strong><div id="agentApprovalReason"></div>
+              <div id="agentApprovalDetails" class="statline"></div><div class="actions"><button id="agentApproveBtn">允许本次</button><button id="agentDeclineBtn">拒绝</button></div></div>
             <div class="form-grid"><label class="field full" for="agentKind">希望获得什么帮助？<select id="agentKind"><option value="next_move">建议下一步</option><option value="explain">规则与配合解释</option><option value="novel_synergies">协同候选提案</option><option value="handoff">全流程体检</option></select></label>
               <label class="field full" for="agentNote">补充说明（可选）<textarea id="agentNote" placeholder="例如：希望保留核心配合，先改善前期曲线"></textarea></label></div>
             <details class="fold"><summary>高级请求设置</summary>
@@ -3158,6 +3219,25 @@ function renderAudit(snap) {
 }
 function renderBridge(snap) {
   const b = snap.bridges || {};
+  const receiver = b.receiver || {status:'offline',message:'接收端未连接'};
+  const statesText = {offline:'未连接',connecting:'连接中',idle:'在线 · 等待任务',busy:'在线 · 处理中',approval:'在线 · 等待批准',stopping:'正在断开',error:'连接失败'};
+  document.getElementById('agentConnection').textContent = (statesText[receiver.status] || receiver.status)
+    + ' · ' + (receiver.message || '') + (receiver.elapsed_sec ? ' · ' + receiver.elapsed_sec + ' 秒' : '')
+    + (receiver.thread_id ? ' · 会话 ' + receiver.thread_id : '')
+    + (receiver.model ? ' · ' + receiver.model : '');
+  const connected = ['connecting','idle','busy','approval','stopping'].includes(receiver.status);
+  const connectBtn = document.getElementById('agentConnectBtn');
+  connectBtn.hidden = connected;
+  connectBtn.textContent = '连接 ' + (receiver.backend_label || 'Agent');
+  document.getElementById('agentDisconnectBtn').hidden = !connected;
+  document.getElementById('agentDisconnectBtn').disabled = receiver.status === 'stopping';
+  const approval = receiver.approval;
+  document.getElementById('agentApproval').hidden = !approval;
+  if (approval) {
+    document.getElementById('agentApproval').dataset.id = approval.id;
+    document.getElementById('agentApprovalReason').textContent = approval.reason;
+    document.getElementById('agentApprovalDetails').textContent = approval.detail || '';
+  }
   let txt = '等待 ' + (b.queue_depth || 0) + ' / 处理中 '
     + (b.in_flight || 0) + ' / 已完成 ' + (b.results_ready || 0);
   const inflight = b.in_flight_requests || [];
@@ -3248,7 +3328,7 @@ async function tick() {
       ? '导入 #' + s.import_seq + '　' + (s.source_name ? '来源 ' + s.source_name + '　' : '')
         + '时间 ' + formatTime(s.imported_at)
       : '尚未导入牌表';
-    const signature = JSON.stringify(d);
+    const signature = JSON.stringify(Object.assign({}, d, {bridges:null}));
     if (signature !== lastRender) {
       const zones = document.getElementById('zones');
       const pool = document.getElementById('poolList');
@@ -3262,13 +3342,13 @@ async function tick() {
       renderCombos(d);
       renderCost(d);
       renderAudit(d);
-      renderBridge(d);
       renderAvenues(d);
       zones.scrollTop = zoneScroll;
       pool.scrollTop = poolScroll;
       updateDisabled();
       lastRender = signature;
     }
+    renderBridge(d);
     const warns = [].concat(d.warnings || [], (d.pool && d.pool.warnings) || []);
     document.getElementById('warnings').textContent =
       warns.join('\\n');
@@ -3355,6 +3435,11 @@ document.getElementById('tabLimited').onclick = () => setMode('limited');
 document.getElementById('tabConstructed').onclick = () => setMode('constructed');
 document.getElementById('openImport').onclick = openImport;
 document.getElementById('dismissError').onclick = () => showErrors('');
+document.getElementById('agentConnectBtn').onclick = () => run(() => postJSON('/api/agent/connect', {}));
+document.getElementById('agentDisconnectBtn').onclick = () => run(() => postJSON('/api/agent/disconnect', {}));
+for (const [id, decision] of [['agentApproveBtn','accept'],['agentDeclineBtn','decline']])
+  document.getElementById(id).onclick = () => run(() => postJSON('/api/agent/approval', {
+    approval_id:document.getElementById('agentApproval').dataset.id, decision:decision}));
 document.getElementById('auditLimited').onchange = updateAuditScope;
 document.getElementById('deckListBtn').onclick = () => setDeckView('list');
 document.getElementById('deckGridBtn').onclick = () => setDeckView('grid');
@@ -3509,9 +3594,12 @@ setInterval(tick, """ + str(POLL_INTERVAL_MS) + """); tick();
 
 # ------------------------------------------------------------------ serve/CLI
 
-def serve(host, port):
+def serve(host, port, agent_backend=workbench_agent.DEFAULT_BACKEND):
     """启动工作台（前台阻塞）。端口占用等启动失败抛 WorkbenchError。"""
-    state = WorkbenchState()
+    try:
+        state = WorkbenchState(agent_backend=agent_backend)
+    except ValueError as exc:
+        raise WorkbenchError(str(exc)) from exc
     try:
         server = ThreadingHTTPServer((host, port), make_handler(state))
     except OSError as exc:
@@ -3526,6 +3614,7 @@ def serve(host, port):
     except KeyboardInterrupt:
         pass
     finally:
+        state.receiver.close()
         server.server_close()
     return 0
 
@@ -3537,13 +3626,16 @@ def build_parser():
     child.add_argument("--host", default=DEFAULT_HOST)
     child.add_argument("--port", type=int, default=DEFAULT_PORT,
                        help="默认 {}（避开 8642 对局监控 / 8643 轮抓面板）".format(DEFAULT_PORT))
+    child.add_argument("--agent-backend", default=workbench_agent.DEFAULT_BACKEND,
+                       choices=sorted(workbench_agent.BACKENDS),
+                       help="助手持续接收端默认后端（页面连接时可切换）")
     return parser
 
 
 def main(argv=None):
     args = build_parser().parse_args(argv)
     try:
-        return serve(args.host, args.port)
+        return serve(args.host, args.port, agent_backend=args.agent_backend)
     except WorkbenchError as exc:
         print("[error] " + str(exc), file=sys.stderr)
         runlog.log_run("deck_workbench", "error", "serve " + str(exc))

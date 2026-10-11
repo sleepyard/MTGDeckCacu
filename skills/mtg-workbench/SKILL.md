@@ -11,9 +11,26 @@ agent session on the other. The page's judgment requests reach you through the
 bridge; deterministic compute never does — do not re-do what the kernel already
 shows in the snapshot.
 
-Submitting a browser request only enqueues it. It does not wake this CLI or
-spawn a sub-agent. Announce the claim explicitly, poll with this session's own
-name (for example `agent=codex&wait=0`), then answer through the result endpoint.
+The browser's **Connect** button (labelled with the active backend) starts the
+persistent receiver in `tools/workbench_agent.py`. The receiver core is
+backend-agnostic (claim loop, lease heartbeats, page approvals, receipts);
+the actual Agent CLI is a registered adapter — currently `codex`
+(`tools/workbench_agent_codex.py`, driving the installed CLI's
+`codex app-server` JSONL protocol), with more backends able to register
+through the contract in the module docstring. While connected,
+frontend submissions are automatically claimed and sent to the backend as
+turns; no second human prompt is needed. The receiver maintains the lease and
+submits the final receipt. Idle waiting does not start model turns. The page
+displays the connection, backend, thread id, claimant, activity and any real
+native approval request. It uses the CLI's existing login/model configuration,
+without spawning sub-agents.
+
+If this turn was started by the receiver, **do not call `/next` or `/result`**;
+return the requested `status/message/result` JSON so the receiver can finish it.
+For a manually connected interactive CLI, announce the claim explicitly, poll
+with this session's own name (for example `agent=codex&wait=0`), then answer
+through the result endpoint. Without a connected receiver or polling CLI, a
+browser request stays queued; it does not wake the current development chat.
 `recent_requests` in bridge status exposes the request id, state and named claimant.
 The optional JSON `payload` is user context for your reasoning, not model settings
 or executable CLI options. Limited proposals stay within the imported pool; generic
@@ -39,6 +56,15 @@ curl -s "http://127.0.0.1:8644/api/find?q=f:pioneer%20t:creature&limit=20"
 Result retrieval expires after 300s (410). Unknown `request_id` is 404;
 answering a request you did not claim is 409. Exit the poll loop when the user
 says the session is done or the hub is unreachable — never spin unattended.
+
+Receiver controls: `POST /api/agent/connect`, `POST /api/agent/disconnect`,
+`GET /api/agent/connection`. Native command/file approvals are presented on the
+page and answered using `POST /api/agent/approval` with `approval_id` and
+`decision` (`accept` or `decline`). No approvals are accepted automatically.
+The receiver records its thread per backend in gitignored
+`tools/cache/workbench_agent_session.json`; reconnecting resumes that thread
+(a saved session from another backend starts fresh, never mixed). Failed resumes are explicit failures, not
+silent new sessions. Disconnect interrupts active work and returns an error receipt.
 
 ## The four kinds
 

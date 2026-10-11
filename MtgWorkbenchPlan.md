@@ -60,8 +60,9 @@ phase-rs Rust sidecar；CI 无 Windows 矩阵。**结论：不照搬实现，移
 **决策 D：双 LLM 通道，按请求性质分流。** LLM 驱动有两条既有通路，工作台都保留：
 
 - **Agent 桥**（主通道）：要调用工具链的判断型请求（`next_move` / `explain` /
-  `novel_synergies` / `handoff`）路由给交互式 Agent 会话——烧的是当前会话订阅，
-  不新增计费通道，且能调用规则/组合技/指南核验全套技能。上游 ADR-0010 同此考量。
+  `novel_synergies` / `handoff`）路由给 CLI Agent 会话，复用已有登录/模型配置，且能
+  调用规则/组合技/指南核验全套技能。自动接收使用独立持久工作台会话；具体计费随已有
+  CLI 登录及提供商配置，不假定使用订阅。手动接入仍保留上游 ADR-0010 的协议模式。
 - **嵌入式 LLM**（辅助通道）：高频低智的打分轴（如 RawPower/Synergy）可复用轮抓
   面板的既有模式——hub 直接读 `tools/llm_config.json`（DeepSeek 兼容端点）自行调用，
   无人值守可用，但只有 prompt 里喂的信息、无工具。
@@ -127,6 +128,28 @@ UI 布局重做（2026-10-11）：改版前检查点 `3db3577`，前序功能提
 验证：全量 unittest 805 项通过；原 Rakdos 文件 29 项真实浏览器交互检查通过，
 37 个不同牌名的卡图命中本地缓存，TXT/PNG 实际下载成功。默认 8644 服务已更新，
 恢复并核对了用户原有 41 主牌/15 备牌/16 地状态，FRA 评分覆盖 21/35 与限制赛门禁正确。
+
+持续接收端（2026-10-11）：先提交 FRA/UI 改动 `39bb411`，再补 `workbench_agent.py`。
+前端一次连接 Codex 后，由接收端持续等待并自动领取，使用 app-server 的 thread/start
+或 thread/resume + turn/start，完成后回写 JSON，空闲时不调用模型。显示在线、会话 ID、
+具名领取、执行阶段/耗时及真实原生审批；断开/超时中断任务，失败不登记为成功。
+工作台会话 ID 单独保存，不对当前开发聊天窗口并发注入；断开重连复用专用会话。
+本机 Codex CLI 0.118.0 实测：一次连接，两次前端提交均自动领取并成功回执；第一条实际
+读取原 Rakdos 文件得到 40/17/17，第二条比较工作台 41/15/16，牌表未变；断开重连会话相同。
+官方接口依据：https://developers.openai.com/codex/app-server 。
+最终验证：全量 unittest 824 项通过（新增接收端 19 项）；真实浏览器 9 项通过，含连续
+任务、具名认领、同会话回执和断开重连。默认 8644 已恢复原牌表并连接接收端，状态 idle，
+界面刷新后可直接提交。工作台专用会话由 OS 锁保证不会被两个接收端同时恢复；待机不发模型请求。
+
+接收端通用化（2026-10-11 后续）：`workbench_agent.py` 拆为协议无关核心（认领循环、
+claim_token 租约、网页审批往返、回执、stale 标注、按后端的会话文件与 OS 锁），Agent CLI
+经注册表接入（`register_backend`；契约 `open/begin_session/run_turn/alive/interrupt/close`
++ 每请求 `TurnHooks`：keepalive/progress/approval，审批为可选回调）。Codex 迁入
+`workbench_agent_codex.py` 作为首个适配器，协议行为不变。hub 经 `create_receiver` 创建
+接收端，`serve --agent-backend` 设默认，离线时 `POST /api/agent/connect` 可切后端；UI 文案
+去 Codex 化，按钮随后端显示。会话文件增加 backend 字段，跨后端记录不混用。规划中的第二
+后端为 Kimi Code CLI（`kimi -p` 无头 + `--session` 恢复 + stream-json；`-p` 模式无审批，
+契合可选回调设计）。
 
 ### Phase 0：hub 骨架与协议（1 个交付周期）
 
