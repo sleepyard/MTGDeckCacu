@@ -446,8 +446,22 @@ curl -s -X POST http://127.0.0.1:8644/api/deck/add -d '{"name":"Swamp","section"
 ```
 
 导出的限制赛牌表用 `python -X utf8 tools/mtg_tool.py validate <导出> --format <赛制> --limited`
-过门禁（主牌 40/41 张；备牌视为池内裁切，不受 15 张上限）。后续阶段加入构筑模式与
-Agent 桥（计划 §5）。
+过门禁（主牌 40/41 张；备牌视为池内裁切，不受 15 张上限）。
+
+Phase 2（构筑模式）已加入：
+
+```bash
+# 构筑种子（候选 JSON 与 mtg_tool search --out 同构；种子不在候选内等输入错误 400）
+curl -s -X POST http://127.0.0.1:8644/api/seed-constructed \
+  -d '{"candidates": [...], "seeds": ["Card A"], "format": "pioneer", "bo3": true}'
+curl -s http://127.0.0.1:8644/api/roles          # 角色分布 + 缺口（对照 M 配额，basis 明示）
+curl -s "http://127.0.0.1:8644/api/combos?format=pioneer&platform=arena"
+curl -s http://127.0.0.1:8644/api/cost           # 造价签名；tools/data 快照缺失显式报错
+# 门禁聚合（limited 显式传，不做张数推断；门禁未知绝不当作通过）
+curl -s -X POST http://127.0.0.1:8644/api/audit -d '{"format":"pioneer","limited":false}'
+```
+
+后续阶段加入 Agent 桥（计划 §5）。
 
 # tools/deck_version.py
 

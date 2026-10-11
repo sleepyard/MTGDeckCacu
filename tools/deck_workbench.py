@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""网页套牌工作台 hub（MtgWorkbenchPlan Phase 0 hub + Phase 1 限制赛组牌）。
+"""网页套牌工作台 hub（MtgWorkbenchPlan Phase 0 hub + Phase 1 限制赛 +
+Phase 2 构筑模式与核验接入）。
 
 分层（决策 B：引擎先行，UI 最薄）：
   引擎纯函数    build_snapshot / serialize_deck / build_stats /
-                hydrate_pool / apply_add|remove|move —— 可独立单测
+                hydrate_pool / apply_add|remove|move /
+                build_roles / parse_cost_output / parse_rotation_output —— 可独立单测
   权威状态      WorkbenchState —— 持锁；牌表 + 水合牌池 + 卡片库 + 最近 seed
+                + 核验缓存槽位（roles/combos/cost/audit/constructed）
   HTTP 层       make_handler —— 解析请求 → 调引擎 → 序列化，不含任何牌规则
 
 端点：
   GET  /                    内嵌工作台页面（fetch 轮询 /api/snapshot，3s）
-  GET  /api/snapshot        牌表 + 牌池 + 统计 + 最近 seed 的全量快照
+  GET  /api/snapshot        牌表 + 牌池 + 统计 + 最近 seed + checks 槽位的全量快照
   POST /api/builds/import   请求体为牌表文本；deck_model.parse_text 解析并替换状态
   GET  /api/export          标准导出文本（与 deck_model 解析器可往返解析）
   POST /api/pool            请求体为牌池文本（数量 牌名）；逐名水合（Scryfall），
@@ -24,6 +27,32 @@
                             无牌表返回空结构（空不是错误）
   POST /api/deck/add|remove|move  手动微调（main↔sideboard，同名 ≤4，
                             BASIC_LANDS/ANY_NUMBER 豁免），响应带重算 stats
+  POST /api/seed-constructed  调 constructed_strategy.build_constructed_deck；
+                            body {"candidates": <mtg_tool search --out 同构数组>,
+                            "seeds": ["牌名",...], "format": "pioneer"(缺省),
+                            "bo3": true, "strategy": "mid"(缺省), "platform":
+                            "arena"(缺省)}；结果经 render_constructed_deck →
+                            import 路径装回当前牌表；候选空/种子不在候选等
+                            输入错误 → 400（与 deck_pooper constructed 口径一致）
+  GET  /api/roles           当前牌表角色聚合（roles.classify_card）：各 root
+                            张数分布、逐牌主角色、未水合牌名进 unknown 明示；
+                            角色缺口对照 constructed_strategy.MODULE_QUOTAS
+                            的 M1/M2/M3/M5/M8 wanted 配额（deck_config 的骨架
+                            目标只服务限制赛，不作构筑基准——basis 字段明说）
+  GET  /api/combos?format=pioneer&platform=arena&limit=20
+                            当前牌表跑 mtg_combo_tool.search_deck（进程内，
+                            75 请求/分钟节流，可能慢）。六桶原样展示；
+                            stale/truncated 透出；查询失败（网络等）与"成功
+                            零命中"显式分离（status=error vs 全零桶）
+  GET  /api/cost            子进程跑 tools/newbie/deck_cost.py sig（与 CLI 输出
+                            天然一致）；快照缺失/子进程失败 → 显式 error，
+                            绝不返回零造价
+  POST /api/audit           body {"format": "pioneer", "limited": false,
+                            "bo3": false}（limited 必传，不做张数静默推断）；
+                            聚合 mtg_tool validate（limited=true 带 --limited）与
+                            rot_audit deck 两个子进程门禁；交通灯结构
+                            {validate, rotation, ok}；子进程失败 = 门禁
+                            unknown（null），不是通过
 
 错误信封与 mtg_rules_tool 同构：
   {"status": "error", "error": {"type": ..., "message": ...}}
@@ -33,19 +62,27 @@
 """
 import argparse
 import json
+import re
+import subprocess
 import sys
+import tempfile
 import threading
 import traceback
+from collections.abc import Mapping
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlsplit
+from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 
+import constructed_strategy as CS
 import deck_core
 import deck_model
 import deck_pooper
 import limited_strategy as LS
+import mtg_combo_tool
 import mtg_tool
 import mtga_draft_tool
+import roles as role_tags
 import runlog
 
 DEFAULT_HOST = "127.0.0.1"
@@ -58,6 +95,24 @@ SEED_PLAN_TOP_N = 5                 # seed 响应携带的枚举方案条数
 DEFAULT_DECK_SIZE = 41              # 限制赛交付口径：17 地 + 24 其他
 ALLOWED_DECK_SIZES = (40, 41)       # 40 张需在报告注明裁剪理由（draft_methodology §4）
 EDIT_SECTIONS = ("main", "sideboard")
+
+# ---- Phase 2 构筑模式缺省与工具路径 ----
+DEFAULT_CONSTRUCTED_FORMAT = "pioneer"
+DEFAULT_STRATEGY = "mid"            # deck_core.STRATEGY_TARGETS 之一
+DEFAULT_PLATFORM = "arena"
+DEFAULT_COMBO_LIMIT = 20
+# mtg_combo_tool CLI 支持的赛制集合（search 子命令口径，非法值在此 400）
+COMBO_FORMATS = ("standard", "pioneer", "explorer", "modern", "legacy",
+                 "vintage", "commander", "brawl", "standardbrawl",
+                 "historic", "timeless", "alchemy", "pauper")
+TOOL_DIR = Path(__file__).resolve().parent
+COST_TOOL_SCRIPT = TOOL_DIR / "newbie" / "deck_cost.py"
+VALIDATE_TOOL_SCRIPT = TOOL_DIR / "mtg_tool.py"
+ROT_TOOL_SCRIPT = TOOL_DIR / "rot_audit.py"
+SUBPROCESS_TIMEOUT = 180            # cost/audit 单个子进程的上限秒数
+# 角色缺口基准：constructed_strategy 的 M1-M9 模块配额（deck_config 的
+# STRATEGY_TARGETS 骨架只服务限制赛深度检查，不作构筑基准；basis 字段明说）
+GAP_MODULES = tuple(CS.REQUIRED_MODULES)    # ("M1", "M2", "M3", "M5", "M8")
 
 # 基本地 → 颜色（mana_sources 统计用；Wastes 无色不列入）
 _BASIC_LAND_COLORS = {
@@ -374,6 +429,268 @@ def summarize_seed(limited, plans, deck_size, table_warnings):
             "warnings": list(table_warnings)}
 
 
+# ------------------------------------------------------------------ 构筑引擎（Phase 2）
+
+def parse_constructed_body(body):
+    """seed-constructed 请求体校验 → (candidates, seed_names, fmt, bo3, strategy, platform)。
+
+    与 deck_pooper constructed 同一输入口径：candidates 是 mtg_tool search
+    --out 的同构非空数组；seeds 是非空牌名数组（各按 1 张必留种子处理）。
+    输入错误抛 ValueError（HTTP 400）；strategy 合法性由
+    build_constructed_deck 复核（非法 strategy 同样 ValueError → 400）。
+    """
+    candidates = body.get("candidates")
+    if not isinstance(candidates, list) or not candidates:
+        raise ValueError(
+            "candidates 必须是非空 JSON 数组（mtg_tool search --out 的同构产物）")
+    if any(not isinstance(item, Mapping) for item in candidates):
+        raise ValueError("candidates 包含非对象记录")
+    seeds = body.get("seeds")
+    if not isinstance(seeds, list) or not seeds:
+        raise ValueError("seeds 必须是非空牌名数组，如 [\"牌名A\", \"牌名B\"]")
+    seed_names = []
+    for item in seeds:
+        name = item.strip() if isinstance(item, str) else ""
+        if not name:
+            raise ValueError("seeds 只接受非空牌名字符串，收到: {!r}".format(item))
+        seed_names.append(name)
+    fmt = body.get("format") or DEFAULT_CONSTRUCTED_FORMAT
+    if not isinstance(fmt, str) or not fmt.strip():
+        raise ValueError("format 必须是非空字符串，收到: {!r}".format(fmt))
+    strategy = body.get("strategy") or DEFAULT_STRATEGY
+    if not isinstance(strategy, str):
+        raise ValueError("strategy 必须是字符串，收到: {!r}".format(strategy))
+    platform = body.get("platform") or DEFAULT_PLATFORM
+    if not isinstance(platform, str):
+        raise ValueError("platform 必须是字符串，收到: {!r}".format(platform))
+    return candidates, seed_names, fmt.strip(), bool(body.get("bo3")), \
+        strategy.strip().lower(), platform.strip().lower()
+
+
+def summarize_constructed(built):
+    """ConstructedDeck → seed-constructed 响应摘要（同时写入 checks.constructed）。"""
+    return {"format": built.format,
+            "colors": list(built.colors),
+            "valid": built.valid,
+            "violations": list(built.violations),
+            "report": list(built.report),
+            "modules": dict(built.modules),
+            "main": sum(item.count for item in built.main),
+            "sideboard": sum(item.count for item in built.sideboard),
+            "commander": sum(item.count for item in built.commander)}
+
+
+def build_roles(deck, card_db, fetch_card):
+    """纯函数：牌表角色聚合（roles.classify_card 口径）。
+
+    水合顺序：卡片库（牌池导入的缓存）→ fetch_card（缺省 Scryfall）；
+    查不到的牌名按名聚合并量进 unknown（带原因），不静默跳过也不失败。
+    distribution 按"命中即计"统计（一张牌可贡献多个 root）；cards 给逐牌
+    主角色（primary_role 口径）与模块归属（constructed_strategy._module）。
+    gaps 对照 constructed_strategy.MODULE_QUOTAS 的 REQUIRED_MODULES wanted
+    配额；deck_config 的骨架目标是限制赛口径，不作构筑基准（basis 明说）。
+    """
+    distribution = {root: 0 for root in role_tags.ROOTS}
+    modules = {}
+    cards = []
+    failures = {}
+    cache = {}
+    total_qty = 0
+    refs = [ref for sec in SECTIONS for ref in getattr(deck, sec)]
+    for ref in refs:
+        total_qty += ref.qty
+        card = _lookup_card(card_db, ref.name)
+        if card is None:
+            key = ref.name.lower()
+            if key in failures:
+                failures[key]["qty"] += ref.qty
+                continue
+            if key not in cache:
+                try:
+                    cache[key] = dict(fetch_card(ref.name))
+                except mtg_tool.MtgToolError as exc:
+                    cache[key] = None
+                    failures[key] = {"name": ref.name, "qty": 0,
+                                     "reason": str(exc)}
+            card = cache[key]
+            if card is None:
+                failures[key]["qty"] += ref.qty    # 首次失败即计入张数
+                continue
+        tags = role_tags.classify_card(card)
+        roots = [root for root in role_tags.ROOTS if role_tags.has_root(tags, root)]
+        for root in roots:
+            distribution[root] += ref.qty
+        module = CS._module(card) or "other"
+        modules[module] = modules.get(module, 0) + ref.qty
+        cards.append({"name": ref.name, "qty": ref.qty,
+                      "primary": role_tags.primary_role(tags, card),
+                      "roots": roots, "module": module})
+    gaps = []
+    for module in GAP_MODULES:
+        have = modules.get(module, 0)
+        want = CS.MODULE_QUOTAS[module][1]
+        if have < want:
+            gaps.append({"module": module, "have": have, "want": want,
+                         "deficit": want - have})
+    return {"status": "ok",
+            "main": sum(card.qty for card in deck.main),
+            "sideboard": sum(card.qty for card in deck.sideboard),
+            "total": total_qty,
+            "distribution": distribution,
+            "cards": cards,
+            "modules": modules,
+            "gaps": gaps,
+            "basis": "constructed_strategy.MODULE_QUOTAS 的 M1/M2/M3/M5/M8 "
+                     "wanted 配额（deck_config 骨架目标仅服务限制赛，"
+                     "不作构筑基准）",
+            "unknown": sorted(failures.values(), key=lambda item: item["name"])}
+
+
+def summarize_combo(combo):
+    """analyze 产出的单个组合技 → 面板展示摘要（保留状态字段，不丢信息）。"""
+    components = [{"name": item.get("name"), "quantity": item.get("quantity", 1)}
+                  for item in combo.get("components") or []]
+    availability = combo.get("combined") or {}
+    return {"id": combo.get("id"),
+            "url": combo.get("source_url"),
+            "popularity": combo.get("popularity") or 0,
+            "cards": " + ".join("{}×{}".format(item["quantity"], item["name"])
+                                for item in components),
+            "components": components,
+            "produces": list(combo.get("results") or []),
+            "legality": (combo.get("legality") or {}).get("status"),
+            "missing": list(availability.get("missing_cards") or []),
+            "unverified_templates": list(availability.get("unverified_templates") or []),
+            "description": (combo.get("description") or "")[:300]}
+
+
+def summarize_combos(result, format_name, platform):
+    """mtg_combo_tool.search_deck 的结果 dict → 面板/快照序列化。
+
+    六桶、stale、truncated、warnings 原样透出；成功零命中 = 全零桶 +
+    status ok，与查询失败（status error）显式分离。
+    """
+    buckets = {}
+    group_counts = {}
+    for key in mtg_combo_tool.OUTPUT_BUCKETS:
+        combos = result.get(key) or []
+        buckets[key] = [summarize_combo(item) for item in combos]
+        group_counts[key] = len(buckets[key])
+    return {"status": "ok",
+            "format": format_name,
+            "platform": platform,
+            "buckets": buckets,
+            "group_counts": group_counts,
+            "variant_count": result.get("variant_count"),
+            "analyzed_variant_count": result.get("analyzed_variant_count"),
+            "unexamined_variant_count": result.get("unexamined_variant_count"),
+            "stale": bool(result.get("stale")),
+            "truncated": bool(result.get("truncated")),
+            "warnings": list(result.get("warnings") or [])}
+
+
+# ------------------------------------------------------------------ 外部工具输出解析（Phase 2）
+
+def _run_tool(argv):
+    """跑外部工具子进程（字节捕获，自行按 UTF-8 解码；OSError/超时向上抛）。"""
+    return subprocess.run(argv, capture_output=True, timeout=SUBPROCESS_TIMEOUT)
+
+
+def _completed_text(completed):
+    stdout = (completed.stdout or b"").decode("utf-8", "replace")
+    stderr = (completed.stderr or b"").decode("utf-8", "replace")
+    return stdout, stderr
+
+
+def parse_cost_output(text):
+    """deck_cost.py sig 的文本输出 → 结构化 dict。
+
+    deck_cost 只有文本输出（无 --json），按行锚解析；缺行字段给 None，
+    不编造。预算档位以 ✗ 前缀判定失败。
+    """
+    signature = None
+    budget = None
+    packs = {"core": None, "all": None, "penalty": None}
+    stats = None
+    unrecognized = []
+    match = re.search(r"造价签名\s+(\S+)", text)
+    if match:
+        signature = match.group(1)
+    match = re.search(r"物质点预算\s+(.*?)\s*｜\s*(.*)", text)
+    if match:
+        tier = match.group(1).strip()
+        budget = {"ok": not tier.startswith("✗"),
+                  "tier": tier.lstrip("✅ ").strip(),
+                  "detail": match.group(2).strip()}
+    match = re.search(r"PP核心[^=]*=\s*([\d.]+)", text)
+    if match:
+        packs["core"] = float(match.group(1))
+    match = re.search(r"PP全量[^=]*=\s*([\d.]+)", text)
+    if match:
+        packs["all"] = float(match.group(1))
+    match = re.search(r"惩罚系数\s*=\s*([\d.]+)", text)
+    if match:
+        packs["penalty"] = float(match.group(1))
+    match = re.search(r"非基本地\s*(\d+)\s*张\s*｜\s*生物\s*(\d+)\s*张\s*｜\s*"
+                      r"主牌合计\s*(\d+)\s*张", text)
+    if match:
+        stats = {"nonbasic_lands": int(match.group(1)),
+                 "creatures": int(match.group(2)),
+                 "main_total": int(match.group(3))}
+    match = re.search(r"未识别[:：]\s*(.+)", text)
+    if match:
+        unrecognized = [name.strip() for name in match.group(1).split(",")
+                        if name.strip()]
+    return {"signature": signature, "budget": budget, "packs": packs,
+            "stats": stats, "unrecognized": unrecognized}
+
+
+def parse_validate_output(stdout):
+    """mtg_tool validate 的 stdout → 违规列表（'[违规]' 行）。"""
+    violations = []
+    for line in stdout.splitlines():
+        if "[违规]" in line:
+            violations.append(line.split("[违规]", 1)[1].strip())
+    return violations
+
+
+_ROT_CARD_RE = re.compile(r"^\s*(✅存活|❌将退)\s+(\d+)\s+(.+?)\s+存活印刷")
+_ROT_TOTAL_RE = re.compile(r"^(主牌|备牌)：(\d+)/(\d+) 张轮替后存活（将退 (\d+) 张）")
+
+
+def parse_rotation_output(stdout):
+    """rot_audit deck 的 stdout → 结构化轮替审计。
+
+    ok = 主备两区都没有"将退"牌；网络失败时 rot_audit 仍 exit 0 但 stderr
+    带 '! FAIL' 行——由调用方结合 returncode/stderr 判定 unknown，这里只
+    负责忠实解析 stdout。
+    """
+    section = None
+    rotating = []
+    totals = {}
+    for line in stdout.splitlines():
+        if line.startswith("== "):
+            section = line[3:].strip()
+            continue
+        match = _ROT_CARD_RE.match(line)
+        if match:
+            if match.group(1) == "❌将退":
+                rotating.append({"name": match.group(3).strip(),
+                                 "qty": int(match.group(2)),
+                                 "section": section or "?"})
+            continue
+        match = _ROT_TOTAL_RE.match(line.strip())
+        if match:
+            totals[match.group(1)] = {"survive": int(match.group(2)),
+                                      "total": int(match.group(3)),
+                                      "rotating": int(match.group(4))}
+    main = totals.get("主牌", {"survive": 0, "total": 0, "rotating": 0})
+    side = totals.get("备牌", {"survive": 0, "total": 0, "rotating": 0})
+    return {"main": main, "sideboard": side,
+            "rotating_cards": rotating,
+            "ok": main["rotating"] == 0 and side["rotating"] == 0}
+
+
 # ------------------------------------------------------------------ 权威状态
 
 class WorkbenchState:
@@ -395,6 +712,14 @@ class WorkbenchState:
         self._pool_meta = {"imported_at": None, "source_name": None}
         self._card_db = {}
         self._last_seed = None
+        # Phase 2 核验缓存槽位：roles/combos/cost/audit/constructed，
+        # 每项 {"status": "ok"/"error", "checked_at": iso, "result"/"error": ...}
+        self._slots = {name: None for name in
+                       ("roles", "combos", "cost", "audit", "constructed")}
+
+    def _record_slot(self, name, entry):
+        with self._lock:
+            self._slots[name] = entry
 
     def _session_locked(self):
         return {"imported_at": self._imported_at,
@@ -410,6 +735,8 @@ class WorkbenchState:
             snap["pool"] = self._pool_locked()
             snap["stats"] = build_stats(self._deck, self._card_db)
             snap["seed"] = self._last_seed
+            snap["checks"] = {name: (dict(entry) if entry else None)
+                              for name, entry in self._slots.items()}
             return snap
 
     def export_text(self):
@@ -498,6 +825,227 @@ class WorkbenchState:
 
     def deck_move(self, name, from_section, to_section, qty=1):
         return self._edit(apply_move, name, from_section, to_section, qty)
+
+    # -------------------------------------------------- Phase 2 构筑模式
+
+    def _deck_copy(self):
+        with self._lock:
+            deck = self._deck
+            return deck_model.Deck(commander=deck.commander,
+                                   companion=deck.companion,
+                                   main=deck.main, sideboard=deck.sideboard,
+                                   skipped=())
+
+    def seed_constructed(self, candidates, seed_names, fmt, bo3,
+                         strategy, platform):
+        """调 constructed_strategy 组构筑牌并装回当前牌表（import 路径复用）。
+
+        引擎的 ValueError（种子不在候选池、strategy 非法、候选记录缺 name
+        等）原样向上抛，由 HTTP 层映射 400——与 deck_pooper constructed
+        的报错口径一致。返回带 constructed 摘要的快照。
+        """
+        seed = CS.SeedSet(main=tuple((1, name) for name in seed_names))
+        built = CS.build_constructed_deck(candidates, seed, fmt, bo3=bo3,
+                                          strategy=strategy, platform=platform)
+        snapshot = self.import_text(
+            deck_pooper.render_constructed_deck(built),
+            source_name="seed-constructed")
+        summary = summarize_constructed(built)
+        snapshot["constructed"] = summary
+        self._record_slot("constructed", {"status": "ok" if built.valid else "error",
+                                          "checked_at": _now_iso(),
+                                          "result": summary})
+        return snapshot
+
+    def roles(self, fetch_card=None):
+        """当前牌表角色聚合；未水合牌名进 unknown 明示（不失败）。"""
+        with self._lock:
+            deck = self._deck
+            card_db = dict(self._card_db)
+        result = build_roles(deck, card_db, fetch_card or default_fetch_card)
+        result["checked_at"] = _now_iso()
+        self._record_slot("roles", {"status": "ok",
+                                    "checked_at": result["checked_at"],
+                                    "result": result})
+        return result
+
+    def combos(self, format_name, platform, limit):
+        """当前牌表跑 mtg_combo_tool.search_deck（进程内，可能慢）。
+
+        返回 (payload, ok)。查询失败（网络/Spellbook/数据错误）→
+        (error 信封, False)；成功（含零命中、stale、truncated）→
+        (序列化结果, True)。stale/truncated/warnings 原样透出。
+        """
+        deck = self._deck_copy()
+        if not deck.main and not deck.commander:
+            raise ValueError("当前牌表为空：请先导入牌表再查询组合技")
+        checked_at = _now_iso()
+        try:
+            raw = mtg_combo_tool.search_deck(deck, format_name, platform,
+                                             limit=limit)
+        except (mtg_tool.MtgToolError, ValueError, OSError) as exc:
+            envelope = _error_envelope(type(exc).__name__, str(exc))
+            envelope["source"] = "commander-spellbook"
+            envelope["checked_at"] = checked_at
+            self._record_slot("combos", {"status": "error",
+                                         "checked_at": checked_at,
+                                         "error": envelope["error"]})
+            return envelope, False
+        result = summarize_combos(raw, format_name, platform)
+        result["checked_at"] = checked_at
+        self._record_slot("combos", {"status": "ok", "checked_at": checked_at,
+                                     "result": result})
+        return result, True
+
+    def cost(self):
+        """子进程跑 deck_cost.py sig（与 CLI 天然一致）。
+
+        返回 (payload, ok)。子进程失败/超时/快照缺失 → (error 信封, False)，
+        绝不返回零造价；空牌表同样显式报错。
+        """
+        checked_at = _now_iso()
+        text = self.export_text()
+        if not text.strip():
+            envelope = _error_envelope(
+                "EmptyDeckError", "当前牌表为空：请先导入牌表再核算造价")
+            self._record_slot("cost", {"status": "error",
+                                       "checked_at": checked_at,
+                                       "error": envelope["error"]})
+            return envelope, False
+        try:
+            with tempfile.TemporaryDirectory(prefix="workbench_cost_") as tmp:
+                deck_path = Path(tmp) / "deck.txt"
+                deck_path.write_text(text, encoding="utf-8")
+                completed = _run_tool([sys.executable, "-X", "utf8",
+                                       str(COST_TOOL_SCRIPT), "sig",
+                                       str(deck_path)])
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            envelope = _error_envelope(type(exc).__name__,
+                                       "造价工具子进程失败: {}".format(exc))
+            self._record_slot("cost", {"status": "error",
+                                       "checked_at": checked_at,
+                                       "error": envelope["error"]})
+            return envelope, False
+        stdout, stderr = _completed_text(completed)
+        if completed.returncode != 0:
+            envelope = _error_envelope(
+                "CostToolError",
+                "deck_cost sig 退出码 {}：{}".format(
+                    completed.returncode, " ".join(stderr.split())[:500] or
+                    " ".join(stdout.split())[:500] or "无输出"))
+            self._record_slot("cost", {"status": "error",
+                                       "checked_at": checked_at,
+                                       "error": envelope["error"]})
+            return envelope, False
+        result = parse_cost_output(stdout)
+        result.update({"status": "ok", "checked_at": checked_at})
+        self._record_slot("cost", {"status": "ok", "checked_at": checked_at,
+                                   "result": result})
+        return result, True
+
+    def audit(self, fmt, limited, bo3):
+        """聚合 mtg_tool validate 与 rot_audit deck 两个子进程门禁。
+
+        返回 (payload, http_ok)。http_ok 仅表示请求本身可否 200；门禁结果在
+        payload.validate/rotation 的 status（pass/fail/unknown）与顶层 ok
+        （True/False/None——任何一门 unknown 则整体 None，绝不把失败当通过）。
+        """
+        checked_at = _now_iso()
+        text = self.export_text()
+        if not text.strip():
+            envelope = _error_envelope(
+                "EmptyDeckError", "当前牌表为空：请先导入牌表再跑门禁")
+            self._record_slot("audit", {"status": "error",
+                                        "checked_at": checked_at,
+                                        "error": envelope["error"]})
+            return envelope, False
+        validate = self._gate_validate(text, fmt, limited, bo3)
+        rotation = self._gate_rotation(text)
+        if validate["ok"] is False or rotation["ok"] is False:
+            overall = False
+        elif validate["ok"] is True and rotation["ok"] is True:
+            overall = True
+        else:
+            overall = None     # 有门禁 unknown：整体未知，不是通过
+        payload = {"status": "ok", "format": fmt, "limited": limited,
+                   "bo3": bo3, "validate": validate, "rotation": rotation,
+                   "ok": overall, "checked_at": checked_at}
+        self._record_slot("audit", {"status": "ok", "checked_at": checked_at,
+                                    "result": payload})
+        return payload, True
+
+    def _gate_validate(self, deck_text, fmt, limited, bo3):
+        """mtg_tool validate 子进程门禁：0=pass，4=fail（违规模块），
+        其余（含 2 牌表解析失败、OSError、超时）= unknown。"""
+        argv = [sys.executable, "-X", "utf8", str(VALIDATE_TOOL_SCRIPT),
+                "validate"]
+        try:
+            with tempfile.TemporaryDirectory(prefix="workbench_validate_") as tmp:
+                deck_path = Path(tmp) / "deck.txt"
+                deck_path.write_text(deck_text, encoding="utf-8")
+                argv.append(str(deck_path))
+                argv.extend(["--format", fmt])
+                if limited:
+                    argv.append("--limited")
+                if bo3:
+                    argv.append("--bo3")
+                completed = _run_tool(argv)
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            return {"status": "unknown", "ok": None, "violations": [],
+                    "error": "validate 子进程失败: {}".format(exc)}
+        stdout, stderr = _completed_text(completed)
+        if completed.returncode == 0:
+            return {"status": "pass", "ok": True,
+                    "violations": parse_validate_output(stdout)}
+        if completed.returncode == 4:
+            return {"status": "fail", "ok": False,
+                    "violations": parse_validate_output(stdout)}
+        return {"status": "unknown", "ok": None,
+                "violations": parse_validate_output(stdout),
+                "error": "validate 退出码 {}：{}".format(
+                    completed.returncode,
+                    " ".join((stderr + " " + stdout).split())[:500] or "无输出")}
+
+    def _gate_rotation(self, deck_text):
+        """rot_audit deck 子进程门禁。rot_audit 网络失败仍 exit 0 但 stderr
+        带 '! FAIL'——此时结果不可信，标 unknown 而不是按 stdout 判存活。"""
+        try:
+            with tempfile.TemporaryDirectory(prefix="workbench_rot_") as tmp:
+                deck_path = Path(tmp) / "deck.txt"
+                deck_path.write_text(deck_text, encoding="utf-8")
+                completed = _run_tool([sys.executable, "-X", "utf8",
+                                       str(ROT_TOOL_SCRIPT), "deck",
+                                       str(deck_path)])
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            return {"status": "unknown", "ok": None,
+                    "error": "rot_audit 子进程失败: {}".format(exc)}
+        stdout, stderr = _completed_text(completed)
+        if completed.returncode != 0 or "! FAIL" in stderr:
+            return {"status": "unknown", "ok": None,
+                    "error": "rot_audit 退出码 {}：{}".format(
+                        completed.returncode,
+                        " ".join(stderr.split())[:500] or "无输出")}
+        parsed = parse_rotation_output(stdout)
+        if not parsed["main"]["total"] and not parsed["sideboard"]["total"]:
+            return {"status": "unknown", "ok": None,
+                    "error": "rot_audit 输出不可解析（无牌表总计行）"}
+        rotating = parsed["rotating_cards"]
+        detail = "主牌 {survive}/{total} 张存活（将退 {rotating} 张）；备牌 " \
+                 "{s_survive}/{s_total} 张存活（将退 {s_rotating} 张）".format(
+                     survive=parsed["main"]["survive"],
+                     total=parsed["main"]["total"],
+                     rotating=parsed["main"]["rotating"],
+                     s_survive=parsed["sideboard"]["survive"],
+                     s_total=parsed["sideboard"]["total"],
+                     s_rotating=parsed["sideboard"]["rotating"])
+        if rotating:
+            detail += "；将退：" + "、".join(
+                "{}{}×{}".format(item["name"], item["qty"], item["section"])
+                for item in rotating)
+        return {"status": "pass" if parsed["ok"] else "fail",
+                "ok": parsed["ok"],
+                "main": parsed["main"], "sideboard": parsed["sideboard"],
+                "rotating_cards": rotating, "detail": detail}
 
 
 # ------------------------------------------------------------------ HTTP 层
@@ -623,6 +1171,12 @@ def make_handler(state):
                     self._send_json(200, state.pool_snapshot())
                 elif path == "/api/stats":
                     self._send_json(200, state.stats())
+                elif path == "/api/roles":
+                    self._send_json(200, state.roles())
+                elif path == "/api/combos":
+                    self._handle_combos()
+                elif path == "/api/cost":
+                    self._handle_cost()
                 else:
                     self._send_json(404, _error_envelope(
                         "NotFoundError", "未知路径: {}".format(path)))
@@ -638,6 +1192,10 @@ def make_handler(state):
                     self._handle_pool_import()
                 elif path == "/api/seed":
                     self._handle_seed()
+                elif path == "/api/seed-constructed":
+                    self._handle_seed_constructed()
+                elif path == "/api/audit":
+                    self._handle_audit()
                 elif path in ("/api/deck/add", "/api/deck/remove", "/api/deck/move"):
                     self._handle_deck_edit(path.rsplit("/", 1)[1])
                 else:
@@ -694,6 +1252,71 @@ def make_handler(state):
                 self._send_json(400, _error_envelope(type(exc).__name__, str(exc)))
                 return
             self._send_json(200, snapshot)
+
+        def _handle_seed_constructed(self):
+            try:
+                body = self._read_json_body()
+                args = parse_constructed_body(body)
+            except ValueError as exc:
+                self._bad_request(exc)
+                return
+            try:
+                snapshot = state.seed_constructed(*args)
+            except (ValueError, TypeError) as exc:
+                # 与 deck_pooper constructed 同一报错口径（exit 2 → 400）
+                self._send_json(400, _error_envelope(type(exc).__name__,
+                                                     str(exc)))
+                return
+            self._send_json(200, snapshot)
+
+        def _handle_combos(self):
+            query = parse_qs(urlsplit(self.path).query)
+            fmt = (query.get("format") or [DEFAULT_CONSTRUCTED_FORMAT])[0]
+            platform = (query.get("platform") or [DEFAULT_PLATFORM])[0]
+            raw_limit = (query.get("limit") or [str(DEFAULT_COMBO_LIMIT)])[0]
+            try:
+                if fmt not in COMBO_FORMATS:
+                    raise ValueError(
+                        "format 只支持 {}，收到: {!r}".format(
+                            "/".join(COMBO_FORMATS), fmt))
+                limit = int(raw_limit)
+                if limit < 1:
+                    raise ValueError("limit 必须是正整数，收到: {!r}".format(raw_limit))
+            except ValueError as exc:
+                self._bad_request(exc)
+                return
+            try:
+                payload, ok = state.combos(fmt, platform, limit)
+            except ValueError as exc:
+                self._bad_request(exc)
+                return
+            self._send_json(200 if ok else 500, payload)
+
+        def _handle_cost(self):
+            payload, ok = state.cost()
+            self._send_json(200 if ok else 500, payload)
+
+        def _handle_audit(self):
+            try:
+                body = self._read_json_body()
+            except ValueError as exc:
+                self._bad_request(exc)
+                return
+            fmt = body.get("format")
+            limited = body.get("limited")
+            bo3 = body.get("bo3", False)
+            if not isinstance(fmt, str) or not fmt.strip():
+                self._bad_request(ValueError(
+                    "format 是必填非空字符串（如 \"pioneer\"），收到: {!r}".format(fmt)))
+                return
+            if not isinstance(limited, bool):
+                # limited 必须显式传：不做牌张数静默推断
+                self._bad_request(ValueError(
+                    "limited 是必填布尔（true=限制赛 40/41 口径，false=构筑口径），"
+                    "收到: {!r}".format(limited)))
+                return
+            payload, ok = state.audit(fmt.strip(), limited, bool(bo3))
+            self._send_json(200 if ok else 500, payload)
 
         def _handle_deck_edit(self, op):
             try:
@@ -775,7 +1398,7 @@ PAGE_HTML = """<!DOCTYPE html>
 </style>
 </head>
 <body>
-<h1>MTG 套牌工作台（Phase 1 限制赛）</h1>
+<h1>MTG 套牌工作台（Phase 2 构筑模式）</h1>
 <div class="panel"><h2>会话</h2><div id="session">尚未导入牌表</div></div>
 <div class="cols">
   <div class="col">
@@ -820,6 +1443,44 @@ PAGE_HTML = """<!DOCTYPE html>
     <div class="panel"><h2>错误</h2><div id="errors">—</div></div>
   </div>
 </div>
+<div class="panel"><h2>Seed 构筑（constructed_strategy，候选 = mtg_tool search --out 同构 JSON）</h2>
+  <textarea id="candtext" style="width:100%;height:80px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;" placeholder='粘贴候选 JSON 数组，如 [{"name":"Lightning Bolt",...},...]'></textarea>
+  <div class="row">种子（逗号分隔牌名）：<input id="seednames" type="text" style="width:280px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;">
+    赛制：<input id="ccFormat" type="text" value="pioneer" style="width:80px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;">
+    策略：<select id="ccStrategy"><option value="mid">mid</option><option value="aggro">aggro</option><option value="control">control</option></select>
+    平台：<select id="ccPlatform"><option value="arena">arena</option><option value="paper">paper</option><option value="mtgo">mtgo</option><option value="any">any</option></select>
+    <label><input id="ccBo3" type="checkbox">BO3</label></div>
+  <button id="ccBtn">Seed 构筑</button>
+  <div id="ccInfo" class="statline"></div>
+</div>
+<div class="cols">
+  <div class="col">
+    <div class="panel"><h2>角色分布与缺口（roles.py）</h2>
+      <button id="rolesBtn">刷新角色</button>
+      <div id="rolesBox" class="statline">—</div>
+    </div>
+    <div class="panel"><h2>组合技（Commander Spellbook，可能慢，75 请求/分钟节流）</h2>
+      <div class="row">赛制：<input id="cbFormat" type="text" value="pioneer" style="width:80px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;">
+        平台：<select id="cbPlatform"><option value="arena">arena</option><option value="paper">paper</option><option value="mtgo">mtgo</option></select>
+        条数：<input id="cbLimit" type="text" value="20" style="width:50px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"></div>
+      <button id="combosBtn">查询组合技</button>
+      <div id="combosBox" class="statline">—</div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="panel"><h2>造价（deck_cost sig，子进程 = CLI 口径）</h2>
+      <button id="costBtn">核算造价</button>
+      <div id="costBox" class="statline">—</div>
+    </div>
+    <div class="panel"><h2>门禁（mtg_tool validate + rot_audit，交通灯）</h2>
+      <div class="row">赛制：<input id="auditFormat" type="text" value="pioneer" style="width:80px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;">
+        <label><input id="auditLimited" type="checkbox">limited（40/41 口径）</label>
+        <label><input id="auditBo3" type="checkbox">BO3</label></div>
+      <button id="auditBtn">跑门禁</button>
+      <div id="auditBox" class="statline">—</div>
+    </div>
+  </div>
+</div>
 <script>
 const ZONES = ['commander', 'companion', 'main', 'sideboard'];
 const ZH = {commander:'指挥官', companion:'伴侣', main:'主牌', sideboard:'备牌'};
@@ -845,6 +1506,19 @@ async function postText(url, text, srcId) {
   if (!r.ok) throw new Error(d.error ? d.error.type + ': ' + d.error.message
                                     : JSON.stringify(d));
   return d;
+}
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error ? d.error.type + ': ' + d.error.message
+                                     : JSON.stringify(d));
+  return d;
+}
+function gateHtml(g) {
+  if (!g) return '<span class="ts">—</span>';
+  if (g.status === 'pass') return '<span class="ok">● 通过</span>';
+  if (g.status === 'fail') return '<span class="bad">● 失败</span>';
+  return '<span class="warn">● 未知</span>';
 }
 function buildColorOptions() {
   const sel = document.getElementById('seedColors');
@@ -958,6 +1632,116 @@ function renderSeed(snap) {
   document.getElementById('seedCuts').textContent =
     (seed.cuts && seed.cuts.length) ? '被裁：' + seed.cuts.join('；') : '被裁：无';
 }
+const BUCKET_ZH = {main_available:'主牌可打', postboard_available:'换备后可打',
+  sideboard_candidates:'备牌候选', missing_components:'缺组件',
+  needs_verification:'待核验', excluded:'已排除'};
+function renderConstructed(snap) {
+  const c = snap.checks && snap.checks.constructed;
+  const box = document.getElementById('ccInfo');
+  if (!c) { box.textContent = '—'; return; }
+  if (c.status === 'error' && c.error && !c.result) {
+    box.innerHTML = '<span class="bad">查询失败: ' + esc(c.error.message || '') + '</span>';
+    return;
+  }
+  const r = c.result;
+  box.innerHTML = (r.valid ? '<span class="ok">门禁通过</span>'
+                           : '<span class="bad">门禁失败: '
+                             + esc(r.violations.join('；')) + '</span>')
+    + '；颜色 ' + esc((r.colors || []).join('') || '无色')
+    + '；主牌 ' + r.main + ' 张，备牌 ' + r.sideboard + ' 张'
+    + '<br>' + (r.report || []).map(esc).join('<br>');
+}
+function renderRoles(snap) {
+  const slot = snap.checks && snap.checks.roles;
+  const box = document.getElementById('rolesBox');
+  if (!slot) { box.textContent = '—'; return; }
+  const r = slot.result;
+  let html = '<div class="note">' + esc(r.basis) + '</div>';
+  const dist = r.distribution || {};
+  const keys = Object.keys(dist).filter(k => dist[k] > 0);
+  html += '<div>' + (keys.length
+    ? keys.map(k => esc(k) + '×' + dist[k]
+        + ' <span class="bar" style="width:' + (dist[k] * 4) + 'px"></span>').join('　')
+    : '<span class="ts">（无可分类牌）</span>') + '</div>';
+  if ((r.gaps || []).length)
+    html += '<div class="warn">缺口：' + r.gaps.map(g =>
+      esc(g.module) + ' 缺 ' + g.deficit + '（有 ' + g.have + ' / 目标 ' + g.want + '）'
+      ).join('；') + '</div>';
+  else html += '<div class="ok">缺口：无（M1/M2/M3/M5/M8 均达 wanted 配额）</div>';
+  if ((r.unknown || []).length)
+    html += '<div class="bad">未水合（角色未知）: ' + r.unknown.map(u =>
+      esc(u.name) + '×' + u.qty).join('、') + '</div>';
+  box.innerHTML = html;
+}
+function renderCombos(snap) {
+  const slot = snap.checks && snap.checks.combos;
+  const box = document.getElementById('combosBox');
+  if (!slot) { box.textContent = '—'; return; }
+  if (slot.status === 'error') {
+    box.innerHTML = '<span class="bad">查询失败（≠零命中）: '
+      + esc((slot.error && slot.error.message) || '') + '</span>';
+    return;
+  }
+  const r = slot.result;
+  const counts = r.group_counts || {};
+  let html = '<div>' + Object.keys(BUCKET_ZH).map(k =>
+    esc(BUCKET_ZH[k]) + ' <b>' + (counts[k] || 0) + '</b>').join('　') + '</div>';
+  if (r.stale) html += '<div class="warn">stale：缓存结果， freshness 不保证</div>';
+  if (r.truncated) html += '<div class="warn">truncated：只分析 ' + r.analyzed_variant_count
+    + ' / ' + r.variant_count + '，调大 limit</div>';
+  const hits = (r.buckets && r.buckets.main_available || []).slice(0, 5);
+  for (const c of hits)
+    html += '<div class="row"><span class="nm">' + esc(c.cards) + '</span>'
+      + '<a class="tag" href="' + esc(c.url) + '" target="_blank">#' + esc(c.id) + '</a></div>';
+  for (const w of (r.warnings || []))
+    html += '<div class="warn">' + esc(w) + '</div>';
+  box.innerHTML = html;
+}
+function renderCost(snap) {
+  const slot = snap.checks && snap.checks.cost;
+  const box = document.getElementById('costBox');
+  if (!slot) { box.textContent = '—'; return; }
+  if (slot.status === 'error') {
+    box.innerHTML = '<span class="bad">造价不可用: '
+      + esc((slot.error && slot.error.message) || '') + '</span>';
+    return;
+  }
+  const r = slot.result;
+  const b = r.budget || {};
+  let html = '签名 <b>' + esc(r.signature || '?') + '</b>　预算 '
+    + (b.ok ? '<span class="ok">' : '<span class="bad">') + esc(b.tier || '?')
+    + '</span><br>PP核心 ' + (r.packs && r.packs.core != null ? r.packs.core : '?')
+    + ' 包；PP全量 ' + (r.packs && r.packs.all != null ? r.packs.all : '?')
+    + ' 包；惩罚 ' + (r.packs && r.packs.penalty != null ? r.packs.penalty : '?') + '×';
+  if ((r.unrecognized || []).length)
+    html += '<br><span class="warn">deck_cost 未识别: '
+          + r.unrecognized.map(esc).join('、') + '</span>';
+  box.innerHTML = html;
+}
+function renderAudit(snap) {
+  const slot = snap.checks && snap.checks.audit;
+  const box = document.getElementById('auditBox');
+  if (!slot) { box.textContent = '—'; return; }
+  if (slot.status === 'error') {
+    box.innerHTML = '<span class="bad">门禁不可用: '
+      + esc((slot.error && slot.error.message) || '') + '</span>';
+    return;
+  }
+  const r = slot.result;
+  const overall = r.ok === true ? '<span class="ok">● 全部通过</span>'
+    : r.ok === false ? '<span class="bad">● 有门禁失败</span>'
+                     : '<span class="warn">● 有门禁未知（≠通过）</span>';
+  let html = overall + '　validate ' + gateHtml(r.validate)
+    + (r.validate && r.validate.violations && r.validate.violations.length
+       ? '：<span class="bad">' + r.validate.violations.map(esc).join('；') + '</span>' : '')
+    + '<br>轮替 ' + gateHtml(r.rotation);
+  if (r.rotation && r.rotation.detail) html += '：' + esc(r.rotation.detail);
+  if (r.rotation && r.rotation.error) html += ' <span class="warn">'
+    + esc(r.rotation.error) + '</span>';
+  if (r.validate && r.validate.error) html += ' <span class="warn">'
+    + esc(r.validate.error) + '</span>';
+  box.innerHTML = html;
+}
 async function tick() {
   try {
     const r = await fetch('/api/snapshot');
@@ -973,6 +1757,11 @@ async function tick() {
     renderDeck(d);
     renderStats(d);
     renderSeed(d);
+    renderConstructed(d);
+    renderRoles(d);
+    renderCombos(d);
+    renderCost(d);
+    renderAudit(d);
     const warns = [].concat(d.warnings || [], (d.pool && d.pool.warnings) || []);
     document.getElementById('warnings').textContent =
       warns.length ? warns.join('\\n') : '—';
@@ -999,6 +1788,27 @@ document.getElementById('seedBtn').onclick = () => run(async () => {
   if (set) body.set = set;
   await postJSON('/api/seed', body);
 });
+document.getElementById('ccBtn').onclick = () => run(async () => {
+  const raw = document.getElementById('candtext').value.trim();
+  const candidates = JSON.parse(raw || 'null');
+  const body = {candidates: candidates,
+    seeds: document.getElementById('seednames').value.split(/[,，]/).map(s => s.trim()).filter(Boolean),
+    format: document.getElementById('ccFormat').value.trim() || 'pioneer',
+    strategy: document.getElementById('ccStrategy').value,
+    platform: document.getElementById('ccPlatform').value,
+    bo3: document.getElementById('ccBo3').checked};
+  await postJSON('/api/seed-constructed', body);
+});
+document.getElementById('rolesBtn').onclick = () => run(() => fetchJSON('/api/roles'));
+document.getElementById('combosBtn').onclick = () => run(() => fetchJSON(
+  '/api/combos?format=' + encodeURIComponent(document.getElementById('cbFormat').value.trim() || 'pioneer')
+  + '&platform=' + document.getElementById('cbPlatform').value
+  + '&limit=' + encodeURIComponent(document.getElementById('cbLimit').value.trim() || '20')));
+document.getElementById('costBtn').onclick = () => run(() => fetchJSON('/api/cost'));
+document.getElementById('auditBtn').onclick = () => run(() => postJSON('/api/audit', {
+  format: document.getElementById('auditFormat').value.trim() || 'pioneer',
+  limited: document.getElementById('auditLimited').checked,
+  bo3: document.getElementById('auditBo3').checked}));
 document.getElementById('poolFilter').onchange = () => { if (lastSnap) renderPool(lastSnap); };
 buildColorOptions();
 setInterval(tick, """ + str(POLL_INTERVAL_MS) + """); tick();

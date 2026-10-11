@@ -101,7 +101,9 @@ phase-rs Rust sidecar；CI 无 Windows 矩阵。**结论：不照搬实现，移
 
 进度（2026-10-11）：热身批次（§7 五项审核修复）与 Phase 0 已交付；Phase 1 已交付
 （真实 FRA 牌池冒烟通过，导出经 `mtg_tool validate --limited` 门禁，该开关为本阶段
-新增）。Phase 2/3 未开始。
+新增）。Phase 2 已交付（构筑 seed/roles/combos/cost/audit 五端点；DeckList 真实交付
+对拍：roles/validate/rot/cost 与 CLI 逐项一致，combos 真实查询零命中属正常口径）。
+Phase 3（Agent 桥）未开始。
 
 ### Phase 0：hub 骨架与协议（1 个交付周期）
 

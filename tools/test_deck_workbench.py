@@ -319,8 +319,12 @@ class HttpTests(unittest.TestCase):
                 self.assertEqual(status, 200)
             final = fx.state.snapshot()
             self.assertEqual(final["session"]["import_seq"], len(decks))
-            self.assertEqual(final["sections"]["main"],
-                             [{"qty": 4, "name": "Bolt5"}])  # 最后一次成功写入获胜
+            # 最后一次成功写入获胜：终态必须等于最大序号那次导入的结果
+            # （请求到达顺序由线程调度决定，不能硬编码某个 BoltN 最后到）
+            winner = next(snap for _, snap in results
+                          if snap["session"]["import_seq"] == len(decks))
+            self.assertEqual(final["sections"], winner["sections"])
+            self.assertEqual(len(final["sections"]["main"]), 1)
             # 快照与状态严格一致（skipped/会话同源）
             self.assertEqual(final["skipped"], [])
 
@@ -786,16 +790,614 @@ class Phase1HttpTests(unittest.TestCase):
             self.assertEqual(snap["stats"]["main"], 41)
             self.assertEqual(snap["pool"]["counts"]["cards"], 34)
 
-    def test_root_page_phase1_markers(self):
+    def test_root_page_phase2_markers(self):
         with ServerFixture() as fx:
             status, body = fx.get("/")
             self.assertEqual(status, 200)
             text = body.decode("utf-8")
-            self.assertIn("Phase 1", text)
-            self.assertIn("/api/seed", text)
-            self.assertIn("/api/pool", text)
-            self.assertIn("/api/deck/move", text)
-            self.assertIn("/api/deck/add", text)
+            self.assertIn("Phase 2", text)
+            for marker in ("/api/seed", "/api/pool", "/api/deck/move",
+                           "/api/deck/add", "/api/seed-constructed",
+                           "/api/roles", "/api/combos", "/api/cost",
+                           "/api/audit"):
+                self.assertIn(marker, text)
+
+
+# ---------------------------------------------------------------- Phase 2 fixtures
+
+def cand(name, oracle="", types="Creature — Goblin", colors="R", cmc=2,
+         cost=None, power=2, keywords=()):
+    """constructed_strategy 候选记录（mtg_tool search --out 同构的最小字段集）。"""
+    if cost is None:
+        cost = ("{" + str(cmc) + "}" if cmc else "")
+    return {"name": name, "colors": list(colors),
+            "color_identity": list(colors), "cmc": cmc, "mana_cost": cost,
+            "type_line": types, "oracle_text": oracle,
+            "keywords": list(keywords),
+            "power": (str(power) if power is not None else None),
+            "rarity": "common", "games": ["arena", "paper", "mtgo"],
+            "legalities": {"pioneer": "legal", "standard": "legal"}}
+
+
+CONSTRUCTED_CANDIDATES = [
+    cand("Goblin One"), cand("Goblin Two"), cand("Goblin Three"),
+    cand("Diviner One", oracle="Draw a card.", types="Creature — Human Wizard",
+         cmc=3),
+    cand("Diviner Two", oracle="Draw a card.", types="Creature — Human Wizard",
+         cmc=3),
+    cand("Dragon One", types="Creature — Dragon", cmc=5, power=4),
+    cand("Dragon Two", types="Creature — Dragon", cmc=5, power=4),
+    cand("Doomblade One", oracle="Destroy target creature.", types="Instant",
+         cost="{1}{R}", power=None),
+    cand("Doomblade Two", oracle="Destroy target creature.", types="Instant",
+         cost="{1}{R}", power=None),
+    cand("Doomblade Three", oracle="Destroy target creature.",
+         types="Instant", cost="{1}{R}", power=None),
+    cand("Life One", types="Creature — Angel", keywords=("lifelink",)),
+    cand("Life Two", types="Creature — Angel", keywords=("lifelink",)),
+    cand("Smash One", oracle="Destroy target artifact.", types="Instant",
+         cmc=1, cost="{R}", power=None),
+    cand("Red Hills", oracle="{T}: Add {R}.", types="Land", cmc=0, cost="",
+         power=None),
+    cand("Red Cliff", oracle="{T}: Add {R}.", types="Land", cmc=0, cost="",
+         power=None),
+]
+
+
+def combo_item(cid, names=("Piece A", "Piece B")):
+    return {"id": cid,
+            "source_url": "https://commanderspellbook.com/combo/" + cid,
+            "popularity": 100,
+            "components": [{"name": name, "quantity": 1} for name in names],
+            "results": ["infinite mana"], "description": "test combo",
+            "legality": {"status": "legal"},
+            "combined": {"missing_cards": [], "unverified_templates": []}}
+
+
+def combo_result(**over):
+    base = {key: [] for key in workbench.mtg_combo_tool.OUTPUT_BUCKETS}
+    base.update({"variant_count": 0, "analyzed_variant_count": 0,
+                 "unexamined_variant_count": 0, "stale": False,
+                 "truncated": False, "warnings": []})
+    base.update(over)
+    return base
+
+
+COST_STDOUT = """
+==========================================================================
+deck.txt
+  造价签名  4m1r8u5c
+  物质点预算  ✅ 低造价档 ｜ 0秘稀×24.59 + 1稀有×5.10 = 5.10 点（低档≤20.4 / 上限≤40.8）
+==========================================================================
+  稀有度     张数        点/张(物质)       点/张(可定向)      小计(可定向)
+----------------------------------------------------------------------
+【需要开多少包（四条线不可互换 ⇒ 取 max）】
+   PP核心 (max[稀有, 秘稀])          =    1.0 包
+   PP全量 (含普通/非普通)            =    5.0 包
+   ★ 不可兑换惩罚系数 = 1.25×
+  非基本地 5 张 ｜ 生物 20 张 ｜ 主牌合计 38 张
+  ⚠ 未识别: Foo, Bar
+
+"""
+
+ROT_STDOUT = """# 轮替存活审计：deck.txt
+# 轮替日 2027-02-02 ｜ 退出：WOE LCI MKM OTJ(+BIG) BLB DSK
+
+== 主牌
+  ✅存活    4 Lightning Bolt                       存活印刷=M11               轮替印刷=—
+  ❌将退    3 Old Card                             存活印刷=—                 轮替印刷=ABC
+== 备牌
+  ✅存活    2 Rest in Peace                        存活印刷=ABC               轮替印刷=—
+
+主牌：57/60 张轮替后存活（将退 3 张）
+备牌：2/2 张轮替后存活（将退 0 张）
+"""
+
+ROT_STDOUT_ALL_PASS = """# 轮替存活审计：deck.txt
+# 轮替日 2027-02-02 ｜ 退出：WOE LCI MKM OTJ(+BIG) BLB DSK
+
+== 主牌
+  ✅存活    4 Lightning Bolt                       存活印刷=M11               轮替印刷=—
+== 备牌
+  ✅存活    2 Rest in Peace                        存活印刷=ABC               轮替印刷=—
+
+主牌：4/4 张轮替后存活（将退 0 张）
+备牌：2/2 张轮替后存活（将退 0 张）
+"""
+
+VALIDATE_PASS = ("[info] 逐牌核对:\n\nPASS — 全部门禁通过\n")
+VALIDATE_FAIL = ("  [违规] 主牌 40 张 < 60\n  [违规] 'X' 共 5 张 > 4（非基本地）\n"
+                 "FAIL — 2 项违规\n")
+
+
+def cp(returncode, stdout="", stderr=""):
+    """伪造的 subprocess.CompletedProcess（字节流，对齐 _run_tool 捕获）。"""
+    return mock.Mock(returncode=returncode,
+                     stdout=stdout.encode("utf-8"),
+                     stderr=stderr.encode("utf-8"))
+
+
+class ToolDispatcher:
+    """按调用顺序返回预置结果（或抛异常），并记录 argv 供断言。"""
+
+    def __init__(self, results):
+        self.results = list(results)
+        self.calls = []
+
+    def __call__(self, argv):
+        self.calls.append(list(argv))
+        item = self.results.pop(0)
+        if isinstance(item, Exception):
+            raise item
+        return item
+
+
+ROLE_CARDS = [
+    {"name": "Doom Blade", "type_line": "Instant",
+     "oracle_text": "Destroy target creature.", "keywords": [], "cmc": 2,
+     "power": None, "mana_cost": "{1}{B}", "colors": ["B"],
+     "legalities": {"pioneer": "legal"}, "games": ["arena"]},
+    {"name": "Diviner", "type_line": "Creature — Human Wizard",
+     "oracle_text": "When Diviner enters the battlefield, you draw a card.",
+     "keywords": [], "cmc": 3, "power": 2, "mana_cost": "{2}{U}",
+     "colors": ["U"], "legalities": {"pioneer": "legal"},
+     "games": ["arena"]},
+    {"name": "Grizzly Bears", "type_line": "Creature — Bear",
+     "oracle_text": "", "keywords": [], "cmc": 2, "power": 2,
+     "mana_cost": "{1}{G}", "colors": ["G"],
+     "legalities": {"pioneer": "legal"}, "games": ["arena"]},
+]
+
+
+class ConstructedSeedTests(unittest.TestCase):
+    """seed-constructed：成功路径、输入错误 400、checks 槽位。"""
+
+    def test_body_parse_defaults(self):
+        candidates, names, fmt, bo3, strategy, platform = \
+            workbench.parse_constructed_body(
+                {"candidates": CONSTRUCTED_CANDIDATES, "seeds": ["Goblin One"]})
+        self.assertEqual(names, ["Goblin One"])
+        self.assertEqual(fmt, "pioneer")
+        self.assertEqual(strategy, "mid")
+        self.assertEqual(platform, "arena")
+        self.assertFalse(bo3)
+
+    def test_body_parse_rejects_empty_candidates(self):
+        for bad in ({}, {"candidates": [], "seeds": ["X"]},
+                    {"candidates": "x", "seeds": ["X"]}):
+            with self.assertRaises(ValueError):
+                workbench.parse_constructed_body(bad)
+
+    def test_body_parse_rejects_empty_or_bad_seeds(self):
+        for bad in ({"candidates": [{}], "seeds": []},
+                    {"candidates": [{}], "seeds": "Goblin One"},
+                    {"candidates": [{}], "seeds": ["  "]}):
+            with self.assertRaises(ValueError):
+                workbench.parse_constructed_body(bad)
+
+    def test_http_seed_constructed_success(self):
+        with ServerFixture() as fx:
+            status, snap = fx.post_obj("/api/seed-constructed", {
+                "candidates": CONSTRUCTED_CANDIDATES,
+                "seeds": ["Goblin One"], "bo3": True})
+            self.assertEqual(status, 200, snap.get("error"))
+            built = snap["constructed"]
+            self.assertTrue(built["valid"], built["violations"])
+            self.assertEqual(built["main"], 60)
+            self.assertLessEqual(built["sideboard"], 15)
+            self.assertTrue(built["report"])
+            self.assertEqual(snap["counts"]["main"], 60)
+            self.assertEqual(snap["session"]["source_name"], "seed-constructed")
+            main_names = {c["name"]: c["qty"]
+                          for c in snap["sections"]["main"]}
+            self.assertEqual(main_names.get("Goblin One"), 1)  # 种子按原数保留
+            # checks.constructed 槽位已记录
+            slot = fx.get_json("/api/snapshot")[1]["checks"]["constructed"]
+            self.assertEqual(slot["status"], "ok")
+            self.assertEqual(slot["result"]["main"], 60)
+
+    def test_http_seed_constructed_empty_candidates_400(self):
+        with ServerFixture() as fx:
+            status, payload = fx.post_obj("/api/seed-constructed",
+                                          {"candidates": [], "seeds": ["X"]})
+            self.assertEqual(status, 400)
+            self.assertEqual(payload["error"]["type"], "BadRequest")
+
+    def test_http_seed_constructed_seed_not_in_candidates_400(self):
+        with ServerFixture() as fx:
+            status, payload = fx.post_obj("/api/seed-constructed", {
+                "candidates": CONSTRUCTED_CANDIDATES,
+                "seeds": ["Missing Card"]})
+            self.assertEqual(status, 400)
+            self.assertIn("不在候选池", payload["error"]["message"])
+
+    def test_http_seed_constructed_bad_strategy_400(self):
+        with ServerFixture() as fx:
+            status, payload = fx.post_obj("/api/seed-constructed", {
+                "candidates": CONSTRUCTED_CANDIDATES,
+                "seeds": ["Goblin One"], "strategy": "turbo"})
+            self.assertEqual(status, 400)
+            self.assertIn("strategy", payload["error"]["message"])
+
+    def test_http_seed_constructed_candidate_missing_name_400(self):
+        with ServerFixture() as fx:
+            status, payload = fx.post_obj("/api/seed-constructed", {
+                "candidates": [{"cmc": 1}], "seeds": ["Goblin One"]})
+            self.assertEqual(status, 400)
+            self.assertIn("name", payload["error"]["message"])
+
+    def test_snapshot_checks_slots_initially_none(self):
+        snap = workbench.WorkbenchState().snapshot()
+        for key in ("roles", "combos", "cost", "audit", "constructed"):
+            self.assertIn(key, snap["checks"])
+            self.assertIsNone(snap["checks"][key])
+
+
+class RolesTests(unittest.TestCase):
+    """roles 聚合：分布/主角色、unknown 明示、缺口对照 M 配额。"""
+
+    DECK_TEXT = "4 Doom Blade\n4 Diviner\n4 Grizzly Bears\n"
+
+    def _db(self):
+        return {card["name"]: card for card in ROLE_CARDS}
+
+    def test_build_roles_distribution_and_primary(self):
+        deck = deck_model.parse_text(self.DECK_TEXT)
+        result = workbench.build_roles(deck, self._db(), FakeResolver([]))
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["distribution"]["removal"], 4)
+        self.assertEqual(result["distribution"]["card_advantage"], 4)
+        self.assertEqual(result["distribution"]["threat"], 4)   # Diviner etb
+        self.assertEqual(result["distribution"]["aggro"], 4)
+        self.assertEqual(result["unknown"], [])
+        by_name = {c["name"]: c for c in result["cards"]}
+        self.assertEqual(by_name["Doom Blade"]["primary"], "removal")
+        self.assertEqual(by_name["Doom Blade"]["module"], "M5")
+        self.assertEqual(by_name["Diviner"]["primary"], "card_advantage")
+        self.assertEqual(by_name["Grizzly Bears"]["primary"], "aggro")
+
+    def test_build_roles_unknown_explicit_with_reason_and_qty(self):
+        deck = deck_model.parse_text("2 Ghost Card\n3 Doom Blade\n")
+        result = workbench.build_roles(deck, {}, FakeResolver(ROLE_CARDS))
+        self.assertEqual(len(result["unknown"]), 1)
+        self.assertEqual(result["unknown"][0]["name"], "Ghost Card")
+        self.assertEqual(result["unknown"][0]["qty"], 2)
+        self.assertTrue(result["unknown"][0]["reason"])
+        # 已知牌照常分类，未水合牌不计入分布
+        self.assertEqual(result["distribution"]["removal"], 3)
+        self.assertNotIn("Ghost Card",
+                         [c["name"] for c in result["cards"]])
+
+    def test_build_roles_gaps_vs_constructed_module_quotas(self):
+        deck = deck_model.parse_text(self.DECK_TEXT)
+        result = workbench.build_roles(deck, self._db(), FakeResolver([]))
+        gaps = {g["module"]: g for g in result["gaps"]}
+        # M1 有 4 张（Bears）目标 8 → 缺 4；M3/M8 完全没有
+        self.assertEqual(gaps["M1"]["have"], 4)
+        self.assertEqual(gaps["M1"]["want"],
+                         workbench.CS.MODULE_QUOTAS["M1"][1])
+        self.assertEqual(gaps["M1"]["deficit"], 4)
+        self.assertIn("M3", gaps)
+        self.assertIn("M8", gaps)
+        self.assertIn("MODULE_QUOTAS", result["basis"])
+
+    def test_roles_http_endpoint_and_slot(self):
+        with ServerFixture() as fx:
+            fx.post_json("/api/builds/import", self.DECK_TEXT)
+            fetch = mock.patch.object(
+                workbench, "default_fetch_card",
+                side_effect=FakeResolver(ROLE_CARDS)).start()
+            self.addCleanup(fetch.stop)
+            status, result = fx.get_json("/api/roles")
+            self.assertEqual(status, 200)
+            self.assertEqual(result["distribution"]["removal"], 4)
+            self.assertEqual(result["unknown"], [])
+            self.assertTrue(result["checked_at"])
+            slot = fx.get_json("/api/snapshot")[1]["checks"]["roles"]
+            self.assertEqual(slot["status"], "ok")
+            self.assertEqual(slot["result"]["main"], 12)
+
+    def test_roles_http_uses_card_db_cache_without_fetch(self):
+        with ServerFixture() as fx:
+            fx.state.import_pool("1 Doom Blade\n", fetch_card=FakeResolver(ROLE_CARDS))
+            fx.post_json("/api/builds/import", "1 Doom Blade\n")
+            fetch = mock.patch.object(
+                workbench, "default_fetch_card",
+                side_effect=AssertionError("不应走到网络水合")).start()
+            self.addCleanup(fetch.stop)
+            status, result = fx.get_json("/api/roles")
+            self.assertEqual(status, 200)
+            self.assertEqual(result["unknown"], [])
+            fetch.assert_not_called()
+
+
+class CombosTests(unittest.TestCase):
+    """combos：零命中 vs 查询失败分离、stale/truncated 透出、参数校验。"""
+
+    def _fixture(self, result=None, error=None):
+        fx = ServerFixture()
+        fx.post_json("/api/builds/import", SAMPLE_TEXT)
+        side = error if error is not None else \
+            (lambda *a, **k: result if result is not None
+             else combo_result())
+        patcher = mock.patch.object(workbench.mtg_combo_tool, "search_deck",
+                                    side_effect=side)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        return fx
+
+    def test_combos_zero_hits_is_success_not_error(self):
+        with self._fixture(result=combo_result()) as fx:
+            status, payload = fx.get_json("/api/combos")
+            self.assertEqual(status, 200)
+            self.assertEqual(payload["status"], "ok")
+            self.assertEqual(sum(payload["group_counts"].values()), 0)
+            self.assertFalse(payload["stale"])
+            slot = fx.get_json("/api/snapshot")[1]["checks"]["combos"]
+            self.assertEqual(slot["status"], "ok")
+
+    def test_combos_hit_buckets_and_counts(self):
+        result = combo_result(main_available=[combo_item("c1")],
+                              variant_count=1, analyzed_variant_count=1,
+                              unexamined_variant_count=0)
+        with self._fixture(result=result) as fx:
+            status, payload = fx.get_json(
+                "/api/combos?format=pioneer&platform=arena")
+            self.assertEqual(status, 200)
+            self.assertEqual(payload["group_counts"]["main_available"], 1)
+            combo = payload["buckets"]["main_available"][0]
+            self.assertEqual(combo["id"], "c1")
+            self.assertIn("Piece A", combo["cards"])
+            self.assertEqual(combo["produces"], ["infinite mana"])
+
+    def test_combos_query_failure_distinct_from_zero_hits(self):
+        with self._fixture(error=mtg_tool.HttpError("Spellbook 网络失败")) as fx:
+            status, payload = fx.get_json("/api/combos")
+            self.assertEqual(status, 500)
+            self.assertEqual(payload["status"], "error")
+            self.assertIn("网络失败", payload["error"]["message"])
+            self.assertEqual(payload["source"], "commander-spellbook")
+            slot = fx.get_json("/api/snapshot")[1]["checks"]["combos"]
+            self.assertEqual(slot["status"], "error")
+            self.assertIn("网络失败", slot["error"]["message"])
+
+    def test_combos_stale_passthrough(self):
+        with self._fixture(result=combo_result(
+                stale=True,
+                warnings=["Spellbook refresh failed; cached results: boom"])) as fx:
+            status, payload = fx.get_json("/api/combos")
+            self.assertEqual(status, 200)
+            self.assertTrue(payload["stale"])
+            self.assertTrue(any("cached" in w for w in payload["warnings"]))
+
+    def test_combos_truncated_passthrough(self):
+        with self._fixture(result=combo_result(
+                variant_count=50, analyzed_variant_count=20,
+                unexamined_variant_count=30, truncated=True)) as fx:
+            status, payload = fx.get_json("/api/combos?limit=20")
+            self.assertEqual(status, 200)
+            self.assertTrue(payload["truncated"])
+            self.assertEqual(payload["analyzed_variant_count"], 20)
+
+    def test_combos_empty_deck_400(self):
+        with ServerFixture() as fx:
+            status, payload = fx.get_json("/api/combos")
+            self.assertEqual(status, 400)
+            self.assertEqual(payload["error"]["type"], "BadRequest")
+
+    def test_combos_bad_params_400(self):
+        with self._fixture() as fx:
+            for path in ("/api/combos?format=nonsense",
+                         "/api/combos?limit=0",
+                         "/api/combos?limit=abc"):
+                status, payload = fx.get_json(path)
+                self.assertEqual(status, 400, path)
+                self.assertEqual(payload["error"]["type"], "BadRequest")
+
+
+class CostTests(unittest.TestCase):
+    """cost：子进程口径、快照缺失/失败显式 error、绝不返回零造价。"""
+
+    def _fixture(self, dispatcher):
+        fx = ServerFixture()
+        fx.post_json("/api/builds/import", SAMPLE_TEXT)
+        patcher = mock.patch.object(workbench, "_run_tool",
+                                    side_effect=dispatcher)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        return fx
+
+    def test_parse_cost_output_unit(self):
+        parsed = workbench.parse_cost_output(COST_STDOUT)
+        self.assertEqual(parsed["signature"], "4m1r8u5c")
+        self.assertTrue(parsed["budget"]["ok"])
+        self.assertEqual(parsed["budget"]["tier"], "低造价档")
+        self.assertEqual(parsed["packs"]["core"], 1.0)
+        self.assertEqual(parsed["packs"]["all"], 5.0)
+        self.assertEqual(parsed["packs"]["penalty"], 1.25)
+        self.assertEqual(parsed["stats"],
+                         {"nonbasic_lands": 5, "creatures": 20,
+                          "main_total": 38})
+        self.assertEqual(parsed["unrecognized"], ["Foo", "Bar"])
+
+    def test_parse_cost_output_missing_lines_are_none(self):
+        parsed = workbench.parse_cost_output("什么都没有")
+        self.assertIsNone(parsed["signature"])
+        self.assertIsNone(parsed["budget"])
+        self.assertEqual(parsed["unrecognized"], [])
+
+    def test_cost_http_success(self):
+        dispatcher = ToolDispatcher([cp(0, COST_STDOUT)])
+        with self._fixture(dispatcher) as fx:
+            status, payload = fx.get_json("/api/cost")
+            self.assertEqual(status, 200)
+            self.assertEqual(payload["status"], "ok")
+            self.assertEqual(payload["signature"], "4m1r8u5c")
+            self.assertTrue(payload["budget"]["ok"])
+            # 子进程 argv = python -X utf8 deck_cost.py sig <tmpfile>
+            argv = dispatcher.calls[0]
+            self.assertEqual(argv[1], "-X")
+            self.assertEqual(argv[2], "utf8")
+            self.assertTrue(argv[3].endswith("deck_cost.py"))
+            self.assertIn("sig", argv)
+            slot = fx.get_json("/api/snapshot")[1]["checks"]["cost"]
+            self.assertEqual(slot["status"], "ok")
+
+    def test_cost_snapshot_missing_nonzero_exit_is_error_not_zero(self):
+        dispatcher = ToolDispatcher([
+            cp(1, "", "Traceback ... FileNotFoundError: rarity_map.json")])
+        with self._fixture(dispatcher) as fx:
+            status, payload = fx.get_json("/api/cost")
+            self.assertEqual(status, 500)
+            self.assertEqual(payload["status"], "error")
+            self.assertEqual(payload["error"]["type"], "CostToolError")
+            self.assertNotIn("signature", payload)   # 绝无零造价回退
+            slot = fx.get_json("/api/snapshot")[1]["checks"]["cost"]
+            self.assertEqual(slot["status"], "error")
+
+    def test_cost_subprocess_oserror_is_error(self):
+        dispatcher = ToolDispatcher([OSError("python 起不来")])
+        with self._fixture(dispatcher) as fx:
+            status, payload = fx.get_json("/api/cost")
+            self.assertEqual(status, 500)
+            self.assertEqual(payload["status"], "error")
+            self.assertIn("python 起不来", payload["error"]["message"])
+
+    def test_cost_empty_deck_is_error(self):
+        with ServerFixture() as fx:
+            status, payload = fx.get_json("/api/cost")
+            self.assertEqual(status, 500)
+            self.assertEqual(payload["error"]["type"], "EmptyDeckError")
+
+
+class AuditTests(unittest.TestCase):
+    """audit：双门禁交通灯、unknown≠通过、limited/constructed 两口径。"""
+
+    def _fixture(self, results):
+        dispatcher = ToolDispatcher(results)
+        fx = ServerFixture()
+        fx.post_json("/api/builds/import", SAMPLE_TEXT)
+        patcher = mock.patch.object(workbench, "_run_tool",
+                                    side_effect=dispatcher)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        return fx, dispatcher
+
+    def test_audit_both_pass(self):
+        fx, dispatcher = self._fixture([cp(0, VALIDATE_PASS),
+                                        cp(0, ROT_STDOUT_ALL_PASS)])
+        with fx:
+            status, payload = fx.post_obj(
+                "/api/audit", {"format": "pioneer", "limited": False})
+            self.assertEqual(status, 200)
+            self.assertTrue(payload["ok"])
+            self.assertEqual(payload["validate"]["status"], "pass")
+            self.assertEqual(payload["validate"]["violations"], [])
+            self.assertEqual(payload["rotation"]["status"], "pass")
+            self.assertTrue(payload["rotation"]["ok"])
+            self.assertEqual(payload["rotation"]["rotating_cards"], [])
+            self.assertEqual(payload["rotation"]["main"],
+                             {"survive": 4, "total": 4, "rotating": 0})
+            self.assertIn("4/4", payload["rotation"]["detail"])
+            self.assertTrue(payload["checked_at"])
+            slot = fx.get_json("/api/snapshot")[1]["checks"]["audit"]
+            self.assertEqual(slot["status"], "ok")
+
+    def test_audit_rotation_lists_dying_cards(self):
+        fx, _ = self._fixture([cp(0, VALIDATE_PASS), cp(0, ROT_STDOUT)])
+        with fx:
+            status, payload = fx.post_obj(
+                "/api/audit", {"format": "pioneer", "limited": False})
+            self.assertEqual(status, 200)
+            # validate 过、轮替有将退 → 整体 fail（不是 unknown）
+            self.assertFalse(payload["ok"])
+            self.assertEqual(payload["rotation"]["status"], "fail")
+            rotating = payload["rotation"]["rotating_cards"]
+            self.assertEqual(rotating[0]["name"], "Old Card")
+            self.assertEqual(rotating[0]["qty"], 3)
+            self.assertEqual(rotating[0]["section"], "主牌")
+            self.assertEqual(payload["rotation"]["main"],
+                             {"survive": 57, "total": 60, "rotating": 3})
+            self.assertIn("57/60", payload["rotation"]["detail"])
+
+    def test_audit_validate_fail_lists_violations(self):
+        fx, _ = self._fixture([cp(4, VALIDATE_FAIL), cp(0, ROT_STDOUT)])
+        with fx:
+            status, payload = fx.post_obj(
+                "/api/audit", {"format": "pioneer", "limited": False})
+            self.assertEqual(status, 200)
+            self.assertFalse(payload["ok"])
+            self.assertEqual(payload["validate"]["status"], "fail")
+            self.assertEqual(payload["validate"]["violations"],
+                             ["主牌 40 张 < 60", "'X' 共 5 张 > 4（非基本地）"])
+
+    def test_audit_validate_unknown_is_not_pass(self):
+        # 退出码 2（牌表解析失败等）→ unknown；整体 ok=None 而不是 True
+        fx, _ = self._fixture([cp(2, "", "[错误] 牌表解析失败: boom"),
+                               cp(0, ROT_STDOUT_ALL_PASS)])
+        with fx:
+            status, payload = fx.post_obj(
+                "/api/audit", {"format": "pioneer", "limited": False})
+            self.assertEqual(status, 200)
+            self.assertIsNone(payload["ok"])
+            self.assertEqual(payload["validate"]["status"], "unknown")
+            self.assertTrue(payload["validate"]["error"])
+
+    def test_audit_rotation_subprocess_failure_is_unknown(self):
+        fx, _ = self._fixture([cp(0, VALIDATE_PASS), cp(9, "", "boom")])
+        with fx:
+            status, payload = fx.post_obj(
+                "/api/audit", {"format": "pioneer", "limited": False})
+            self.assertEqual(status, 200)
+            self.assertIsNone(payload["ok"])
+            self.assertEqual(payload["rotation"]["status"], "unknown")
+            self.assertTrue(payload["rotation"]["error"])
+
+    def test_audit_rotation_network_fail_stderr_is_unknown(self):
+        # rot_audit 网络失败仍 exit 0，但 stderr 带 '! FAIL' → 不可信，unknown
+        fx, _ = self._fixture([cp(0, VALIDATE_PASS),
+                               cp(0, "", "  ! FAIL https://api.scryfall.com/sets boom")])
+        with fx:
+            status, payload = fx.post_obj(
+                "/api/audit", {"format": "pioneer", "limited": False})
+            self.assertIsNone(payload["ok"])
+            self.assertEqual(payload["rotation"]["status"], "unknown")
+
+    def test_audit_limited_and_constructed_argv(self):
+        fx, dispatcher = self._fixture(
+            [cp(0, VALIDATE_PASS), cp(0, ROT_STDOUT),
+             cp(0, VALIDATE_PASS), cp(0, ROT_STDOUT)])
+        with fx:
+            status, _ = fx.post_obj(
+                "/api/audit", {"format": "pioneer", "limited": True})
+            self.assertEqual(status, 200)
+            status, _ = fx.post_obj(
+                "/api/audit", {"format": "pioneer", "limited": False})
+            self.assertEqual(status, 200)
+            limited_argv, constructed_argv = dispatcher.calls[0], dispatcher.calls[2]
+            self.assertIn("--limited", limited_argv)
+            self.assertNotIn("--limited", constructed_argv)
+            self.assertIn("validate", limited_argv)
+            self.assertTrue(limited_argv[3].endswith("mtg_tool.py"))
+            self.assertTrue(dispatcher.calls[1][3].endswith("rot_audit.py"))
+
+    def test_audit_missing_format_or_limited_400(self):
+        fx, _ = self._fixture([])
+        with fx:
+            for body in ({}, {"format": "pioneer"},
+                         {"limited": False},
+                         {"format": "", "limited": False},
+                         {"format": "pioneer", "limited": "yes"}):
+                status, payload = fx.post_obj("/api/audit", body)
+                self.assertEqual(status, 400, body)
+                self.assertEqual(payload["error"]["type"], "BadRequest")
+
+    def test_audit_empty_deck_is_error(self):
+        with ServerFixture() as fx:
+            status, payload = fx.post_obj(
+                "/api/audit", {"format": "pioneer", "limited": False})
+            self.assertEqual(status, 500)
+            self.assertEqual(payload["error"]["type"], "EmptyDeckError")
 
 
 if __name__ == "__main__":
