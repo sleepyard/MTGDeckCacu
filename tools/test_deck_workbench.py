@@ -792,12 +792,24 @@ class Phase1HttpTests(unittest.TestCase):
             self.assertEqual(snap["stats"]["main"], 41)
             self.assertEqual(snap["pool"]["counts"]["cards"], 34)
 
-    def test_root_page_phase3_markers(self):
+    def test_root_page_markers(self):
         with ServerFixture() as fx:
             status, body = fx.get("/")
             self.assertEqual(status, 200)
             text = body.decode("utf-8")
-            self.assertIn("Phase 3", text)
+            # 用户语言标题（不再是 Phase N 开发语言）
+            self.assertIn("MTG 套牌工作台", text)
+            self.assertNotIn("Phase 3", text)
+            # 模式分流标签与 Agent 区新文案
+            self.assertIn("限制赛", text)
+            self.assertIn("构筑", text)
+            self.assertIn("Agent 助手", text)
+            self.assertIn("直连工具", text)
+            self.assertIn("Agent 回写候选", text)
+            # 结构化结果渲染器（纯函数式 JS，输入 JSON 返回 HTML）
+            self.assertIn("renderAgentPayload", text)
+            self.assertIn("renderValue", text)
+            self.assertNotIn("<pre", text)   # 禁止整段倾倒原始 JSON
             for marker in ("/api/seed", "/api/pool", "/api/deck/move",
                            "/api/deck/add", "/api/seed-constructed",
                            "/api/roles", "/api/combos", "/api/cost",
@@ -1383,6 +1395,23 @@ class AuditTests(unittest.TestCase):
             self.assertTrue(limited_argv[3].endswith("mtg_tool.py"))
             self.assertTrue(dispatcher.calls[1][3].endswith("rot_audit.py"))
 
+    def test_clip_detail_truncates_with_marker(self):
+        # 子进程 stderr 整段倾倒（含 URL 噪音）→ 单行收敛 + 截断标注
+        long_text = "! FAIL https://api.scryfall.com/sets " + "x" * 600
+        clipped = workbench._clip_detail(long_text, 500)
+        self.assertTrue(clipped.endswith("…[截断]"))
+        self.assertLessEqual(len(clipped), 500 + len("…[截断]"))
+        self.assertEqual(workbench._clip_detail("短文本", 500), "短文本")
+        fx, _ = self._fixture([cp(0, VALIDATE_PASS),
+                               cp(9, "", long_text)])
+        with fx:
+            status, payload = fx.post_obj(
+                "/api/audit", {"format": "pioneer", "limited": False})
+            self.assertEqual(status, 200)
+            error = payload["rotation"]["error"]
+            self.assertIn("…[截断]", error)
+            self.assertLessEqual(len(error), 500 + len("…[截断]") + 32)
+
     def test_audit_missing_format_or_limited_400(self):
         fx, _ = self._fixture([])
         with fx:
@@ -1513,14 +1542,28 @@ class AgentBridgeUnitTests(unittest.TestCase):
         self.assertEqual(view["result"], {"advice": "cut a land"})
         self.assertEqual(view["message"], "done")
         self.assertEqual(view["agent"], "agent-a")
+        self.assertEqual(view["claimed_by"], "agent-a")
         self.assertTrue(view["completed_at"])
+
+    def test_result_pending_view_carries_claimed_by(self):
+        bridge = make_bridge()
+        rid = bridge.submit("explain", {})["request_id"]
+        outcome, view = bridge.get_result(rid)
+        self.assertEqual(outcome, "pending")
+        self.assertIsNone(view["claimed_by"])
+        bridge.next_request("agent-a", wait=False)
+        outcome, view = bridge.get_result(rid)
+        self.assertEqual(outcome, "pending")
+        self.assertEqual(view["claimed_by"], "agent-a")
 
     def test_result_pending_before_complete(self):
         bridge = make_bridge()
         rid = bridge.submit("explain", {})["request_id"]
-        self.assertEqual(bridge.get_result(rid), ("pending", None))
+        outcome, _ = bridge.get_result(rid)
+        self.assertEqual(outcome, "pending")
         bridge.next_request("agent-a", wait=False)
-        self.assertEqual(bridge.get_result(rid), ("pending", None))
+        outcome, _ = bridge.get_result(rid)
+        self.assertEqual(outcome, "pending")
 
     def test_error_status_result_roundtrip(self):
         bridge = make_bridge()
@@ -1617,6 +1660,19 @@ class AgentBridgeUnitTests(unittest.TestCase):
         self.assertEqual(status["tracked_requests"], 4)
         self.assertEqual(status["kinds"], list(workbench.AGENT_KINDS))
 
+    def test_status_in_flight_requests_detail(self):
+        # 旧字段 in_flight 保持计数兼容；新字段带 request_id + claimed_by 明细
+        bridge = make_bridge()
+        self.assertEqual(bridge.status()["in_flight_requests"], [])
+        rid = bridge.submit("next_move", {})["request_id"]
+        bridge.next_request("agent-a", wait=False)
+        status = bridge.status()
+        self.assertEqual(status["in_flight"], 1)
+        self.assertEqual(status["in_flight_requests"],
+                         [{"request_id": rid, "claimed_by": "agent-a"}])
+        bridge.complete(rid, "ok", {}, "")
+        self.assertEqual(bridge.status()["in_flight_requests"], [])
+
 
 class AgentBridgeHttpTests(unittest.TestCase):
     """Agent 桥端点：request / next / result / heartbeat / status。"""
@@ -1695,9 +1751,14 @@ class AgentBridgeHttpTests(unittest.TestCase):
             rid = out["request_id"]
             status, pending = fx.get_json("/api/agent/result/{}".format(rid))
             self.assertEqual(status, 202)
-            self.assertEqual(pending, {"status": "pending", "request_id": rid})
+            self.assertEqual(pending["status"], "pending")
+            self.assertEqual(pending["request_id"], rid)
+            self.assertIsNone(pending["claimed_by"])   # 未认领
             status, claimed = fx.get_json("/api/agent/next?agent=kimi&wait=0")
             self.assertEqual(claimed["status"], "ok")
+            status, pending = fx.get_json("/api/agent/result/{}".format(rid))
+            self.assertEqual(status, 202)
+            self.assertEqual(pending["claimed_by"], "kimi")   # 认领人透出
             status, done = fx.post_obj(
                 "/api/agent/result",
                 {"request_id": rid, "status": "ok",
@@ -1709,6 +1770,7 @@ class AgentBridgeHttpTests(unittest.TestCase):
             self.assertEqual(view["status"], "ok")
             self.assertEqual(view["result"], {"synergies": ["A + B"]})
             self.assertEqual(view["agent"], "kimi")
+            self.assertEqual(view["claimed_by"], "kimi")
             # 重复提交 → 409
             status, payload = fx.post_obj(
                 "/api/agent/result",
@@ -1771,7 +1833,20 @@ class AgentBridgeHttpTests(unittest.TestCase):
             self.assertEqual(status, 200)
             self.assertEqual(payload["queue_depth"], 1)
             self.assertEqual(payload["in_flight"], 0)
+            self.assertEqual(payload["in_flight_requests"], [])
             self.assertEqual(payload["kinds"], list(workbench.AGENT_KINDS))
+
+    def test_agent_status_in_flight_requests_http(self):
+        with ServerFixture() as fx:
+            _, out = fx.post_obj("/api/agent/request",
+                                 {"kind": "next_move", "payload": {}})
+            fx.get_json("/api/agent/next?agent=kimi&wait=0")
+            status, payload = fx.get_json("/api/agent/status")
+            self.assertEqual(status, 200)
+            self.assertEqual(payload["in_flight"], 1)
+            self.assertEqual(payload["in_flight_requests"],
+                             [{"request_id": out["request_id"],
+                               "claimed_by": "kimi"}])
 
     def test_snapshot_contains_bridges_and_avenues_slots(self):
         with ServerFixture() as fx:
@@ -2097,7 +2172,7 @@ class AdviceTests(unittest.TestCase):
             status, body = fx.get("/")
             self.assertEqual(status, 200)
             text = body.decode("utf-8")
-            self.assertIn("Agent 桥", text)
+            self.assertIn("Agent 助手", text)
             self.assertIn("/api/agent/request", text)
             self.assertIn("/api/avenues", text)
             self.assertIn("/api/advice", text)

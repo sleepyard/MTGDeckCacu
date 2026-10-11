@@ -642,6 +642,19 @@ def _run_tool(argv):
     return subprocess.run(argv, capture_output=True, timeout=SUBPROCESS_TIMEOUT)
 
 
+def _clip_detail(text, limit=500):
+    """子进程错误细节收敛：压成单行并按 limit 截断，截断处标注 …[截断]。
+
+    rot_audit/deck_cost 的 stderr 可能整段倾倒（含 URL 与重试噪音，
+    如 "! FAIL https://… 429"），直接进 JSON 会把页面淹没；截断保信息
+    密度且明示发生了截断。短文本原样返回。
+    """
+    flat = " ".join(str(text).split())
+    if len(flat) <= limit:
+        return flat
+    return flat[:limit] + "…[截断]"
+
+
 def _completed_text(completed):
     stdout = (completed.stdout or b"").decode("utf-8", "replace")
     stderr = (completed.stderr or b"").decode("utf-8", "replace")
@@ -857,8 +870,12 @@ class AgentBridge:
             return "ok"
 
     def get_result(self, request_id):
-        """网页侧取结果：返回 ("ok", view) / ("pending", None) /
-        ("missing", None) / ("gone", None)。"""
+        """网页侧取结果：返回 ("ok", view) / ("pending", view) /
+        ("missing", None) / ("gone", None)。
+
+        ok 与 pending 两种 view 顶层都带 claimed_by（未认领 None）——
+        页面据此显示"等待 Agent 认领…"还是"[agent] 处理中…"。
+        """
         with self._cond:
             self._sweep_locked()
             rec = self._records.get(request_id)
@@ -866,11 +883,14 @@ class AgentBridge:
                 return ("gone", None) if request_id in self._gone \
                     else ("missing", None)
             if rec["state"] != "done":
-                return "pending", None
+                return "pending", {"request_id": rec["id"],
+                                   "kind": rec["kind"],
+                                   "claimed_by": rec["claimed_by"]}
             return "ok", {"request_id": rec["id"], "kind": rec["kind"],
                           "status": rec["result_status"],
                           "result": rec["result"], "message": rec["message"],
                           "agent": rec["claimed_by"],
+                          "claimed_by": rec["claimed_by"],
                           "completed_at": rec["completed_iso"]}
 
     def heartbeat(self, request_id, agent):
@@ -886,13 +906,22 @@ class AgentBridge:
             return "ok"
 
     def status(self):
-        """桥诊断：队列深度、在途请求数、就绪结果数、kind 集合。"""
+        """桥诊断：队列深度、在途请求数与认领明细、就绪结果数、kind 集合。
+
+        in_flight 保持计数（旧消费方兼容），in_flight_requests 新带
+        [{request_id, claimed_by}] 明细供页面判断"处理中/待认领"。
+        """
         with self._cond:
             self._sweep_locked()
             states = [rec["state"] for rec in self._records.values()]
+            in_flight = [{"request_id": rec["id"],
+                          "claimed_by": rec["claimed_by"]}
+                         for rec in self._records.values()
+                         if rec["state"] == "in_flight"]
             return {"status": "ok",
                     "queue_depth": len(self._queue),
                     "in_flight": states.count("in_flight"),
+                    "in_flight_requests": in_flight,
                     "results_ready": states.count("done"),
                     "tracked_requests": len(self._records),
                     "kinds": list(AGENT_KINDS)}
@@ -1399,8 +1428,8 @@ class WorkbenchState:
             envelope = _error_envelope(
                 "CostToolError",
                 "deck_cost sig 退出码 {}：{}".format(
-                    completed.returncode, " ".join(stderr.split())[:500] or
-                    " ".join(stdout.split())[:500] or "无输出"))
+                    completed.returncode, _clip_detail(stderr)
+                    or _clip_detail(stdout) or "无输出"))
             self._record_slot("cost", {"status": "error",
                                        "checked_at": checked_at,
                                        "error": envelope["error"]})
@@ -1472,7 +1501,7 @@ class WorkbenchState:
                 "violations": parse_validate_output(stdout),
                 "error": "validate 退出码 {}：{}".format(
                     completed.returncode,
-                    " ".join((stderr + " " + stdout).split())[:500] or "无输出")}
+                    _clip_detail(stderr + " " + stdout) or "无输出")}
 
     def _gate_rotation(self, deck_text):
         """rot_audit deck 子进程门禁。rot_audit 网络失败仍 exit 0 但 stderr
@@ -1492,7 +1521,7 @@ class WorkbenchState:
             return {"status": "unknown", "ok": None,
                     "error": "rot_audit 退出码 {}：{}".format(
                         completed.returncode,
-                        " ".join(stderr.split())[:500] or "无输出")}
+                        _clip_detail(stderr) or "无输出")}
         parsed = parse_rotation_output(stdout)
         if not parsed["main"]["total"] and not parsed["sideboard"]["total"]:
             return {"status": "unknown", "ok": None,
@@ -1895,7 +1924,9 @@ def make_handler(state):
                 self._send_json(200, view)
             elif outcome == "pending":
                 self._send_json(202, {"status": "pending",
-                                      "request_id": request_id})
+                                      "request_id": request_id,
+                                      "claimed_by": (view or {}).get(
+                                          "claimed_by")})
             elif outcome == "gone":
                 self._send_json(410, _error_envelope(
                     "ResultExpiredError",
@@ -2005,9 +2036,18 @@ PAGE_HTML = """<!DOCTYPE html>
   body { background:#0d1117; color:#c9d1d9; font-family:Consolas,'Microsoft YaHei',monospace;
          margin:0; padding:16px; }
   h1 { font-size:18px; color:#58a6ff; margin:0 0 12px; }
+  .tabs { margin-bottom:12px; }
+  .tabbtn { background:#161b22; color:#8b949e; border:1px solid #30363d;
+            border-radius:6px 6px 0 0; padding:6px 26px; margin:0 6px 0 0;
+            font-size:14px; cursor:pointer; }
+  .tabbtn.active { color:#58a6ff; border-color:#58a6ff; }
   .panel { background:#161b22; border:1px solid #30363d; border-radius:6px;
            padding:12px 16px; margin-bottom:12px; }
   .panel h2 { font-size:13px; color:#8b949e; margin:0 0 8px; font-weight:normal; }
+  .panel h2.sub { margin-top:18px; border-top:1px solid #30363d;
+                  padding-top:12px; }
+  .panel h3.sub2 { font-size:13px; color:#c9d1d9; margin:12px 0 4px;
+                   font-weight:normal; }
   #session { font-size:13px; color:#8b949e; }
   .cols { display:flex; gap:12px; align-items:flex-start; }
   .col { flex:1; min-width:0; }
@@ -2036,13 +2076,29 @@ PAGE_HTML = """<!DOCTYPE html>
   .statline { font-size:13px; line-height:1.8; }
   .ok { color:#3fb950; } .bad { color:#f85149; } .warn { color:#e3b341; }
   .note { color:#8b949e; font-size:12px; line-height:1.6; }
+  .card { background:#0d1117; border:1px solid #30363d; border-radius:6px;
+          padding:8px 12px; margin:8px 0; font-size:13px; line-height:1.7; }
+  .card h3 { font-size:13px; color:#58a6ff; margin:0 0 6px; font-weight:normal; }
+  .verdict { font-weight:bold; font-size:14px; background:#0d1117;
+             border-left:3px solid #58a6ff; padding:8px 12px; margin:8px 0;
+             line-height:1.7; }
+  table.kv { border-collapse:collapse; font-size:13px; margin:4px 0; }
+  table.kv td { border:1px solid #30363d; padding:3px 8px; vertical-align:top;
+                line-height:1.6; }
+  td.kvkey { color:#8b949e; white-space:nowrap; }
+  ul.kvlist { margin:2px 0; padding-left:18px; }
+  ul.kvlist li { line-height:1.7; }
 </style>
 </head>
 <body>
-<h1>MTG 套牌工作台（Phase 3 Agent 桥）</h1>
+<h1>MTG 套牌工作台</h1>
+<div class="tabs">
+  <button class="tabbtn" data-mode="limited" id="tabLimited" type="button">限制赛</button>
+  <button class="tabbtn" data-mode="constructed" id="tabConstructed" type="button">构筑</button>
+</div>
 <div class="panel"><h2>会话</h2><div id="session">尚未导入牌表</div></div>
 <div class="cols">
-  <div class="col">
+  <div class="col mode-panel" data-mode="limited">
     <div class="panel"><h2>牌池</h2>
       <div class="row">筛选：<select id="poolFilter">
         <option value="all">全部</option>
@@ -2057,14 +2113,7 @@ PAGE_HTML = """<!DOCTYPE html>
       <div>来源（可选）：<input id="srcname" type="text"></div>
       <button id="poolBtn">导入牌池</button>
     </div>
-    <div class="panel"><h2>导入/导出牌表</h2>
-      <textarea id="decktext" placeholder="粘贴牌表文本（Deck/Sideboard 段头）"></textarea>
-      <button id="importBtn">导入牌表</button>
-      <button id="exportBtn">导出当前牌表</button>
-    </div>
-  </div>
-  <div class="col">
-    <div class="panel"><h2>Seed（limited_strategy）</h2>
+    <div class="panel"><h2>自动组牌（限制赛）</h2>
       <div class="row">色组：<select id="seedColors"></select>
           张数：<select id="seedSize">
             <option value="41">41</option>
@@ -2073,29 +2122,24 @@ PAGE_HTML = """<!DOCTYPE html>
           系列：<input id="setcode" type="text" placeholder="如 FRA（评分表）"></div>
       <div class="note">通常 17 地 + 24 其他 = 41；选 40 张需在报告注明裁剪理由
         （draft_methodology §4）。无评分表时按稀有度/结构降级计分并在警告中明示。</div>
-      <button id="seedBtn">Seed</button>
+      <button id="seedBtn">生成套牌</button>
       <div id="seedInfo" class="statline"></div>
       <div id="seedPlans" class="statline"></div>
       <div id="seedCuts" class="note"></div>
     </div>
     <div class="panel"><h2>统计（deck_core 口径）</h2><div id="stats">—</div></div>
-    <div class="panel"><h2>当前牌表</h2><div id="zones">—</div></div>
-    <div class="panel"><h2>警告</h2><div id="warnings">—</div></div>
-    <div class="panel"><h2>错误</h2><div id="errors">—</div></div>
   </div>
-</div>
-<div class="panel"><h2>Seed 构筑（constructed_strategy，候选 = mtg_tool search --out 同构 JSON）</h2>
-  <textarea id="candtext" style="width:100%;height:80px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;" placeholder='粘贴候选 JSON 数组，如 [{"name":"Lightning Bolt",...},...]'></textarea>
-  <div class="row">种子（逗号分隔牌名）：<input id="seednames" type="text" style="width:280px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;">
-    赛制：<input id="ccFormat" type="text" value="pioneer" style="width:80px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;">
-    策略：<select id="ccStrategy"><option value="mid">mid</option><option value="aggro">aggro</option><option value="control">control</option></select>
-    平台：<select id="ccPlatform"><option value="arena">arena</option><option value="paper">paper</option><option value="mtgo">mtgo</option><option value="any">any</option></select>
-    <label><input id="ccBo3" type="checkbox">BO3</label></div>
-  <button id="ccBtn">Seed 构筑</button>
-  <div id="ccInfo" class="statline"></div>
-</div>
-<div class="cols">
-  <div class="col">
+  <div class="col mode-panel" data-mode="constructed">
+    <div class="panel"><h2>构筑组牌（候选 = mtg_tool search --out 同构 JSON）</h2>
+      <textarea id="candtext" style="width:100%;height:80px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;" placeholder='粘贴候选 JSON 数组，如 [{"name":"Lightning Bolt",...},...]'></textarea>
+      <div class="row">种子（逗号分隔牌名）：<input id="seednames" type="text" style="width:280px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;">
+        赛制：<input id="ccFormat" type="text" value="pioneer" style="width:80px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;">
+        策略：<select id="ccStrategy"><option value="mid">mid</option><option value="aggro">aggro</option><option value="control">control</option></select>
+        平台：<select id="ccPlatform"><option value="arena">arena</option><option value="paper">paper</option><option value="mtgo">mtgo</option><option value="any">any</option></select>
+        <label><input id="ccBo3" type="checkbox">BO3</label></div>
+      <button id="ccBtn">构筑组牌</button>
+      <div id="ccInfo" class="statline"></div>
+    </div>
     <div class="panel"><h2>角色分布与缺口（roles.py）</h2>
       <button id="rolesBtn">刷新角色</button>
       <div id="rolesBox" class="statline">—</div>
@@ -2107,15 +2151,25 @@ PAGE_HTML = """<!DOCTYPE html>
       <button id="combosBtn">查询组合技</button>
       <div id="combosBox" class="statline">—</div>
     </div>
-  </div>
-  <div class="col">
-    <div class="panel"><h2>造价（deck_cost sig，子进程 = CLI 口径）</h2>
+    <div class="panel"><h2>造价核算（deck_cost sig，子进程 = CLI 口径）</h2>
       <button id="costBtn">核算造价</button>
       <div id="costBox" class="statline">—</div>
     </div>
-    <div class="panel"><h2>门禁（mtg_tool validate + rot_audit，交通灯）</h2>
+  </div>
+</div>
+<div class="panel"><h2>当前牌表（可手动微调）</h2><div id="zones">—</div></div>
+<div class="cols">
+  <div class="col">
+    <div class="panel"><h2>导入/导出牌表</h2>
+      <textarea id="decktext" placeholder="粘贴牌表文本（Deck/Sideboard 段头）"></textarea>
+      <button id="importBtn">导入牌表</button>
+      <button id="exportBtn">导出当前牌表</button>
+    </div>
+  </div>
+  <div class="col">
+    <div class="panel"><h2>门禁体检（张数/合法性 + 轮替存活）</h2>
       <div class="row">赛制：<input id="auditFormat" type="text" value="pioneer" style="width:80px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;">
-        <label><input id="auditLimited" type="checkbox">limited（40/41 口径）</label>
+        <label><input id="auditLimited" type="checkbox">限制赛口径（40/41 张）</label>
         <label><input id="auditBo3" type="checkbox">BO3</label></div>
       <button id="auditBtn">跑门禁</button>
       <div id="auditBox" class="statline"></div>
@@ -2123,44 +2177,44 @@ PAGE_HTML = """<!DOCTYPE html>
   </div>
 </div>
 <div class="cols">
-  <div class="col">
-    <div class="panel"><h2>Agent 桥（网页出题 → Agent 会话答题）</h2>
-      <div class="row">kind：<select id="agentKind">
-          <option value="next_move">next_move（建议下一步）</option>
-          <option value="explain">explain（规则/配合解释）</option>
-          <option value="novel_synergies">novel_synergies（协同提案）</option>
-          <option value="handoff">handoff（转其他技能/全流程）</option>
-        </select>
-        timeout：<input id="agentTimeout" type="text" value="300" style="width:60px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"> 秒</div>
-      payload（JSON 对象，可空）：<br>
-      <textarea id="agentPayload" style="width:100%;height:50px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;" placeholder='{"note": "补充上下文"}'></textarea>
-      <button id="agentReqBtn">提交请求</button>
-      <div id="agentReqInfo" class="statline"></div>
-      <div id="agentResult" class="statline"></div>
-      <div id="bridgeStatus" class="statline"></div>
-    </div>
-    <div class="panel"><h2>Find（铁律契约：候选必须来自实际检索）</h2>
-      <div class="row">q：<input id="findQ" type="text" style="flex:1;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;" placeholder="f:pioneer t:creature cmc<=2">
-        limit：<input id="findLimit" type="text" value="20" style="width:50px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"></div>
-      <button id="findBtn">检索</button>
-      <div id="findBox" class="statline"></div>
-    </div>
-    <div class="panel"><h2>AI 点评（嵌入式 LLM，决策 D 辅助通道）</h2>
-      <button id="adviceBtn">获取点评</button>
-      <div id="adviceBox" class="statline"></div>
-    </div>
-  </div>
-  <div class="col">
-    <div class="panel"><h2>Avenues（Agent 反向通路）</h2>
-      <div class="note">候选牌名由写入方负责经 /api/find 或 mtg_tool search 核验（铁律）；服务端不联网验证，unverified_card_names 明示。</div>
-      <div class="row">标题：<input id="avTitle" type="text" style="flex:1;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"></div>
-      <div class="row">备注：<input id="avNote" type="text" style="flex:1;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"></div>
-      候选（每行 "牌名 | 理由"）：<br>
-      <textarea id="avCands" style="width:100%;height:50px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"></textarea>
-      <button id="avenueBtn">新增 avenue</button>
-      <div id="avenueList" class="statline">—</div>
-    </div>
-  </div>
+  <div class="col"><div class="panel"><h2>警告</h2><div id="warnings">—</div></div></div>
+  <div class="col"><div class="panel"><h2>错误</h2><div id="errors">—</div></div></div>
+</div>
+<div class="panel"><h2>Agent 助手</h2>
+  <div class="note">向 Agent 会话提问，由它调用工具链查证后回执。流程：入队 → 认领 → 查证 → 回执。</div>
+  <div class="row">问题类型：<select id="agentKind" style="flex:1;min-width:0;max-width:680px;">
+      <option value="next_move">建议下一步 —— Agent 读当前牌表统计后给出带证据的微调建议</option>
+      <option value="explain">规则与配合解释 —— 路由：规则查询工具 + 官方 CR 原文</option>
+      <option value="novel_synergies">协同候选提案 —— 路由：检索落地成真卡 → 回写候选区</option>
+      <option value="handoff">全流程体检 —— 路由：构筑工作流阶段 0b–5</option>
+    </select>
+    超时：<input id="agentTimeout" type="text" value="300" style="width:60px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"> 秒</div>
+  补充说明（可选，JSON 对象）：<br>
+  <textarea id="agentPayload" style="width:100%;height:50px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;" placeholder='{"note": "补充上下文"}'></textarea>
+  <button id="agentReqBtn">提交请求</button>
+  <div id="agentReqInfo" class="statline"></div>
+  <div id="agentResult" class="statline"></div>
+  <div id="bridgeStatus" class="statline"></div>
+  <h2 class="sub">直连工具</h2>
+  <div class="note">以下工具由工作台直接执行，不经 Agent 会话。</div>
+  <h3 class="sub2">卡牌检索</h3>
+  <div class="row">查询式：<input id="findQ" type="text" style="flex:1;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;" placeholder="f:pioneer t:creature cmc<=2">
+    条数：<input id="findLimit" type="text" value="20" style="width:50px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"></div>
+  <div class="note">铁律契约：后续提案的一切候选牌必须来自实际检索结果。</div>
+  <button id="findBtn">检索</button>
+  <div id="findBox" class="statline"></div>
+  <h3 class="sub2">智能点评</h3>
+  <div class="note">嵌入式 LLM 辅助通道；离线时显示机器兜底内容（确定性统计）并标注。</div>
+  <button id="adviceBtn">获取点评</button>
+  <div id="adviceBox" class="statline"></div>
+  <h2 class="sub">Agent 回写候选</h2>
+  <div class="note">Agent 提案的探索方向；候选牌名由写入方负责经卡牌检索或 mtg_tool search 核验（铁律），服务端不联网验证。</div>
+  <div class="row">标题：<input id="avTitle" type="text" style="flex:1;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"></div>
+  <div class="row">备注：<input id="avNote" type="text" style="flex:1;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"></div>
+  候选（每行 "牌名 | 理由"）：<br>
+  <textarea id="avCands" style="width:100%;height:50px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;font-family:inherit;"></textarea>
+  <button id="avenueBtn">新增候选</button>
+  <div id="avenueList" class="statline">—</div>
 </div>
 <script>
 const ZONES = ['commander', 'companion', 'main', 'sideboard'];
@@ -2198,9 +2252,10 @@ async function fetchJSON(url) {
 function gateHtml(g) {
   if (!g) return '<span class="ts">—</span>';
   if (g.status === 'pass') return '<span class="ok">● 通过</span>';
-  if (g.status === 'fail') return '<span class="bad">● 失败</span>';
+  if (g.status === 'fail') return '<span class="bad">● 未通过</span>';
   return '<span class="warn">● 未知</span>';
 }
+function pct(v) { return v == null ? '—' : (v * 100).toFixed(1) + '%'; }
 function buildColorOptions() {
   const sel = document.getElementById('seedColors');
   let html = '<option value="">自动（枚举选最优）</option>';
@@ -2383,13 +2438,13 @@ function renderCost(snap) {
   const box = document.getElementById('costBox');
   if (!slot) { box.textContent = '—'; return; }
   if (slot.status === 'error') {
-    box.innerHTML = '<span class="bad">造价不可用: '
-      + esc((slot.error && slot.error.message) || '') + '</span>';
+    box.innerHTML = '<div class="card"><span class="bad">造价不可用: '
+      + truncBlock((slot.error && slot.error.message) || '', 120, 5) + '</span></div>';
     return;
   }
   const r = slot.result;
   const b = r.budget || {};
-  let html = '签名 <b>' + esc(r.signature || '?') + '</b>　预算 '
+  let html = '<div class="card">签名 <b>' + esc(r.signature || '?') + '</b>　预算 '
     + (b.ok ? '<span class="ok">' : '<span class="bad">') + esc(b.tier || '?')
     + '</span><br>PP核心 ' + (r.packs && r.packs.core != null ? r.packs.core : '?')
     + ' 包；PP全量 ' + (r.packs && r.packs.all != null ? r.packs.all : '?')
@@ -2397,37 +2452,197 @@ function renderCost(snap) {
   if ((r.unrecognized || []).length)
     html += '<br><span class="warn">deck_cost 未识别: '
           + r.unrecognized.map(esc).join('、') + '</span>';
+  html += '</div>';
   box.innerHTML = html;
+}
+// ---------------- 结构化结果渲染器（输入 JSON，输出 HTML 字符串，绝不倾倒原始 JSON） ----------------
+const KEY_ZH = {action:'操作', detail:'详情', evidence:'依据', result:'结果',
+  message:'结论', candidates:'候选', name:'名称', reason:'理由', how:'做法',
+  deck_profile:'牌表概况', roles:'角色分布', recommendation:'主要建议',
+  next_moves:'下一步建议', alternatives:'备选方案', colors:'色组',
+  strategy:'策略', deck_size:'牌张数', average_cmc:'平均 CMC', lands:'地配置',
+  land_check:'地检', ok:'通过', violations:'违规', cuts:'被裁',
+  plans:'枚举方案', depth_ok:'深度达标', valid:'合法', warnings:'警告',
+  sources:'来源', source_url:'来源链接', module:'模块', deficit:'缺口',
+  have:'现有', want:'目标', quantity:'数量', cards:'卡牌', note:'备注',
+  title:'标题', agent:'Agent', status:'状态', kind:'类型', request_id:'请求号',
+  completed_at:'完成时间', queued_at:'入队时间', payload:'补充说明',
+  timeout_sec:'超时(秒)', p3:'3回合≥2地', p5:'5回合≥4地', curve:'曲线',
+  curve_label:'曲线评价', mana_sources:'法术力来源', pips:'法术力符号',
+  main:'主牌', sideboard:'备牌', total:'合计', cmc:'法术力费用',
+  type_line:'类型行', popularity:'人气', produces:'产出', components:'组件',
+  description:'描述', overview:'概况', summary:'摘要', advice:'点评',
+  model:'模型', offline_reason:'离线原因', machine_fallback:'机器兜底',
+  signature:'签名', budget:'预算', packs:'卡包折算', stats:'统计',
+  unrecognized:'未识别', group_counts:'分类计数', buckets:'分类',
+  rotating_cards:'将退卡牌', basis:'基准', distribution:'分布', gaps:'缺口',
+  unknown:'未知', checked_at:'核验时间', format:'赛制', limited:'限制赛',
+  bo3:'BO3', platform:'平台', seeds:'种子', query:'查询式',
+  returned:'返回条数', total_cards:'总条数', url:'链接', id:'编号',
+  focused:'焦点', created_at:'创建时间', unverified_card_names:'候选未核验',
+  report:'报告', modules:'模块', commander:'指挥官', nonbasic_lands:'非基本地',
+  depth_note:'深度说明', score:'评分', playable_count:'可打张数',
+  imported_at:'导入时间', source_name:'来源', import_seq:'导入序号',
+  skip:'跳过'};
+const VAL_ZH = {pass:'通过', fail:'未通过', unknown:'未知', ok:'正常',
+  error:'出错', pending:'等待中', offline:'离线', queued:'已入队',
+  done:'已完成', in_flight:'处理中'};
+function zhKey(k) { return KEY_ZH[k] || k; }
+function toggleLong(a) {
+  const s = a.nextElementSibling;
+  if (!s) return;
+  const show = s.style.display === 'none';
+  s.style.display = show ? '' : 'none';
+  a.textContent = show ? '收起' : '展开';
+}
+function truncStr(s, n) {
+  s = String(s);
+  if (s.length <= n) return esc(s);
+  return esc(s.slice(0, n)) + '<span class="tag">…</span>'
+    + '<a href="#" onclick="toggleLong(this);return false;">展开</a>'
+    + '<span class="long" style="display:none">' + esc(s) + '</span>';
+}
+function truncBlock(text, perLine, maxLines) {
+  const lines = String(text).split(/\\n|；/).map(x => x.trim()).filter(Boolean);
+  if (!lines.length) return '<span class="ts">—</span>';
+  const shown = lines.slice(0, maxLines).map(x => truncStr(x, perLine));
+  let html = shown.join('<br>');
+  if (lines.length > maxLines)
+    html += ' <a href="#" onclick="toggleLong(this);return false;">展开（共 '
+      + lines.length + ' 行）</a><span class="long" style="display:none">'
+      + lines.map(esc).join('<br>') + '</span>';
+  return html;
+}
+function renderValue(v, depth) {
+  if (v === null || v === undefined) return '<span class="ts">—</span>';
+  if (typeof v === 'boolean')
+    return v ? '<span class="ok">是</span>' : '<span class="bad">否</span>';
+  if (typeof v === 'number') return String(v);
+  if (typeof v === 'string') {
+    if (VAL_ZH[v]) return VAL_ZH[v];
+    return truncStr(v, 200);
+  }
+  if (Array.isArray(v)) {
+    if (!v.length) return '<span class="ts">（空）</span>';
+    return '<ul class="kvlist">'
+      + v.map(item => '<li>' + renderValue(item, depth + 1) + '</li>').join('')
+      + '</ul>';
+  }
+  const keys = Object.keys(v);
+  if (!keys.length) return '<span class="ts">（空）</span>';
+  let rows = '';
+  for (const k of keys)
+    rows += '<tr><td class="kvkey">' + esc(zhKey(k)) + '</td><td>'
+          + renderValue(v[k], depth + 1) + '</td></tr>';
+  return '<table class="kv">' + rows + '</table>';
+}
+function renderDeckProfile(p) {
+  let html = '<div class="card"><h3>牌表概况</h3><div class="statline">';
+  const bits = [];
+  if (p.colors) bits.push('色组 <b>' + esc((p.colors || []).join('')) + '</b>');
+  if (p.strategy) bits.push('策略 ' + esc(p.strategy));
+  if (p.deck_size != null) bits.push(p.deck_size + ' 张');
+  if (p.average_cmc != null) bits.push('平均 CMC ' + p.average_cmc);
+  if (p.lands) bits.push('地 ' + renderValue(p.lands, 1));
+  html += bits.join('　') + '</div>';
+  if (p.land_check) {
+    const lc = p.land_check;
+    html += '<div class="statline">地检（' + (lc.deck_size || '?') + ' 张口径，'
+      + (lc.lands != null ? lc.lands : '?') + ' 地）：3回合≥2地 ' + pct(lc.p3)
+      + '，5回合≥4地 ' + pct(lc.p5) + '，'
+      + (lc.ok ? '<span class="ok">通过</span>'
+               : '<span class="bad">未通过</span>') + '</div>';
+  }
+  const rest = {};
+  for (const k in p)
+    if (['colors','strategy','deck_size','average_cmc','lands','land_check'].indexOf(k) < 0)
+      rest[k] = p[k];
+  if (Object.keys(rest).length) html += renderValue(rest, 1);
+  return html + '</div>';
+}
+function renderMoveCard(m, i) {
+  if (m === null || m === undefined) return '';
+  if (typeof m === 'string')
+    return '<div class="card"><b>' + (i + 1) + '.</b> ' + truncStr(m, 300) + '</div>';
+  let html = '<div class="card"><h3>建议 ' + (i + 1)
+    + (m.action ? '：' + esc(m.action) : '') + '</h3>';
+  if (m.how) html += '<div>' + truncStr(m.how, 400) + '</div>';
+  if (Array.isArray(m.evidence) && m.evidence.length)
+    html += '<div class="note">依据</div><ul class="kvlist">'
+      + m.evidence.map(e => '<li>' + renderValue(e, 1) + '</li>').join('')
+      + '</ul>';
+  const rest = {};
+  for (const k in m)
+    if (['action','how','evidence'].indexOf(k) < 0) rest[k] = m[k];
+  if (Object.keys(rest).length) html += renderValue(rest, 1);
+  return html + '</div>';
+}
+function renderAgentPayload(d) {
+  let html = '';
+  if (d.message) html += '<div class="verdict">' + truncStr(d.message, 500) + '</div>';
+  const r = d.result;
+  if (r && typeof r === 'object' && !Array.isArray(r)) {
+    const used = {};
+    if (r.deck_profile) { html += renderDeckProfile(r.deck_profile); used.deck_profile = 1; }
+    if (r.roles) {
+      html += '<div class="card"><h3>角色分布</h3>' + renderValue(r.roles, 1) + '</div>';
+      used.roles = 1;
+    }
+    const moves = [];
+    if (Array.isArray(r.next_moves)) moves.push.apply(moves, r.next_moves);
+    if (r.recommendation) moves.push(r.recommendation);
+    if (moves.length)
+      html += '<div class="card"><h3>建议</h3>'
+            + moves.map(renderMoveCard).join('') + '</div>';
+    if (Array.isArray(r.alternatives) && r.alternatives.length)
+      html += '<div class="card"><h3>备选方案</h3>'
+            + r.alternatives.map(renderMoveCard).join('') + '</div>';
+    const rest = {};
+    for (const k in r)
+      if (!used[k] && ['next_moves','recommendation','alternatives'].indexOf(k) < 0)
+        rest[k] = r[k];
+    if (Object.keys(rest).length) html += renderValue(rest, 0);
+  } else if (r !== null && r !== undefined) {
+    html += renderValue(r, 0);
+  }
+  if (!html) html = '<span class="ts">（无结果内容）</span>';
+  return html;
 }
 function renderAudit(snap) {
   const slot = snap.checks && snap.checks.audit;
   const box = document.getElementById('auditBox');
   if (!slot) { box.textContent = '—'; return; }
   if (slot.status === 'error') {
-    box.innerHTML = '<span class="bad">门禁不可用: '
-      + esc((slot.error && slot.error.message) || '') + '</span>';
+    box.innerHTML = '<div class="card"><span class="bad">门禁不可用: '
+      + truncBlock((slot.error && slot.error.message) || '', 120, 5) + '</span></div>';
     return;
   }
   const r = slot.result;
   const overall = r.ok === true ? '<span class="ok">● 全部通过</span>'
-    : r.ok === false ? '<span class="bad">● 有门禁失败</span>'
+    : r.ok === false ? '<span class="bad">● 有门禁未通过</span>'
                      : '<span class="warn">● 有门禁未知（≠通过）</span>';
-  let html = overall + '　validate ' + gateHtml(r.validate)
-    + (r.validate && r.validate.violations && r.validate.violations.length
-       ? '：<span class="bad">' + r.validate.violations.map(esc).join('；') + '</span>' : '')
-    + '<br>轮替 ' + gateHtml(r.rotation);
-  if (r.rotation && r.rotation.detail) html += '：' + esc(r.rotation.detail);
-  if (r.rotation && r.rotation.error) html += ' <span class="warn">'
-    + esc(r.rotation.error) + '</span>';
-  if (r.validate && r.validate.error) html += ' <span class="warn">'
-    + esc(r.validate.error) + '</span>';
+  let html = overall + '　张数与合法性 ' + gateHtml(r.validate);
+  if (r.validate && r.validate.violations && r.validate.violations.length)
+    html += '<ul class="kvlist">'
+      + r.validate.violations.map(v => '<li class="bad">' + truncStr(v, 120) + '</li>').join('')
+      + '</ul>';
+  html += '<br>轮替存活 ' + gateHtml(r.rotation);
+  if (r.rotation && r.rotation.detail) html += '<br>' + truncBlock(r.rotation.detail, 120, 5);
+  if (r.rotation && r.rotation.error)
+    html += ' <span class="warn">' + truncBlock(r.rotation.error, 120, 5) + '</span>';
+  if (r.validate && r.validate.error)
+    html += ' <span class="warn">' + truncBlock(r.validate.error, 120, 5) + '</span>';
   box.innerHTML = html;
 }
 function renderBridge(snap) {
   const b = snap.bridges || {};
-  document.getElementById('bridgeStatus').textContent =
-    '桥状态：队列 ' + (b.queue_depth || 0) + ' / 在途 ' + (b.in_flight || 0)
-    + ' / 就绪结果 ' + (b.results_ready || 0);
+  let txt = '桥状态：队列 ' + (b.queue_depth || 0) + ' / 在途 '
+    + (b.in_flight || 0) + ' / 就绪结果 ' + (b.results_ready || 0);
+  const inflight = b.in_flight_requests || [];
+  if (inflight.length)
+    txt += '；在途：' + inflight.map(x => x.request_id
+      + (x.claimed_by ? '（' + x.claimed_by + ' 处理中）' : '（待认领）')).join('、');
+  document.getElementById('bridgeStatus').textContent = txt;
 }
 function renderAvenues(snap) {
   const list = snap.avenues || [];
@@ -2437,28 +2652,43 @@ function renderAvenues(snap) {
     '<div class="row"' + (a.focused ? ' style="background:#21262d"' : '') + '>'
     + '<span class="nm"><b>' + esc(a.title) + '</b>'
     + (a.note ? ' <span class="tag">' + esc(a.note) + '</span>' : '')
-    + (a.unverified_card_names ? ' <span class="warn">unverified</span>' : '')
+    + (a.unverified_card_names ? ' <span class="warn">候选未核验</span>' : '')
     + '<br>' + (a.candidates || []).map(c => esc(c.name)
         + (c.reason ? ' <span class="ts">(' + esc(c.reason) + ')</span>' : ''))
         .join('、')
     + '</span>'
-    + '<button onclick="doFocusAvenue(\\'' + a.id + '\\')">focus</button>'
+    + '<button onclick="doFocusAvenue(\\'' + a.id + '\\')">聚焦</button>'
     + '<button onclick="doDeleteAvenue(\\'' + a.id + '\\')">删</button></div>'
   ).join('');
 }
 async function pollAgentResult(rid) {
+  const infoBox = document.getElementById('agentReqInfo');
   const box = document.getElementById('agentResult');
   for (let i = 0; i < 120; i++) {
     const r = await fetch('/api/agent/result/' + encodeURIComponent(rid));
-    if (r.status === 202) { await new Promise(res => setTimeout(res, 3000)); continue; }
+    if (r.status === 202) {
+      let cb = null;
+      try { cb = (await r.json()).claimed_by; } catch (e) { cb = null; }
+      infoBox.textContent = cb
+        ? ('[' + cb + '] 处理中…（入队 ' + rid + '）')
+        : ('等待 Agent 认领…（入队 ' + rid + '）');
+      await new Promise(res => setTimeout(res, 3000));
+      continue;
+    }
     const d = await r.json();
     if (!r.ok) throw new Error(d.error ? d.error.type + ': ' + d.error.message
                                        : JSON.stringify(d));
-    box.innerHTML = '<b>' + esc(d.kind) + '</b> → ' + esc(d.status)
-      + '（agent: ' + esc(d.agent || '?') + '）'
-      + (d.message ? '<br>' + esc(d.message) : '')
-      + (d.result ? '<br><pre style="white-space:pre-wrap">'
-        + esc(JSON.stringify(d.result, null, 1)) + '</pre>' : '');
+    if (d.status === 'error') {
+      infoBox.textContent = '回执完成（' + (d.agent || d.claimed_by || '?') + '）';
+      box.innerHTML = '<span class="bad">回执失败：'
+        + truncStr(d.message || '未知错误', 300) + '</span>'
+        + (d.result && Object.keys(d.result).length
+           ? renderValue(d.result, 0) : '');
+    } else {
+      infoBox.textContent = '回执完成（' + (d.agent || d.claimed_by || '?')
+        + (d.completed_at ? '，' + d.completed_at : '') + '）';
+      box.innerHTML = renderAgentPayload(d);
+    }
     return;
   }
   box.textContent = '轮询超时（Agent 未在期限内作答）';
@@ -2509,6 +2739,27 @@ async function run(action) {
 function doAdd(name, section) { run(() => postJSON('/api/deck/add', {name:name, section:section, qty:1})); }
 function doRemove(name, section) { run(() => postJSON('/api/deck/remove', {name:name, section:section, qty:1})); }
 function doMove(name, from, to) { run(() => postJSON('/api/deck/move', {name:name, from:from, to:to, qty:1})); }
+function setMode(mode) {
+  if (mode !== 'limited' && mode !== 'constructed') mode = 'limited';
+  try { localStorage.setItem('workbench-mode', mode); } catch (e) {}
+  const panels = document.querySelectorAll('.mode-panel');
+  for (let i = 0; i < panels.length; i++)
+    panels[i].style.display =
+      panels[i].getAttribute('data-mode') === mode ? '' : 'none';
+  const tabs = document.querySelectorAll('.tabbtn');
+  for (let i = 0; i < tabs.length; i++)
+    tabs[i].classList.toggle('active',
+                             tabs[i].getAttribute('data-mode') === mode);
+  const al = document.getElementById('auditLimited');
+  if (al) al.checked = (mode === 'limited');   // 限制赛默认 40/41 口径，构筑默认关闭
+}
+function initMode() {
+  let mode = 'limited';
+  try { mode = localStorage.getItem('workbench-mode') || 'limited'; } catch (e) {}
+  setMode(mode);
+}
+document.getElementById('tabLimited').onclick = () => setMode('limited');
+document.getElementById('tabConstructed').onclick = () => setMode('constructed');
 document.getElementById('poolBtn').onclick = () => run(
   () => postText('/api/pool', document.getElementById('pooltext').value, 'srcname'));
 document.getElementById('importBtn').onclick = () => run(
@@ -2552,9 +2803,10 @@ document.getElementById('agentReqBtn').onclick = () => run(async () => {
     payload: payload,
     timeout_sec: parseInt(document.getElementById('agentTimeout').value, 10) || 300};
   const d = await postJSON('/api/agent/request', body);
+  const t = (d.queued_at || '').slice(11, 16);
   document.getElementById('agentReqInfo').textContent =
-    '已入队 ' + d.request_id + '（' + d.queued_at + '），等待 Agent 认领…';
-  document.getElementById('agentResult').textContent = '等待结果…';
+    '已入队 ' + d.request_id + '（' + t + '）';
+  document.getElementById('agentResult').textContent = '等待回执…';
   pollAgentResult(d.request_id).catch(e => showErrors(String(e.message || e)));
 });
 document.getElementById('findBtn').onclick = () => run(async () => {
@@ -2574,8 +2826,9 @@ document.getElementById('adviceBtn').onclick = () => run(async () => {
   const box = document.getElementById('adviceBox');
   if (d.status === 'offline') {
     box.innerHTML = '<span class="warn">LLM 离线：'
-      + esc(d.offline_reason || '未知原因') + '</span><br>机器兜底：<pre style="white-space:pre-wrap">'
-      + esc(JSON.stringify(d.machine_fallback, null, 1)) + '</pre>';
+      + esc(d.offline_reason || '未知原因') + '</span><br>'
+      + '<span class="note">以下为机器兜底内容（确定性统计，未经 LLM 生成）：</span>'
+      + renderValue(d.machine_fallback || {}, 0);
   } else {
     box.innerHTML = '<span class="tag">[' + esc(d.model || 'llm')
       + '，未经工具核验]</span><br>' + esc(d.advice);
@@ -2593,6 +2846,7 @@ document.getElementById('avenueBtn').onclick = () => run(async () => {
 });
 document.getElementById('poolFilter').onchange = () => { if (lastSnap) renderPool(lastSnap); };
 buildColorOptions();
+initMode();
 setInterval(tick, """ + str(POLL_INTERVAL_MS) + """); tick();
 </script>
 </body>
