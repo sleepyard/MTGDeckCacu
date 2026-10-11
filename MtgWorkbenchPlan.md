@@ -57,6 +57,27 @@ phase-rs Rust sidecar；CI 无 Windows 矩阵。**结论：不照搬实现，移
 `mtg_card_facts.py` 证据缓存；不引入 MTGJSON 全量库与 phase-rs。上游 Card IR 能力降级
 为 `roles.py` 的 oracle 正则标签（既有）+ 必要时扩展 `roles` 的机制注册表。
 
+**决策 D：双 LLM 通道，按请求性质分流。** LLM 驱动有两条既有通路，工作台都保留：
+
+- **Agent 桥**（主通道）：要调用工具链的判断型请求（`next_move` / `explain` /
+  `novel_synergies` / `handoff`）路由给交互式 Agent 会话——烧的是当前会话订阅，
+  不新增计费通道，且能调用规则/组合技/指南核验全套技能。上游 ADR-0010 同此考量。
+- **嵌入式 LLM**（辅助通道）：高频低智的打分轴（如 RawPower/Synergy）可复用轮抓
+  面板的既有模式——hub 直接读 `tools/llm_config.json`（DeepSeek 兼容端点）自行调用，
+  无人值守可用，但只有 prompt 里喂的信息、无工具。
+
+本质确认：界面由 Agent 唤起、双方走 HTTP 接口，LLM 计算始终走上述两条既有通道，
+工作台不发明第三条 LLM 通路。网页与 Agent 会话是**同一份权威牌表状态的两个操作
+界面**：按钮覆盖高频机械操作（原来由 LLM 当中间传话筒逐步调 CLI 的部分），自然
+语言覆盖低频复杂判断，两边随时切换；反向通路（Agent 经 API 往工作台写候选/探索
+方向）在 Phase 3 随 avenues 一并实现。
+
+**决策 E：重工具轻前端（Legacy 教训的延续）。** `Legacy/MTGCacu` 是重前端形态
+（WPF 一排 XAML 窗口 + MVVM + 编译链），业务逻辑困在 UI 层、Agent 无法驱动、改流程
+成本压过功能成本。本项目已反转为"能力全沉 CLI/纯函数内核，前端是可抛弃的薄渲染壳"。
+工作台守住此线：每个面板一页内嵌 HTML，复杂度只准留在工具侧；界面复杂到内嵌装不下
+时，升级路径是静态构建产物（仍无运行时依赖），不回到前端工程栈。
+
 ## 4. 内核对接映射
 
 | 工作台功能 | 本项目内核（确定性） | 备注 |
@@ -110,12 +131,17 @@ phase-rs Rust sidecar；CI 无 Windows 矩阵。**结论：不照搬实现，移
 
 - 端点：`GET /api/agent/next`（长轮询，60s 心跳）、`POST /api/agent/result`、
   `POST /api/agent/request`；kind：`next_move` / `explain` / `novel_synergies` /
-  `handoff`（裁剪上游集合）。
+  `handoff`（裁剪上游集合）。`handoff` 对应网页上的"一键全流程"按钮（如阶段 0b
+  全套体检），等价于一句自然语言指令，但触发点是按钮。
+- 反向通路：Agent 可经 API 往工作台写候选与探索方向（avenues 语义），网页侧可见；
+  双向操作同一份权威状态。
+- 嵌入式 LLM 通道（决策 D）：高频打分轴经 `tools/llm_config.json` 直连，不走 Agent
+  桥；两条通道的失败都要显式降级为纯机器模式并标注 offline。
 - Agent 侧落 `skills/` 新技能（如 `mtg-workbench`）：教会 Kimi Code 会话轮询协议、
   铁律（提案必须经 `/api/find` 或 `mtg_tool search` 落地）、以及把规则问题路由给
   `skills/mtg-rules`、组合技给 `skills/mtg-combo`。
 - 验收：人工驱动一轮完整会话（import→seed→next_move→按建议微调→export），
-  Agent 每条建议附内核证据；LLM 离线时面板明确显示 offline 并保留机器排名
+  Agent 每条建议附内核证据；LLM 双通道均离线时面板明确显示 offline 并保留机器排名
   （沿用 `draft_advisor` 既有口径）。
 
 ### Phase 4（可选，另立需求）：上游未覆盖方向
@@ -147,9 +173,9 @@ phase-rs Rust sidecar；CI 无 Windows 矩阵。**结论：不照搬实现，移
 
 ## 8. 风险与开放问题
 
-- **内嵌 HTML 的天花板**：牌池网格 + 拖拽交互复杂后单文件页面会失控；届时评估
-  引入静态构建（仍无运行时依赖，构建产物入库或不入库另议），而不是直接跳到
-  Svelte 运行时依赖。
+- **内嵌 HTML 的天花板**：牌池网格 + 拖拽交互复杂后单文件页面会失控；届时按决策 E
+  升级为静态构建产物（构建链留在开发侧、运行时仍零依赖），而不是回到 Legacy 式的
+  前端工程栈或上游的 Svelte 运行时依赖。
 - **Agent 桥的空闲轮询成本**：长轮询挂在交互式会话上，依赖 Agent 主动循环；需要
   技能里写明轮询节奏与退出条件，避免会话空转。
 - **多 build 持久化**暂以单会话内存 + 显式导出代替；若实测中频繁丢状态再升级。
