@@ -86,6 +86,7 @@ python tools/deck_pooper.py draft --watch --set HOB --llm --port 8643
 | `MtgSetReviewWorkFlow.md` / `MtgSetReviewTemplate.md` | 新系列评测工作流与模板 |
 | `MtgDeckCostMetric.md` | 造价指标定义的唯一权威来源（签名/物质点/PP、MRUC 视觉方案） |
 | `DeckPooperDesign.md` | deck_pooper 设计文档 |
+| `MtgWorkbenchPlan.md` | 网页工作台（deck-forge 引入）开发计划 |
 
 ## 数据与版权
 
