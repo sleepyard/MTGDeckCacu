@@ -13,6 +13,8 @@
 """
 
 import argparse
+import os
+import re
 import shutil
 import sqlite3
 import sys
@@ -22,6 +24,66 @@ from pathlib import Path
 
 class MtgaDbToolError(Exception):
     pass
+
+
+# ---------------------------------------------------------------- 数据库定位
+def _steam_install_dirs():
+    """Steam 安装目录候选：注册表 SteamPath（Windows）+ 两个默认路径。"""
+    dirs = []
+    try:
+        import winreg
+        try:
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                                r"Software\Valve\Steam") as key:
+                dirs.append(Path(winreg.QueryValueEx(key, "SteamPath")[0]))
+        except OSError:
+            pass
+    except ImportError:
+        pass
+    dirs.append(Path("C:/Program Files (x86)/Steam"))
+    dirs.append(Path("C:/Program Files/Steam"))
+    return dirs
+
+
+def _steam_library_roots():
+    """Steam 库根目录列表：安装目录自带库 + libraryfolders.vdf 解析出的附加库。"""
+    roots = []
+    for steam in _steam_install_dirs():
+        vdf = steam / "steamapps" / "libraryfolders.vdf"
+        if not vdf.is_file():
+            continue
+        roots.append(steam)
+        try:
+            text = vdf.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for match in re.finditer(r'"path"\s+"([^"]+)"', text):
+            roots.append(Path(match.group(1).replace("\\\\", "\\")))
+    seen, unique = set(), []
+    for root in roots:
+        key = str(root).lower()
+        if key not in seen:
+            seen.add(key)
+            unique.append(root)
+    return unique
+
+
+def find_database():
+    """自动定位最新的 MTGA 客户端卡库（Raw_CardDatabase_*.mtga）。
+
+    优先环境变量 MTGA_CARD_DATABASE（直接指向 .mtga 文件）；否则扫描
+    Steam 各库下的 MTGA 安装目录，取修改时间最新的一份。找不到返回 None。"""
+    env = os.environ.get("MTGA_CARD_DATABASE")
+    if env and Path(env).is_file():
+        return Path(env)
+    candidates = []
+    for root in _steam_library_roots():
+        raw = (root / "steamapps" / "common" / "MTGA" / "MTGA_Data"
+               / "downloads" / "Raw")
+        candidates.extend(raw.glob("Raw_CardDatabase_*.mtga"))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda p: p.stat().st_mtime)
 
 
 # ---------------------------------------------------------------- 数据库打开
@@ -129,11 +191,37 @@ def lookup_card_name(conn, loc_table, title_id):
     return row[0] if row else None
 
 
+def lookup_names(db_path, grp_ids):
+    """批量反查：grpId 可迭代 → {str(grpId): {name, set_code, number, rarity}}。
+
+    只含命中项；db_path 可为 find_database() 的返回路径。"""
+    conn, tmp_dir = open_database(db_path)
+    try:
+        table = sniff_cards_table(conn)
+        grp_col = sniff_grp_column(conn, table)
+        loc_table = sniff_localizations_table(conn)
+        out = {}
+        for grp_id in grp_ids:
+            card = lookup_card(conn, table, grp_col, int(grp_id))
+            if not card:
+                continue
+            name = lookup_card_name(conn, loc_table, card["title_id"])
+            if name:
+                out[str(grp_id)] = {
+                    "name": name, "set_code": card["set_code"],
+                    "number": card["number"], "rarity": card["rarity"]}
+        return out
+    finally:
+        conn.close()
+        shutil.rmtree(str(tmp_dir), ignore_errors=True)
+
+
 # ---------------------------------------------------------------- main
 def build_parser():
     p = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("db", help="MTGA 卡牌数据库路径（Raw_CardDatabase_*.mtga）")
+    p.add_argument("db", help="MTGA 卡牌数据库路径（Raw_CardDatabase_*.mtga），"
+                              "或 auto 自动定位（环境变量 MTGA_CARD_DATABASE 优先）")
     p.add_argument("grpids", nargs="*", type=int, metavar="grpId",
                    help="要反查的 grpId（省略则列出全部表名）")
     return p
@@ -141,8 +229,16 @@ def build_parser():
 
 def main(argv=None):
     args = build_parser().parse_args(argv)
+    db = args.db
+    if db.lower() == "auto":
+        found = find_database()
+        if found is None:
+            print("[错误] 未找到 MTGA 客户端卡库（可设环境变量 "
+                  "MTGA_CARD_DATABASE 指定路径）", file=sys.stderr)
+            return 2
+        db = str(found)
     try:
-        conn, tmp_dir = open_database(args.db)
+        conn, tmp_dir = open_database(db)
     except MtgaDbToolError as exc:
         print(f"[错误] {exc}", file=sys.stderr)
         return 2

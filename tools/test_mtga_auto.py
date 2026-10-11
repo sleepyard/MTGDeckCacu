@@ -750,6 +750,8 @@ class TestDraftWatch(unittest.TestCase):
                                   return_value=FakeTable()),
                 mock.patch.object(MDT, "load_ratings",
                                   return_value=(None, None)),  # 17Lands 默认无数据
+                mock.patch.object(MDT, "load_external_anchors",
+                                  return_value={}),  # 外部锚点默认无数据
                 mock.patch.object(MDT, "build_brief",
                                   return_value=("# 简报", ["简报行"]))]
 
@@ -920,6 +922,80 @@ class TestDraftWatch(unittest.TestCase):
             self.assertTrue(all(row["recommendation_score"] is not None
                                 for row in panel.rows))
             self.assertIn("LLM", panel.render_html())
+        finally:
+            for patcher in patchers:
+                patcher.stop()
+
+    def test_panel_llm_no_parseable_names_renders(self):
+        """全包 grpId 解析失败：_apply_advice 早退的行没有 recommendation_score，
+        render_html 必须仍可渲染（回归：KeyError: 'recommendation_score'）。"""
+        patchers = self._patch_cards({}, {}, {})  # 牌名全部解析失败
+        for patcher in patchers:
+            patcher.start()
+        try:
+            with mock.patch.object(MAT, "load_llm_config",
+                                   return_value={"api_key": "k"}), \
+                    mock.patch.object(MAT, "record_draft_advice"):
+                panel = MAT.DraftPickPanel(llm=True)
+                panel.feed(self._status(DraftPack=["1", "2"]))
+                page = panel.render_html()
+            self.assertEqual(panel.advice_status, "offline")
+            self.assertIn("&lt;grpId 1&gt;", page)
+            self.assertIn("&lt;grpId 2&gt;", page)
+        finally:
+            for patcher in patchers:
+                patcher.stop()
+
+    def test_panel_external_anchors_attach_and_render(self):
+        """外部锚点（assistant_norm 等）挂载到推荐卡片并渲染外部列。"""
+        names = {"1": "Alpha Card", "2": "Beta Card"}
+        cmcs = {"1": 2, "2": 3}
+        anchors = {"Alpha Card": {"assistant_ai": 5.0, "assistant_pro": 4.5,
+                                  "assistant_norm": 0.95, "ata": 2.1,
+                                  "ata_norm": 0.92},
+                   "Beta Card": {"draftsim_norm": 0.4}}
+        patchers = self._patch_cards(names, cmcs, {"Alpha Card": {"grade": "B"},
+                                                   "Beta Card": {"grade": "B"}})
+        for patcher in patchers:
+            patcher.start()
+        try:
+            with mock.patch.object(MDT, "load_external_anchors",
+                                   return_value=anchors), \
+                    mock.patch.object(MAT, "load_llm_config",
+                                      side_effect=MAT.AutoToolError("no config")), \
+                    mock.patch.object(MAT, "record_draft_advice"):
+                panel = MAT.DraftPickPanel(llm=True)
+                panel.feed(self._status(DraftPack=["1", "2"]))
+                page = panel.render_html()
+            # 同等级下 高外部锚点 应压过 低外部锚点（离线锚点混合生效）
+            self.assertEqual(panel.rows[0]["grp_id"], "1")
+            self.assertIn("A5·P4.5·T2.1", page)  # 外部列标签
+            self.assertIn("D2.0", page)
+        finally:
+            for patcher in patchers:
+                patcher.stop()
+
+    def test_panel_llm_basic_land_sinks_last(self):
+        """基本地不参与轮抓推荐：不进 prompt、recommendation_score=None 沉底。"""
+        names = {"1": "Mountain", "2": "Alpha Card"}
+        cmcs = {"1": 0, "2": 3}
+        patchers = self._patch_cards(names, cmcs, {"Alpha Card": {"grade": "B"}})
+        for patcher in patchers:
+            patcher.start()
+        try:
+            with mock.patch.object(MAT, "load_llm_config", return_value={"api_key": "k"}), \
+                    mock.patch.object(MAT, "llm_chat", return_value=json.dumps([
+                        {"name": "Alpha Card", "raw_power": 0.8,
+                         "synergy": 0.5, "reason": "合格主力"},
+                    ])), \
+                    mock.patch.object(MAT, "record_draft_advice"):
+                panel = MAT.DraftPickPanel(llm=True)
+                panel.feed(self._status(DraftPack=["1", "2"]))
+                page = panel.render_html()
+            self.assertEqual(panel.advice_status, "ok")
+            self.assertEqual(panel.rows[-1]["grp_id"], "1")  # 山脉沉底
+            self.assertIsNone(panel.rows[-1]["recommendation_score"])
+            self.assertIn("基本地不参与轮抓推荐", page)
         finally:
             for patcher in patchers:
                 patcher.stop()

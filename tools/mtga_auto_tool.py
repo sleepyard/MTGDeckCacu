@@ -33,7 +33,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from mtg_tool import MtgToolError, fetch_chinese_name, parse_deckfile, scryfall_get  # noqa: E402
+from mtg_tool import BASIC_LAND_NAMES, MtgToolError, fetch_chinese_name, parse_deckfile, scryfall_get  # noqa: E402
 import mtga_log_tool as MLT  # noqa: E402
 import deck_core  # noqa: E402  纯函数内核（无 I/O、无反向依赖，可顶层导入）
 import draft_advisor as DRAFT_ADVISOR  # noqa: E402  轮抓九轴推荐（纯函数）
@@ -1530,7 +1530,7 @@ class DraftPickPanel:
         key = (self.set_code, fmt)
         if key == self._meta_key:
             return self._meta
-        meta = {"gih_wr": {}, "gih_norm": {}, "alsa": {}}
+        meta = {"gih_wr": {}, "gih_norm": {}, "alsa": {}, "external": {}}
         try:
             if self.set_code:
                 import mtga_draft_tool as MDT  # 同 load_card_table 的循环导入规避
@@ -1548,7 +1548,14 @@ class DraftPickPanel:
                         meta["alsa"][name] = entry["alsa"]
         except Exception as exc:
             print(f"[draft] 17Lands 锚点不可用: {exc}", file=sys.stderr)
-            meta = {"gih_wr": {}, "gih_norm": {}, "alsa": {}}
+            meta = {"gih_wr": {}, "gih_norm": {}, "alsa": {}, "external": {}}
+        try:
+            if self.set_code:
+                meta["external"] = MDT.load_external_anchors(
+                    self.set_code, fmt) or {}
+        except Exception as exc:
+            print(f"[draft] 外部锚点不可用: {exc}", file=sys.stderr)
+            meta["external"] = {}
         self._meta = meta
         self._meta_key = key
         return meta
@@ -1559,6 +1566,26 @@ class DraftPickPanel:
         key = (name or "").split(" // ")[0]  # 双面/历险牌按主面名对齐
         return (meta["gih_wr"].get(key), meta["gih_norm"].get(key),
                 meta["alsa"].get(key))
+
+    def _external_for(self, name):
+        """牌名 → 外部锚点 dict（assistant_norm/draftsim_norm/ata_norm 等）。"""
+        meta = self._ensure_meta()
+        key = (name or "").split(" // ")[0]
+        return meta.get("external", {}).get(key) or {}
+
+    def _external_label(self, name):
+        """外部锚点紧凑标签：A=Assistant AI(0-5) P=Pro D=draftsim(0-5) T=自算ATA。"""
+        ext = self._external_for(name)
+        parts = []
+        if ext.get("assistant_ai") is not None:
+            parts.append(f"A{ext['assistant_ai']:g}")
+        if ext.get("assistant_pro") is not None:
+            parts.append(f"P{ext['assistant_pro']:g}")
+        if ext.get("draftsim_norm") is not None:
+            parts.append(f"D{ext['draftsim_norm'] * 5:.1f}")
+        if ext.get("ata") is not None:
+            parts.append(f"T{ext['ata']:.1f}")
+        return "·".join(parts) or "-"
 
     def _card_info(self, grp_id):
         """grpId → {name, cn, cmc}（进程内缓存；name 走 grp 磁盘缓存，
@@ -1575,7 +1602,12 @@ class DraftPickPanel:
             raw = scryfall_get(f"/cards/arena/{grp_id}")
             cmc = raw.get("cmc")
         except MtgToolError:
-            pass
+            if name:
+                try:
+                    raw = scryfall_get("/cards/named", params={"exact": name})
+                    cmc = raw.get("cmc")
+                except MtgToolError:
+                    pass
         info = {"name": name or raw.get("name"), "cn": cn, "cmc": cmc,
                 "colors": raw.get("colors") or [],
                 "rarity": raw.get("rarity") or "",
@@ -1663,12 +1695,19 @@ class DraftPickPanel:
                 info = self._info_cache.get(row["grp_id"], {})
                 if not info.get("name"):
                     continue
+                if info["name"].split(" // ")[0] in BASIC_LAND_NAMES:
+                    continue  # 基本地不参与轮抓推荐（排序沉底见下方合并循环）
                 gih_wr, gih_norm, alsa = self._meta_for(info["name"])
                 card = dict(info)
                 card.update({"name": info["name"], "grade": row["grade"],
                              "community_score": row["score"], "note": row["note"],
                              "grp_id": row["grp_id"], "alsa": alsa,
                              "gih_norm": gih_norm})
+                ext = self._external_for(info["name"])
+                for key in ("assistant_norm", "draftsim_norm", "ata_norm",
+                            "assistant_ai"):
+                    if ext.get(key) is not None:
+                        card[key] = ext[key]
                 if gih_wr is not None:
                     card["gih_wr"] = gih_wr  # 百分比浮点，build_prompt 展示用
                 cards.append(card)
@@ -1706,13 +1745,17 @@ class DraftPickPanel:
             }
 
         for row in rows:
-            recommendation = advice_by_name.get(self._info_cache.get(row["grp_id"], {}).get("name"))
+            name = self._info_cache.get(row["grp_id"], {}).get("name")
+            recommendation = advice_by_name.get(name)
             if recommendation is not None:
                 row["recommendation_score"] = recommendation.total
                 row["advice_reason"] = recommendation.reason
             else:
                 row["recommendation_score"] = None
-                row["advice_reason"] = "未解析，未参与推荐"
+                if name and name.split(" // ")[0] in BASIC_LAND_NAMES:
+                    row["advice_reason"] = "基本地不参与轮抓推荐"
+                else:
+                    row["advice_reason"] = "未解析，未参与推荐"
         rows.sort(key=lambda row: (
             row["recommendation_score"] is None,
             -(row["recommendation_score"] or 0.0), row["label"]))
@@ -1748,6 +1791,7 @@ class DraftPickPanel:
             rows.append({"grp_id": gid, "label": self._card_label(gid, info),
                          "grade": grade, "score": entry.get("community_score"),
                          "gih_wr": round(gih_wr, 1) if gih_wr is not None else None,
+                         "external": self._external_label(info["name"]),
                          "note": entry.get("note") or "", "hint": hint})
         if self.llm_enabled and self.status == "PickNext":
             rows = self._apply_advice(rows, counts, table)
@@ -1804,30 +1848,37 @@ class DraftPickPanel:
                                  "<button id=\"advice-retry\" type=\"button\">重试推荐</button>"
                                  "<span id=\"retry-result\"></span></p>")
                     parts.append("<table><tr><th>#</th><th>等级</th><th>牌名</th>"
-                                 "<th>社区分</th><th>GIH</th><th>综合</th><th>曲线</th>"
+                                 "<th>社区分</th><th>GIH</th><th>外部</th><th>综合</th><th>曲线</th>"
                                  "<th>推荐理由</th><th>短评</th></tr>")
                 else:
                     parts.append("<table><tr><th>#</th><th>等级</th><th>牌名</th>"
-                                 "<th>社区分</th><th>GIH</th><th>曲线</th><th>短评</th></tr>")
+                                 "<th>社区分</th><th>GIH</th><th>外部</th><th>曲线</th><th>短评</th></tr>")
                 for i, r in enumerate(self.rows, 1):
                     score = "-" if r["score"] is None else esc(str(r["score"]))
                     gih = ("-" if r.get("gih_wr") is None else
                            esc(f"{r['gih_wr']:.1f}"))
+                    external = esc(r.get("external") or "-")
                     if self.llm_enabled:
-                        total = ("-" if r["recommendation_score"] is None else
+                        total = ("-" if r.get("recommendation_score") is None else
                                  esc(f"{r['recommendation_score']:.3f}"))
                         parts.append(
                             f"<tr><td>{i}</td><td class=\"g\">{esc(r['grade'] or '?')}</td>"
                             f"<td>{esc(r['label'])}</td><td>{score}</td><td>{gih}</td>"
+                            f"<td>{external}</td>"
                             f"<td>{total}</td>"
-                            f"<td>{esc(r['hint'])}</td><td>{esc(r['advice_reason'])}</td>"
+                            f"<td>{esc(r['hint'])}</td><td>{esc(r.get('advice_reason') or '')}</td>"
                             f"<td>{esc(r['note'])}</td></tr>")
                     else:
                         parts.append(
                             f"<tr><td>{i}</td><td class=\"g\">{esc(r['grade'] or '?')}</td>"
                             f"<td>{esc(r['label'])}</td><td>{score}</td><td>{gih}</td>"
+                            f"<td>{external}</td>"
                             f"<td>{esc(r['hint'])}</td><td>{esc(r['note'])}</td></tr>")
                 parts.append("</table>")
+                parts.append("<p class=\"config-meta\">外部列（17Lands 之外的锚点）："
+                             "A=MTGA Assistant AI 评分(0-5) · P=Pro 人工评分 · "
+                             "D=draftsim 评分(0-5) · T=public dataset 自算 ATA；"
+                             "GIH 缺失时参与离线锚点混合。</p>")
             total = sum(len(v) for v in self.picked_grades.values())
             parts.append(f"<h2>已抓 {total} 张</h2>")
             for grade in DRAFT_GRADES + ["?"]:

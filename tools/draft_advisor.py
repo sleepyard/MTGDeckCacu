@@ -75,14 +75,20 @@ def grade_anchor(card: Mapping, table=None) -> float:
 
 
 def power_anchor(card: Mapping, table=None) -> float:
-    """RawPower 离线锚点：card 带 17Lands GIH 归一化值（gih_norm）时按
-    0.6 等级锚点 + 0.4 GIH 混合；缺失或非法时退回纯等级锚点。"""
+    """RawPower 离线锚点：0.6 等级锚点 + 0.4 数据锚点。数据锚点优先 17Lands
+    GIH 归一化（gih_norm）；GIH 缺失（新系列样本不足）时退回外部锚点
+    （assistant_norm / draftsim_norm / ata_norm 可用项的均值，由
+    mtga_draft_tool.load_external_anchors 注入）；全缺退回纯等级锚点。"""
     gih_norm = card.get("gih_norm")
     if gih_norm is not None:
         try:
             return 0.6 * grade_anchor(card, table) + 0.4 * float(gih_norm)
         except (TypeError, ValueError):
             pass
+    ext = [v for v in (card.get("assistant_norm"), card.get("draftsim_norm"),
+                       card.get("ata_norm")) if v is not None]
+    if ext:
+        return 0.6 * grade_anchor(card, table) + 0.4 * (sum(ext) / len(ext))
     return grade_anchor(card, table)
 
 
@@ -155,6 +161,9 @@ def build_prompt(pack: Sequence[Mapping], picked: Sequence[Mapping], table=None)
         if isinstance(gih, (int, float)) and not isinstance(gih, bool):
             # 原始 17Lands 数据是 0-1 小数，面板注入的已是百分比；统一归一为百分比
             row["gih_wr_pct"] = round(gih * 100, 1) if gih <= 1 else round(float(gih), 1)
+        ai = card.get("assistant_ai")
+        if isinstance(ai, (int, float)) and not isinstance(ai, bool):
+            row["assistant_ai_0_5"] = ai
         rows.append(row)
     picked_colors = {}
     picked_curve = {}
@@ -180,7 +189,8 @@ def build_prompt(pack: Sequence[Mapping], picked: Sequence[Mapping], table=None)
         "你是万智牌限制赛选牌评审员。只评价当前包内的牌，不要计算费用、牌数、曲线或法术力。",
         "请严格返回 JSON 对象，picks 数组覆盖当前包每张牌：",
         '{"picks":[{"name":"当前牌名","raw_power":0到1,"synergy":0到1,"reason":"一句话理由"}]}',
-        "raw_power 必须参考 grade_anchor，给出 gih_wr_pct（17Lands 在手胜率百分比）时"
+        "raw_power 必须参考 grade_anchor，给出 gih_wr_pct（17Lands 在手胜率百分比）或"
+        " assistant_ai_0_5（MTGA Assistant 用户数据 0-5 评分）时"
         "同时参考；synergy 只根据已抓牌池摘要判断，与主色（colors 计数前二）完全脱色的牌"
         " synergy 不得超过 0.3。name 必须与输入完全一致。",
         "已抓牌池摘要：" + json.dumps(summary, ensure_ascii=False),
