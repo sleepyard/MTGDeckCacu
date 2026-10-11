@@ -410,6 +410,30 @@ python tools/mtga_db_tool.py "C:\path\to\Raw_CardDatabase_xxx.mtga" 12345 67890
 python tools/mtga_db_tool.py "C:\path\to\Raw_CardDatabase_xxx.mtga"
 ```
 
+# tools/deck_workbench.py
+
+网页工作台 hub（Phase 0，开发计划见 `MtgWorkbenchPlan.md`）：纯标准库
+`ThreadingHTTPServer` 于 127.0.0.1，默认端口 **8644**（避开 8642 监控台 /
+8643 轮抓面板）。单页内嵌 HTML + `/api/snapshot` / `/api/builds/import` /
+`/api/export`，持有一份权威 `deck_model.Deck` 状态；确定性引擎函数纯、
+HTTP 层不含牌规则。导出与导入往返守恒（再导入条目恒等）。
+
+```bash
+python tools/deck_workbench.py serve            # 默认 127.0.0.1:8644
+python tools/deck_workbench.py serve --port 9000
+```
+
+```bash
+# 程序化接口（错误信封与 mtg_rules_tool 同构：status/error.type/message）
+curl -s http://127.0.0.1:8644/api/snapshot
+curl -s -X POST http://127.0.0.1:8644/api/builds/import \
+  -H "X-Source-Name: mydeck.txt" --data-binary @mydeck.txt
+curl -s http://127.0.0.1:8644/api/export
+```
+
+导入的 skipped 行进 `warnings`（成功但带警告）；完全解析不出条目返回 400。
+后续阶段加入牌池 seed、统计面板与 Agent 桥（计划 §5）。
+
 # tools/deck_version.py
 
 版本化交付脚手架：按 `--format --colors --theme` 生成 `DeckList/{format}_{colors}_{theme}/` 目录与 `{Name}V{n}.txt` + `{Name}V{n}.md` 成对文件（版本 max+1、禁覆盖），并生成设计文档骨架；基础门禁：主牌 ≥60、备牌 0 或 15、同名 >4 报警（基本地与牌面 ANY_NUMBER 豁免）。仅 Python 标准库。
