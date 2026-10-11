@@ -95,6 +95,7 @@ Phase 2 构筑模式与核验接入 + Phase 3 Agent 桥与双 LLM 通道）。
 """
 import argparse
 import collections
+import hashlib
 import json
 import re
 import subprocess
@@ -120,13 +121,14 @@ import mtga_auto_tool as AUTO
 import mtga_draft_tool
 import roles as role_tags
 import runlog
+import workbench_jobs
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8644
 MAX_BODY_BYTES = 1024 * 1024
 POLL_INTERVAL_MS = 3000
 
-MAX_COPIES = 4                      # 限制赛同名上限（豁免名单除外）
+MAX_COPIES = 4                      # 构筑默认上限；限制赛依据导入牌池数量
 SEED_PLAN_TOP_N = 5                 # seed 响应携带的枚举方案条数
 DEFAULT_DECK_SIZE = 41              # 限制赛交付口径：17 地 + 24 其他
 ALLOWED_DECK_SIZES = (40, 41)       # 40 张需在报告注明裁剪理由（draft_methodology §4）
@@ -145,6 +147,7 @@ TOOL_DIR = Path(__file__).resolve().parent
 COST_TOOL_SCRIPT = TOOL_DIR / "newbie" / "deck_cost.py"
 VALIDATE_TOOL_SCRIPT = TOOL_DIR / "mtg_tool.py"
 ROT_TOOL_SCRIPT = TOOL_DIR / "rot_audit.py"
+IMAGE_TOOL_SCRIPT = TOOL_DIR / "deck_image.py"
 SUBPROCESS_TIMEOUT = 180            # cost/audit 单个子进程的上限秒数
 # 角色缺口基准：constructed_strategy 的 M1-M9 模块配额（deck_config 的
 # STRATEGY_TARGETS 骨架只服务限制赛深度检查，不作构筑基准；basis 字段明说）
@@ -265,7 +268,7 @@ def hydrate_pool(entries, fetch_card):
     查不到/拉取失败（mtg_tool.MtgToolError）按名降级进 unresolved 并累计
     数量——单牌查不到不等于整个导入失败。返回 (cards, unresolved)。
     """
-    cards, unresolved, cache = [], {}, {}
+    cards, unresolved, cache, merged = [], {}, {}, {}
     for qty, name in entries:
         key = name.lower()
         if key not in cache:
@@ -277,9 +280,13 @@ def hydrate_pool(entries, fetch_card):
         if cache[key] is None:
             unresolved[key]["qty"] += qty
         else:
-            item = dict(cache[key])
-            item["count"] = qty
-            cards.append(item)
+            canonical = str(cache[key].get("name") or name).casefold()
+            if canonical not in merged:
+                item = dict(cache[key])
+                item["count"] = 0
+                merged[canonical] = item
+                cards.append(item)
+            merged[canonical]["count"] += qty
     return cards, list(unresolved.values())
 
 
@@ -403,15 +410,15 @@ def _rebuild(deck, section, rows):
                            skipped=())
 
 
-def apply_add(deck, name, section, qty):
+def apply_add(deck, name, section, qty, max_copies=MAX_COPIES):
     """纯函数：加牌，返回新 Deck。非豁免同名超 4 张抛 DeckEditError。"""
     _check_edit_args(name, section, qty)
     rows = [[card.qty, card.name] for card in getattr(deck, section)]
     have = sum(row[0] for row in rows if row[1] == name)
-    if not _copy_limit_exempt(name) and have + qty > MAX_COPIES:
+    if max_copies is not None and not _copy_limit_exempt(name) and have + qty > max_copies:
         raise DeckEditError(
             "'{}' 在 {} 已有 {} 张，再加 {} 张超过同名 {} 张上限"
-            .format(name, section, have, qty, MAX_COPIES))
+            .format(name, section, have, qty, max_copies))
     for row in rows:
         if row[1] == name:
             row[0] += qty
@@ -436,12 +443,73 @@ def apply_remove(deck, name, section, qty):
     return _rebuild(deck, section, rows)
 
 
-def apply_move(deck, name, from_section, to_section, qty):
+def apply_move(deck, name, from_section, to_section, qty, max_copies=MAX_COPIES):
     """纯函数：main↔sideboard 搬移（守恒），返回新 Deck。"""
     if from_section == to_section:
         raise DeckEditError("from/to 分区不能相同: {!r}".format(from_section))
     moved = apply_remove(deck, name, from_section, qty)
-    return apply_add(moved, name, to_section, qty)
+    return apply_add(moved, name, to_section, qty, max_copies=max_copies)
+
+
+def build_limited_audit(deck, pool, unresolved=(), skipped=()):
+    """Pure limited gates: delivery count and copies from the imported pool."""
+    main = sum(card.qty for card in deck.main)
+    violations = [] if main in ALLOWED_DECK_SIZES else ["主牌 {} 张，限制赛交付应为 40 或 41".format(main)]
+    validate = {"status": "fail" if violations else "pass", "ok": not violations,
+                "violations": violations, "main": main,
+                "sideboard": sum(card.qty for card in deck.sideboard)}
+    available = collections.Counter()
+    for card in pool:
+        available[deck_model.front_name(card["name"]).casefold()] += int(card.get("count") or 1)
+    unknown_names = {deck_model.front_name(card["name"]).casefold() for card in unresolved}
+    used, labels = collections.Counter(), {}
+    for _qty, name, _section in deck.entries():
+        if name in deck_model.BASIC_LANDS:
+            continue
+        key = deck_model.front_name(name).casefold()
+        used[key] += _qty
+        labels[key] = name
+    pool_violations, unknown = [], []
+    if pool or unresolved:
+        for key, count in used.items():
+            if key in unknown_names:
+                unknown.append(labels[key])
+            elif count > available[key]:
+                pool_violations.append("{}：主备合计 {} 张，导入牌池只有 {} 张".format(labels[key], count, available[key]))
+        if skipped:
+            unknown.append("导入牌池存在无法解析的行")
+    else:
+        unknown.append("未导入完整牌池，只能检查牌表张数")
+    pool_ok = False if pool_violations else None if unknown else True
+    pool_gate = {"status": "fail" if pool_ok is False else "unknown" if pool_ok is None else "pass",
+                 "ok": pool_ok, "violations": pool_violations, "unknown": unknown,
+                 "basis": "以本次导入牌池为依据；主备合计不得超过池内数量，基本地按内核规则补充。"}
+    overall = False if not validate["ok"] or pool_ok is False else None if pool_ok is None else True
+    return {"status": "ok", "scope": "limited", "format": None, "limited": True,
+            "validate": validate, "pool": pool_gate,
+            "rotation": {"status": "not_applicable", "ok": None,
+                         "detail": "限制赛不采用构筑赛合法性和 Standard 轮替门禁。"}, "ok": overall}
+
+
+def summarize_ratings(pool, table, set_code=None):
+    names = sorted({_name for _name in (str(card.get("name") or "") for card in pool)
+                    if _name not in deck_model.BASIC_LANDS})
+    covered = [name for name in names if table and table.lookup(name) and table.lookup(name).get("grade")]
+    meta = {}
+    if set_code:
+        path = mtga_draft_tool.card_table_path(str(set_code).upper())
+        try:
+            meta = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            pass
+    if not isinstance(meta, dict):
+        meta = {}
+    return {"set": set_code, "covered": len(covered), "total": len(names),
+            "missing": [name for name in names if name not in covered],
+            "source": meta.get("source"), "generated": meta.get("generated"),
+            "preview_count": sum(table.lookup(name).get("source") == "preview" or
+                                 table.lookup(name).get("confidence") == "C0" for name in covered),
+            "basis": "评分用于机器选牌排序、色组深度和曲线/角色取舍；缺失评分使用默认值，不能据此证明强度。"}
 
 
 def summarize_plans(plans, top_n=SEED_PLAN_TOP_N):
@@ -924,6 +992,10 @@ class AgentBridge:
                     "in_flight_requests": in_flight,
                     "results_ready": states.count("done"),
                     "tracked_requests": len(self._records),
+                    "recent_requests": [{"request_id": rec["id"], "kind": rec["kind"],
+                                         "state": rec["state"], "claimed_by": rec["claimed_by"],
+                                         "queued_at": rec["queued_at"]}
+                                        for rec in list(self._records.values())[-10:]],
                     "kinds": list(AGENT_KINDS)}
 
 
@@ -1163,6 +1235,7 @@ class WorkbenchState:
                        ("roles", "combos", "cost", "audit", "constructed")}
         # Phase 3：Agent 桥（请求/结果队列）+ avenues 持久列表（反向通路）
         self.bridge = AgentBridge()
+        self.jobs = workbench_jobs.JobRegistry()
         self._avenues = []
         self._avenue_seq = 0
 
@@ -1272,6 +1345,8 @@ class WorkbenchState:
             self._pool_skipped = skipped
             self._pool_meta = {"imported_at": _now_iso(),
                                "source_name": source_name or None}
+            self._slots = {name: None for name in self._slots}
+            self._last_seed = None
             for card in pool:
                 self._card_db[str(card.get("name") or "")] = card
             return self._pool_locked()
@@ -1285,7 +1360,7 @@ class WorkbenchState:
             return build_stats(self._deck, self._card_db)
 
     def seed_limited(self, colors=None, deck_size=DEFAULT_DECK_SIZE,
-                     table=None, table_warnings=()):
+                     table=None, table_warnings=(), set_code=None):
         """调 limited_strategy 组牌，结果经 render_deck → import_text 装回
         当前牌表（复用 Phase 0 导入路径，不另起状态）。返回带 seed 摘要的
         快照。无可用牌池抛 PoolEmptyError；非法色组/deck_size 抛 ValueError。
@@ -1301,6 +1376,7 @@ class WorkbenchState:
         snapshot = self.import_text(deck_pooper.render_deck(limited),
                                     source_name="seed")
         seed = summarize_seed(limited, plans, deck_size, table_warnings)
+        seed["ratings"] = summarize_ratings(pool, table, set_code)
         with self._lock:
             self._last_seed = seed
         snapshot["seed"] = seed
@@ -1310,18 +1386,37 @@ class WorkbenchState:
         """手动微调：锁内应用纯函数并返回 快照 + 重算 stats。"""
         with self._lock:
             self._deck = func(self._deck, *args)
+            self._slots = {name: None for name in self._slots}
+            if self._last_seed:
+                self._last_seed = dict(self._last_seed, stale=True)
             snap = build_snapshot(self._deck, self._session_locked())
             snap["stats"] = build_stats(self._deck, self._card_db)
             return snap
 
-    def deck_add(self, name, section, qty=1):
+    def deck_add(self, name, section, qty=1, limited=False):
+        if limited:
+            _check_edit_args(name, section, qty)
+            with self._lock:
+                if name not in deck_model.BASIC_LANDS:
+                    used = sum(card.qty for sec in SECTIONS for card in getattr(self._deck, sec)
+                               if deck_model.front_name(card.name).casefold() == deck_model.front_name(name).casefold())
+                    available = sum(int(card.get("count") or 1) for card in self._pool
+                                    if deck_model.front_name(card["name"]).casefold() == deck_model.front_name(name).casefold())
+                    if used + qty > available:
+                        raise DeckEditError("{}：已使用 {} 张，牌池只有 {} 张；可将已有备牌移入主牌。".format(name, used, available))
+                self._deck = apply_add(self._deck, name, section, qty, max_copies=None)
+                self._slots = {key: None for key in self._slots}
+                if self._last_seed:
+                    self._last_seed = dict(self._last_seed, stale=True)
+            return self.snapshot()
         return self._edit(apply_add, name, section, qty)
 
     def deck_remove(self, name, section, qty=1):
         return self._edit(apply_remove, name, section, qty)
 
-    def deck_move(self, name, from_section, to_section, qty=1):
-        return self._edit(apply_move, name, from_section, to_section, qty)
+    def deck_move(self, name, from_section, to_section, qty=1, limited=False):
+        return self._edit(apply_move, name, from_section, to_section, qty,
+                          None if limited else MAX_COPIES)
 
     # -------------------------------------------------- Phase 2 构筑模式
 
@@ -1440,7 +1535,61 @@ class WorkbenchState:
                                    "result": result})
         return result, True
 
-    def audit(self, fmt, limited, bo3):
+    def _audit_context(self):
+        with self._lock:
+            return (self._deck, list(self._pool), list(self._pool_unresolved), list(self._pool_skipped))
+
+    @staticmethod
+    def _context_signature(context):
+        deck, pool, unresolved, skipped = context
+        data = [serialize_deck(deck), [(card.get("name"), card.get("count")) for card in pool],
+                unresolved, skipped]
+        return hashlib.sha256(_json_bytes(data)).hexdigest()
+
+    def start_audit(self, fmt, limited, bo3):
+        context = self._audit_context()
+        source = self._context_signature(context) + ":{}:{}:{}".format(fmt, limited, bo3)
+
+        def worker(progress, _key):
+            result, http_ok = self.audit(fmt, limited, bo3, progress=progress, context=context)
+            if not http_ok:
+                raise WorkbenchError(result["error"]["message"])
+            return result
+
+        return self.jobs.start("audit", source, worker)
+
+    def start_image(self, title="当前套牌"):
+        deck = self._deck_copy()
+        text = serialize_deck(deck)
+        if not text.strip():
+            raise ValueError("请先导入或生成牌表")
+        source = hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+        def worker(progress, key):
+            names = sorted({name for _qty, name, _sec in deck.entries()})
+            missing = []
+            for i, name in enumerate(names):
+                progress("准备卡图：" + name, i, len(names))
+                if not workbench_jobs.card_image(name):
+                    missing.append(name)
+                progress("卡图已处理 {} / {}".format(i + 1, len(names)), i + 1, len(names))
+            progress("正在排版并写入 PNG", len(names), len(names))
+            with tempfile.TemporaryDirectory(prefix="workbench_image_") as tmp:
+                path = Path(tmp) / "deck.txt"
+                out = Path(tmp) / "deck.png"
+                path.write_text(text, encoding="utf-8")
+                completed = _run_tool([sys.executable, "-X", "utf8", str(IMAGE_TOOL_SCRIPT),
+                                       str(path), "--out", str(out), "--title", title])
+                stdout, stderr = _completed_text(completed)
+                if completed.returncode or not out.is_file():
+                    raise WorkbenchError("图片输出失败：" + _clip_detail(stderr or stdout or "未生成 PNG"))
+                data = out.read_bytes()
+            return {"download_url": "/api/jobs/" + key + "/image", "missing_images": missing,
+                    "stale": serialize_deck(self._deck_copy()) != text, "_image": data}
+
+        return self.jobs.start("image", source, worker)
+
+    def audit(self, fmt, limited, bo3, progress=None, context=None):
         """聚合 mtg_tool validate 与 rot_audit deck 两个子进程门禁。
 
         返回 (payload, http_ok)。http_ok 仅表示请求本身可否 200；门禁结果在
@@ -1448,7 +1597,10 @@ class WorkbenchState:
         （True/False/None——任何一门 unknown 则整体 None，绝不把失败当通过）。
         """
         checked_at = _now_iso()
-        text = self.export_text()
+        context = context or self._audit_context()
+        deck, pool, unresolved, skipped = context
+        text = serialize_deck(deck)
+        progress = progress or (lambda *args: None)
         if not text.strip():
             envelope = _error_envelope(
                 "EmptyDeckError", "当前牌表为空：请先导入牌表再跑门禁")
@@ -1456,19 +1608,33 @@ class WorkbenchState:
                                         "checked_at": checked_at,
                                         "error": envelope["error"]})
             return envelope, False
-        validate = self._gate_validate(text, fmt, limited, bo3)
-        rotation = self._gate_rotation(text)
-        if validate["ok"] is False or rotation["ok"] is False:
-            overall = False
-        elif validate["ok"] is True and rotation["ok"] is True:
-            overall = True
+        if limited:
+            progress("检查限制赛张数", 0, 2)
+            payload = build_limited_audit(deck, pool, unresolved, skipped)
+            progress("核对主备牌与导入牌池数量", 1, 2)
         else:
-            overall = None     # 有门禁 unknown：整体未知，不是通过
-        payload = {"status": "ok", "format": fmt, "limited": limited,
-                   "bo3": bo3, "validate": validate, "rotation": rotation,
-                   "ok": overall, "checked_at": checked_at}
-        self._record_slot("audit", {"status": "ok", "checked_at": checked_at,
-                                    "result": payload})
+            standard = fmt.lower() == "standard"
+            progress("CLI：检查张数、逐牌合法性与平台可用性（缓存/网络）", 0, 2 if standard else 1)
+            validate = self._gate_validate(text, fmt, False, bo3)
+            if standard:
+                progress("CLI：检查 Standard 轮替存活", 1, 2)
+                rotation = self._gate_rotation(text)
+            else:
+                rotation = {"status": "not_applicable", "ok": None,
+                            "detail": "{} 不采用 Standard 轮替门禁。".format(fmt)}
+            gates = [validate] + ([rotation] if standard else [])
+            overall = False if any(g["ok"] is False for g in gates) else \
+                None if any(g["ok"] is None for g in gates) else True
+            payload = {"status": "ok", "scope": "constructed", "format": fmt, "limited": False,
+                       "validate": validate, "rotation": rotation, "ok": overall}
+        payload.update(bo3=bo3, checked_at=checked_at)
+        with self._lock:
+            current = (self._deck, self._pool, self._pool_unresolved, self._pool_skipped)
+            payload["stale"] = self._context_signature(context) != self._context_signature(current)
+            if not payload["stale"]:
+                self._slots["audit"] = {"status": "ok", "checked_at": checked_at, "result": payload}
+        progress("体检完成", 2 if limited or fmt.lower() == "standard" else 1,
+                 2 if limited or fmt.lower() == "standard" else 1)
         return payload, True
 
     def _gate_validate(self, deck_text, fmt, limited, bo3):
@@ -1591,16 +1757,18 @@ def _resolve_table(set_code):
     """seed 的评分表解析：显式 set → mtga_draft_tool.load_card_table。
 
     缺失/未提供都返回 (None, [warning])——table=None 是 limited_strategy
-    的合法降级路径（按稀有度/结构计分），但必须在响应里明示。
+    的合法降级路径（缺失等级使用默认分，再按曲线/角色计分），但必须明示。
     """
     if not set_code:
-        return None, ["未提供 set：无评分表，按稀有度/结构降级计分"
+        return None, ["未提供 set：无评分表，按默认分与曲线/角色综合选择"
                       "（可在 seed 请求传 {\"set\": \"XXX\"} 启用评分表）"]
     code = str(set_code).upper()
+    if not re.fullmatch(r"[A-Z0-9]{2,8}", code):
+        raise ValueError("系列代码需为 2–8 位字母或数字")
     table = mtga_draft_tool.load_card_table(code)
     if table is None:
         return None, ["无评分表 tools/cache/draft_ratings/{}.json："
-                      "按稀有度/结构降级计分".format(code)]
+                      "按默认分与曲线/角色综合选择".format(code)]
     return table, []
 
 
@@ -1664,6 +1832,10 @@ def make_handler(state):
                 elif path == "/api/export":
                     self._send(200, state.export_text().encode("utf-8"),
                                "text/plain; charset=utf-8")
+                elif path == "/api/card-image":
+                    self._handle_card_image()
+                elif path.startswith("/api/jobs/"):
+                    self._handle_job_get(path)
                 elif path == "/api/pool":
                     self._send_json(200, state.pool_snapshot())
                 elif path == "/api/stats":
@@ -1704,6 +1876,10 @@ def make_handler(state):
                     self._handle_seed_constructed()
                 elif path == "/api/audit":
                     self._handle_audit()
+                elif path == "/api/audit/start":
+                    self._handle_audit(async_start=True)
+                elif path == "/api/export-image":
+                    self._handle_image_start()
                 elif path in ("/api/deck/add", "/api/deck/remove", "/api/deck/move"):
                     self._handle_deck_edit(path.rsplit("/", 1)[1])
                 elif path == "/api/agent/request":
@@ -1779,7 +1955,8 @@ def make_handler(state):
             try:
                 snapshot = state.seed_limited(colors=colors, deck_size=deck_size,
                                               table=table,
-                                              table_warnings=table_warnings)
+                                              table_warnings=table_warnings,
+                                              set_code=body.get("set"))
             except (PoolEmptyError, ValueError) as exc:
                 self._send_json(400, _error_envelope(type(exc).__name__, str(exc)))
                 return
@@ -1828,7 +2005,52 @@ def make_handler(state):
             payload, ok = state.cost()
             self._send_json(200 if ok else 500, payload)
 
-        def _handle_audit(self):
+        def _handle_card_image(self):
+            name = (parse_qs(urlsplit(self.path).query).get("name") or [""])[0]
+            snap = state.snapshot()
+            allowed = {card["name"] for cards in snap["sections"].values() for card in cards}
+            allowed.update(card["name"] for card in snap["pool"]["entries"])
+            if name not in allowed:
+                self._send_json(404, _error_envelope("NotFoundError", "该牌不在当前牌表或牌池中"))
+                return
+            path = workbench_jobs.card_image(name)
+            if path is None:
+                self._send_json(404, _error_envelope("ImageUnavailable", "没有可用卡图"))
+                return
+            self._send(200, path.read_bytes(), workbench_jobs.image_content_type(path))
+
+        def _handle_job_get(self, path):
+            parts = path.strip("/").split("/")
+            job = state.jobs.get(parts[2]) if len(parts) in (3, 4) else None
+            if job is None:
+                self._send_json(404, _error_envelope("NotFoundError", "任务不存在或已过期"))
+            elif len(parts) == 4 and parts[3] == "image":
+                data = state.jobs.image(parts[2])
+                if not data:
+                    self._send_json(409, _error_envelope("ImageNotReady", "图片尚未完成或生成失败"))
+                    return
+                self.send_response(200)
+                self.send_header("Content-Type", "image/png")
+                self.send_header("Content-Disposition", 'attachment; filename="deck.png"')
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+            elif len(parts) == 3:
+                self._send_json(200, job)
+            else:
+                self._send_json(404, _error_envelope("NotFoundError", "未知任务路径"))
+
+        def _handle_image_start(self):
+            try:
+                body = self._read_json_body(allow_empty=True)
+                title = body.get("title") or "当前套牌"
+                if not isinstance(title, str) or len(title) > 120:
+                    raise ValueError("标题需为 120 字以内文本")
+                self._send_json(202, state.start_image(title))
+            except ValueError as exc:
+                self._bad_request(exc)
+
+        def _handle_audit(self, async_start=False):
             try:
                 body = self._read_json_body()
             except ValueError as exc:
@@ -1837,7 +2059,7 @@ def make_handler(state):
             fmt = body.get("format")
             limited = body.get("limited")
             bo3 = body.get("bo3", False)
-            if not isinstance(fmt, str) or not fmt.strip():
+            if not limited and (not isinstance(fmt, str) or not fmt.strip()):
                 self._bad_request(ValueError(
                     "format 是必填非空字符串（如 \"pioneer\"），收到: {!r}".format(fmt)))
                 return
@@ -1847,7 +2069,14 @@ def make_handler(state):
                     "limited 是必填布尔（true=限制赛 40/41 口径，false=构筑口径），"
                     "收到: {!r}".format(limited)))
                 return
-            payload, ok = state.audit(fmt.strip(), limited, bool(bo3))
+            fmt = fmt.strip() if isinstance(fmt, str) else ""
+            if async_start:
+                try:
+                    self._send_json(202, state.start_audit(fmt, limited, bool(bo3)))
+                except ValueError as exc:
+                    self._bad_request(exc)
+                return
+            payload, ok = state.audit(fmt, limited, bool(bo3))
             self._send_json(200 if ok else 500, payload)
 
         def _handle_deck_edit(self, op):
@@ -1858,14 +2087,18 @@ def make_handler(state):
                 return
             name = body.get("name")
             qty = body.get("qty", 1)
+            limited = body.get("limited", False)
+            if not isinstance(limited, bool):
+                self._bad_request(ValueError("limited 必须是布尔值"))
+                return
             try:
                 if op == "add":
-                    snap = state.deck_add(name, body.get("section"), qty)
+                    snap = state.deck_add(name, body.get("section"), qty, limited=limited)
                 elif op == "remove":
                     snap = state.deck_remove(name, body.get("section"), qty)
                 else:
                     snap = state.deck_move(name, body.get("from"),
-                                           body.get("to"), qty)
+                                           body.get("to"), qty, limited=limited)
             except DeckEditError as exc:
                 self._send_json(400, _error_envelope("DeckEditError", str(exc)))
                 return
@@ -2154,6 +2387,26 @@ PAGE_HTML = """<!DOCTYPE html>
   #warningPanel { border-color:#64533b; }
   #warnings { color:var(--gold); white-space:pre-wrap; font-size:12px; }
   .status-footer { color:var(--muted); font-size:11px; padding:4px 0; }
+  .art-thumb { width:38px; height:53px; padding:0 !important; border:0; overflow:hidden; background:var(--inset); flex-shrink:0; }
+  .art-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+  .art-missing::after { content:'无卡图'; color:var(--muted); font-size:10px; }
+  .zone-cards .row { position:relative; }
+  .viewbtn.active { color:var(--accent); border-color:var(--accent); }
+  .deck-grid .zone-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(125px,1fr)); gap:10px; padding-top:8px; }
+  .deck-grid .zone-cards .row { display:flex; flex-direction:column; align-items:stretch; border:1px solid var(--line); padding:8px; border-radius:8px; }
+  .deck-grid .art-thumb { width:100%; height:auto; aspect-ratio:244/340; }
+  .deck-grid .zone-cards .row > .tag { position:absolute; top:12px; left:12px; background:#10161edb; padding:2px 5px; border-radius:4px; }
+  .deck-grid .card-actions { justify-content:space-between; }
+  dialog { color:var(--text); background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px; max-width:94vw; }
+  dialog::backdrop { background:#080b10c9; }
+  dialog .panel-head { margin-bottom:12px; }
+  #cardPreviewImage { display:block; max-height:75vh; max-width:80vw; }
+  #exportPreviewImage { display:block; max-width:85vw; max-height:68vh; object-fit:contain; }
+  .job-status { padding:10px 12px; border-left:2px solid var(--accent); background:var(--inset); margin:10px 0; font-size:12px; }
+  .job-status:empty { display:none; }
+  #taskStatus { color:var(--accent); font-size:12px; margin-bottom:14px; }
+  #taskStatus:empty { display:none; }
+  .claim-row { border-top:1px solid var(--line); padding:6px 0; margin-top:6px; font-size:12px; }
   @media (min-width:1201px) { .editor-column { position:sticky; top:18px; } }
   @media (max-width:1200px) {
     .workspace { grid-template-columns:minmax(250px,.75fr) minmax(340px,1.25fr); }
@@ -2195,12 +2448,15 @@ PAGE_HTML = """<!DOCTYPE html>
     <button class="tabbtn" data-mode="constructed" id="tabConstructed" type="button" aria-pressed="false">构筑</button>
   </nav>
   <div class="header-actions"><span class="connection" id="connection" role="status" aria-live="polite">正在连接</span>
-    <button id="openImport" type="button">导入</button><button id="exportBtn" type="button">导出牌表</button></div>
+    <button id="openImport" type="button">导入</button><button id="exportBtn" type="button">导出 TXT</button>
+    <button id="imageBtn" type="button">导出图片</button></div>
 </div></header>
 <main class="shell">
   <div class="session-row"><div id="session">尚未导入牌表</div><div id="modeHint" class="mode-hint"></div></div>
   <div id="errorPanel" class="feedback" hidden><div id="errors" role="alert"></div>
     <button id="dismissError" type="button" aria-label="关闭错误提示">关闭</button></div>
+  <div id="taskStatus" role="status" aria-live="polite"></div>
+  <div id="imageReady" hidden><button id="showExportPreview">图片已生成，查看 / 下载 PNG</button></div>
   <div class="overview" aria-label="当前套牌概况">
     <div class="metric"><span>主牌 / 张</span><strong id="mainMetric">0</strong></div>
     <div class="metric"><span>备牌 / 张</span><strong id="sideMetric">0</strong></div>
@@ -2231,13 +2487,13 @@ PAGE_HTML = """<!DOCTYPE html>
           </div>
         </div>
         <div class="panel">
-          <div class="panel-head"><h2>自动组牌</h2><span class="tag">限制赛</span></div>
+          <div class="panel-head"><h2>自动组牌</h2><span class="tag">纯机器 · 限制赛</span></div>
           <div class="form-grid">
             <label class="field" for="seedColors">色组<select id="seedColors"></select></label>
             <label class="field" for="seedSize">主牌张数<select id="seedSize"><option value="41">41 张</option><option value="40">40 张</option></select></label>
             <label class="field full" for="setcode">系列代码（可选）<input id="setcode" type="text" placeholder="如 FRA，用于加载评分"></label>
           </div>
-          <div class="note">通常从 17 地 + 24 张其他牌开始；保留 41 张或裁到 40 张时说明理由。没有评分表时会显示降级依据。</div>
+          <div class="note">只从导入牌池选牌，不调用 LLM。系列代码用于读取本地评分，影响选牌排序；缺失评分使用默认值。通常从 17 地 + 24 张其他牌开始，调整地数和 40/41 张需说明理由。</div>
           <div class="actions"><button id="seedBtn" class="primary">生成套牌</button></div>
           <div id="seedInfo" class="statline"></div>
           <details class="fold"><summary>对比色组与裁剪结果</summary><div id="seedPlans" class="statline"></div><div id="seedCuts" class="note"></div></details>
@@ -2263,6 +2519,7 @@ PAGE_HTML = """<!DOCTYPE html>
       <div class="column-label"><b>02</b>编辑当前套牌</div>
       <div class="panel editor">
         <div class="panel-head"><h2>当前牌表</h2><span class="tag" id="deckTotal">共 0 张</span></div>
+        <div class="actions" style="margin:0 0 12px"><button class="viewbtn active" id="deckListBtn">列表</button><button class="viewbtn" id="deckGridBtn">卡图</button></div>
         <p class="editor-note">调整主备牌，或移除一张；每次操作都会更新统计。</p>
         <div id="zones"></div>
       </div>
@@ -2276,14 +2533,14 @@ PAGE_HTML = """<!DOCTYPE html>
         <nav class="inspector-tabs" aria-label="检查与探索工具">
           <button class="inspectbtn active" data-view="checks" aria-pressed="true">核验</button>
           <button class="inspectbtn" data-view="assistant" aria-pressed="false">助手</button>
-          <button class="inspectbtn" data-view="explore" aria-pressed="false">候选</button>
+          <button class="inspectbtn mode-panel" data-mode="constructed" data-view="explore" aria-pressed="false" hidden>候选</button>
         </nav>
         <div class="inspect-view" data-view="checks">
-          <div class="tool-section"><h3>门禁体检</h3><div class="note">检查张数、赛制合法性与轮替存活。</div>
-            <div class="form-grid"><label class="field" for="auditFormat">赛制<input id="auditFormat" type="text" value="pioneer"></label>
+          <div class="tool-section"><h3>门禁体检</h3><div class="note" id="auditBasis">限制赛检查张数与导入牌池，不检查构筑合法性和轮替。</div>
+            <div class="form-grid"><label class="field" id="auditFormatField" for="auditFormat">构筑赛制<input id="auditFormat" type="text" value="pioneer"></label>
               <label class="check"><input id="auditBo3" type="checkbox">BO3</label>
               <label class="check full"><input id="auditLimited" type="checkbox">限制赛口径（40 / 41 张）</label></div>
-            <button id="auditBtn">运行体检</button><div id="auditBox" class="statline" aria-live="polite"></div>
+            <button id="auditBtn">运行体检</button><div id="auditProgress" class="job-status" aria-live="polite"></div><div id="auditBox" class="statline"></div>
           </div>
           <div class="mode-panel" data-mode="constructed" hidden>
             <div class="tool-section"><h3>角色分布与缺口</h3><button id="rolesBtn">刷新角色</button><div id="rolesBox" class="statline"></div></div>
@@ -2298,15 +2555,16 @@ PAGE_HTML = """<!DOCTYPE html>
           </div>
         </div>
         <div class="inspect-view" data-view="assistant" hidden>
-          <div class="tool-section"><h3>Agent 助手</h3><div class="note">由连接的 Agent 查证并给出带依据的建议。</div>
+          <div class="tool-section"><h3>Agent 助手</h3><div class="note">提交后等待会话显式领取；网页不会自动唤醒 CLI 或启动子代理。当前会话需主动轮询并回执。</div>
             <div class="form-grid"><label class="field full" for="agentKind">希望获得什么帮助？<select id="agentKind"><option value="next_move">建议下一步</option><option value="explain">规则与配合解释</option><option value="novel_synergies">协同候选提案</option><option value="handoff">全流程体检</option></select></label>
               <label class="field full" for="agentNote">补充说明（可选）<textarea id="agentNote" placeholder="例如：希望保留核心配合，先改善前期曲线"></textarea></label></div>
             <details class="fold"><summary>高级请求设置</summary>
               <label class="field" for="agentTimeout">超时（秒）<input id="agentTimeout" type="number" min="1" value="300"></label>
-              <label class="field" for="agentPayload">额外参数（JSON 对象）<textarea id="agentPayload" placeholder='{"note":"补充上下文"}'></textarea></label>
+              <div class="note">额外参数是交给 Agent 的上下文，不是模型参数或脚本选项。通常留空；上方补充说明会合并到 note。</div>
+              <label class="field" for="agentPayload">额外上下文（JSON 对象）<textarea id="agentPayload" placeholder='{"budget":"尽量不消耗稀有野卡","keep_theme":true}'></textarea></label>
             </details>
             <button id="agentReqBtn" class="primary">提交请求</button>
-            <div id="agentReqInfo" class="statline" aria-live="polite"></div><div id="agentResult" class="statline"></div><div id="bridgeStatus" class="note"></div>
+            <div id="agentReqInfo" class="statline" aria-live="polite"></div><div id="agentResult" class="statline"></div><div id="bridgeStatus" class="note"></div><div id="claimList"></div>
           </div>
           <div class="tool-section"><h3>智能点评</h3><div class="note">直连工具：快速点评不调用查证工具；离线时保留机器统计。</div>
             <div class="actions"><button id="adviceBtn">获取点评</button></div><div id="adviceBox" class="statline"></div></div>
@@ -2329,6 +2587,11 @@ PAGE_HTML = """<!DOCTYPE html>
     </aside>
   </div>
 </main>
+<dialog id="cardPreview"><div class="panel-head"><strong id="cardPreviewTitle"></strong><button id="closeCardPreview">关闭</button></div><img id="cardPreviewImage" alt="卡牌正面"></dialog>
+<dialog id="exportPreview"><div class="panel-head"><strong>牌表图片</strong><button id="closeExportPreview">关闭</button></div>
+  <div id="imageProgress" class="job-status" aria-live="polite"></div><img id="exportPreviewImage" alt="当前牌表图片" hidden>
+  <div class="actions"><a id="imageDownload" download="deck.png" hidden>下载 PNG</a></div>
+</dialog>
 <script>
 const ZONES = ['commander', 'companion', 'main', 'sideboard'];
 const ZH = {commander:'指挥官', companion:'伴侣', main:'主牌', sideboard:'备牌'};
@@ -2338,6 +2601,8 @@ let ticking = false;
 let busy = false;
 let agentPending = false;
 let lastRender = '';
+let currentMode = 'limited';
+const runningJobs = {};
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
                                   .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
                                   .replace(/'/g,'&#39;'); }
@@ -2370,6 +2635,69 @@ function cardButton(action, name, section, to, text) {
     + '" data-name="' + esc(name) + '" data-section="' + section
     + '" data-to="' + (to || '') + '" aria-label="' + esc(name + '：' + text)
     + '">' + text + '</button>';
+}
+function artThumb(name) {
+  return '<button class="art-thumb" type="button" data-card-preview="' + esc(name)
+    + '" aria-label="查看 ' + esc(name) + ' 的卡图"><img loading="lazy" alt="" src="/api/card-image?name='
+    + encodeURIComponent(name) + '" onerror="this.hidden=true;this.parentElement.classList.add(\\'art-missing\\')"></button>';
+}
+function setDeckView(view) {
+  document.body.classList.toggle('deck-grid', view === 'grid');
+  document.getElementById('deckGridBtn').classList.toggle('active', view === 'grid');
+  document.getElementById('deckListBtn').classList.toggle('active', view !== 'grid');
+  try { localStorage.setItem('workbench-card-view', view); } catch (e) {}
+}
+function renderJobStatus() {
+  document.getElementById('taskStatus').textContent = Object.values(runningJobs)
+    .filter(Boolean).map(job => (job.kind === 'audit' ? '体检' : '图片输出') + '：' + job.message
+      + ' · ' + job.elapsed_sec + ' 秒').join('；');
+}
+async function followJob(id, kind) {
+  const button = document.getElementById(kind === 'audit' ? 'auditBtn' : 'imageBtn');
+  const box = document.getElementById(kind === 'audit' ? 'auditProgress' : 'imageProgress');
+  try {
+    for (;;) {
+      const job = await fetchJSON('/api/jobs/' + encodeURIComponent(id));
+      runningJobs[kind] = job;
+      button.disabled = true;
+      box.textContent = job.message + (job.total != null ? ' · 已完成 ' + job.current + ' / ' + job.total : '')
+        + ' · ' + job.elapsed_sec + ' 秒';
+      renderJobStatus();
+      if (job.status === 'error') throw new Error((job.error || {}).message || '任务失败');
+      if (job.status === 'done') {
+        runningJobs[kind] = null;
+        await tick();
+        if (kind === 'audit') renderAudit({checks:{audit:{status:'ok', result:job.result}}});
+        else {
+          const img = document.getElementById('exportPreviewImage');
+          const link = document.getElementById('imageDownload');
+          img.src = job.result.download_url; img.hidden = false;
+          link.href = job.result.download_url; link.hidden = false;
+          document.getElementById('imageReady').hidden = false;
+          box.textContent = 'PNG 已生成' + (job.result.stale ? '（生成的是任务开始时的牌表）' : '')
+            + ((job.result.missing_images || []).length ? '；缺失卡图将以占位显示：' + job.result.missing_images.join('、') : '');
+        }
+        showErrors('');
+        return;
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  } catch (e) { box.textContent = '任务失败：' + e.message; showErrors(e.message); }
+  finally {
+    runningJobs[kind] = null;
+    try { localStorage.removeItem('workbench-job-' + kind); } catch (e) {}
+    updateDisabled(); renderJobStatus();
+  }
+}
+async function startJob(kind, url, body) {
+  if (runningJobs[kind]) return;
+  runningJobs[kind] = {kind:kind, message:'准备任务', elapsed_sec:0};
+  updateDisabled(); renderJobStatus();
+  try {
+    const job = await postJSON(url, body);
+    try { localStorage.setItem('workbench-job-' + kind, job.job_id); } catch (e) {}
+    await followJob(job.job_id, kind);
+  } catch (e) { runningJobs[kind] = null; updateDisabled(); renderJobStatus(); showErrors(e.message); }
 }
 async function postJSON(url, obj) {
   const r = await fetch(url, {method:'POST',
@@ -2463,18 +2791,18 @@ function renderDeck(snap) {
     const count = (snap.counts && snap.counts[z]) || 0;
     if (z === 'commander' || z === 'companion') {
       if (!items.length) continue;
-      html += '<div class="zone"><div class="zone-head"><b>' + ZH[z] + '</b><span class="tag">' + count + ' 张</span></div><ul>'
-        + items.map(c => '<li>' + c.qty + ' × ' + esc(c.name) + '</li>').join('')
-        + (items.length ? '' : '<li class="ts">（空）</li>') + '</ul></div>';
+      html += '<div class="zone"><div class="zone-head"><b>' + ZH[z] + '</b><span class="tag">' + count + ' 张</span></div><div class="zone-cards">'
+        + items.map(c => '<div class="row">' + artThumb(c.name) + '<span class="tag">' + c.qty + '×</span><span class="nm">' + esc(c.name) + '</span></div>').join('')
+        + '</div></div>';
       continue;
     }
     const btns = c => '<span class="card-actions">'
       + cardButton('move', c.name, z, z === 'main' ? 'sideboard' : 'main', z === 'main' ? '入备' : '入主')
       + cardButton('remove', c.name, z, '', '-1') + '</span>';
-    html += '<div class="zone"><div class="zone-head"><b>' + ZH[z] + '</b><span class="tag">' + count + ' 张</span></div>'
-      + items.map(c => '<div class="row"><span class="tag">' + c.qty + '×</span>'
+    html += '<div class="zone"><div class="zone-head"><b>' + ZH[z] + '</b><span class="tag">' + count + ' 张</span></div><div class="zone-cards">'
+      + items.map(c => '<div class="row">' + artThumb(c.name) + '<span class="tag">' + c.qty + '×</span>'
         + '<span class="nm">' + esc(c.name) + '</span>' + btns(c) + '</div>').join('')
-      + (items.length ? '' : '<div class="note">暂无' + ZH[z] + '</div>') + '</div>';
+      + (items.length ? '' : '<div class="note">暂无' + ZH[z] + '</div>') + '</div></div>';
   }
   document.getElementById('zones').innerHTML = html;
 }
@@ -2526,9 +2854,19 @@ function renderSeed(snap) {
     '色组 <b>' + esc(seed.colors.join('+')) + '</b>（' + esc(seed.strategy)
     + '，' + seed.deck_size + ' 张）深度'
     + (seed.depth_ok ? '<span class="ok">通过</span>' : '<span class="bad">不足</span>')
-    + '；平均 CMC ' + seed.average_cmc + '；地 ' + esc(JSON.stringify(seed.lands))
+    + (seed.depth_note ? '（' + esc(seed.depth_note) + '，评级深度）' : '')
+    + '；平均 CMC ' + seed.average_cmc + '；地 ' + Object.keys(seed.lands).map(c => esc(c) + ' ' + seed.lands[c]).join(' / ')
     + '；' + (seed.valid ? '<span class="ok">门禁通过</span>'
                          : '<span class="bad">门禁失败: ' + esc(seed.violations.join('；')) + '</span>');
+  const ratings = seed.ratings || {};
+  if (ratings.total != null)
+    document.getElementById('seedInfo').innerHTML += '<div class="note">评分覆盖 ' + ratings.covered + ' / ' + ratings.total
+      + ' 个非基本地牌名' + (ratings.source ? ' · 来源 ' + esc(ratings.source) : '')
+      + (ratings.generated ? ' · ' + esc(ratings.generated) : '') + '</div>'
+      + (ratings.preview_count ? '<div class="note">其中 ' + ratings.preview_count + ' 个预览期 / 低置信评分，仅作为选牌参考。</div>' : '')
+      + (ratings.missing.length ? '<details class="fold"><summary>缺失评分：' + ratings.missing.length + ' 个牌名使用默认值</summary>'
+        + ratings.missing.map(esc).join('、') + '</details>' : '');
+  if (seed.stale) document.getElementById('seedInfo').innerHTML += '<div class="warn">此为生成时方案，当前牌表已手动调整。</div>';
   document.getElementById('seedPlans').innerHTML = '枚举方案 top '
     + (seed.plans || []).length + '：' + (seed.plans || []).map(p =>
       esc(p.colors.join('+')) + ' = ' + p.score
@@ -2786,6 +3124,20 @@ function renderAudit(snap) {
     return;
   }
   const r = slot.result;
+  if (r.scope === 'limited') {
+    let html = '<div class="card">限制赛体检 ' + (r.ok === true ? '<span class="ok">通过</span>'
+      : r.ok === false ? '<span class="bad">未通过</span>' : '<span class="warn">待核验</span>')
+      + '<br>40/41 张检查 ' + gateHtml(r.validate) + '<br>牌池数量检查 ' + gateHtml(r.pool)
+      + '<div class="note">' + esc((r.pool || {}).basis || '') + '</div>';
+    for (const gate of [r.validate || {}, r.pool || {}]) {
+      html += (gate.violations || []).map(v => '<div class="bad">' + esc(v) + '</div>').join('');
+      html += (gate.unknown || []).map(v => '<div class="warn">' + esc(v) + '</div>').join('');
+    }
+    html += '<div class="note">不检查构筑赛合法性或 Standard 轮替。通过表示张数与当前导入牌池一致，不代表套牌强度。</div>';
+    if (r.stale) html += '<div class="warn">牌表或牌池在检查期间已变更，请重新体检。</div>';
+    box.innerHTML = html + '</div>';
+    return;
+  }
   const overall = r.ok === true ? '<span class="ok">● 全部通过</span>'
     : r.ok === false ? '<span class="bad">● 有门禁未通过</span>'
                      : '<span class="warn">● 有门禁未知（≠通过）</span>';
@@ -2794,12 +3146,14 @@ function renderAudit(snap) {
     html += '<ul class="kvlist">'
       + r.validate.violations.map(v => '<li class="bad">' + truncStr(v, 120) + '</li>').join('')
       + '</ul>';
-  html += '<br>轮替存活 ' + gateHtml(r.rotation);
+  html += r.rotation && r.rotation.status === 'not_applicable'
+    ? '<div class="note">' + esc(r.rotation.detail) + '</div>' : '<br>轮替存活 ' + gateHtml(r.rotation);
   if (r.rotation && r.rotation.detail) html += '<br>' + truncBlock(r.rotation.detail, 120, 5);
   if (r.rotation && r.rotation.error)
     html += ' <span class="warn">' + truncBlock(r.rotation.error, 120, 5) + '</span>';
   if (r.validate && r.validate.error)
     html += ' <span class="warn">' + truncBlock(r.validate.error, 120, 5) + '</span>';
+  if (r.stale) html += '<div class="warn">检查期间牌表已变更，请重新体检。</div>';
   box.innerHTML = html;
 }
 function renderBridge(snap) {
@@ -2811,6 +3165,11 @@ function renderBridge(snap) {
     txt += '；在途：' + inflight.map(x => x.request_id
       + (x.claimed_by ? '（' + x.claimed_by + ' 处理中）' : '（待认领）')).join('、');
   document.getElementById('bridgeStatus').textContent = txt;
+  const states = {queued:'待领取', in_flight:'处理中', done:'已回执'};
+  document.getElementById('claimList').innerHTML = (b.recent_requests || []).map(r =>
+    '<div class="claim-row"><b>' + esc(r.request_id) + '</b> · ' + (states[r.state] || esc(r.state))
+    + ' · ' + (r.claimed_by ? esc(r.claimed_by) + ' 已显式认领' : '尚无 Agent 认领')
+    + (r.state === 'done' ? ' <button data-receipt="' + esc(r.request_id) + '">查看回执</button>' : '') + '</div>').join('');
 }
 function renderAvenues(snap) {
   const list = snap.avenues || [];
@@ -2829,10 +3188,11 @@ function renderAvenues(snap) {
     + '<button data-avenue-action="delete" data-id="' + esc(a.id) + '">删除</button></div></div>'
   ).join('');
 }
-async function pollAgentResult(rid) {
+async function pollAgentResult(rid, timeoutSec=300) {
   const infoBox = document.getElementById('agentReqInfo');
   const box = document.getElementById('agentResult');
-  for (let i = 0; i < 120; i++) {
+  const deadline = Date.now() + timeoutSec * 1000;
+  while (Date.now() < deadline) {
     const r = await fetch('/api/agent/result/' + encodeURIComponent(rid));
     if (r.status === 202) {
       let cb = null;
@@ -2859,7 +3219,8 @@ async function pollAgentResult(rid) {
     }
     return;
   }
-  box.textContent = '轮询超时（Agent 未在期限内作答）';
+  infoBox.textContent = '等待超时；网页未自动启动 Agent。请求仍在桥中，可由当前 CLI 显式领取。';
+  box.textContent = '';
 }
 function doFocusAvenue(id) {
   run(() => postJSON('/api/avenues/' + encodeURIComponent(id) + '/focus', {}));
@@ -2925,6 +3286,8 @@ function updateDisabled() {
                     'costBtn','auditBtn','findBtn','adviceBtn','avenueBtn'])
     document.getElementById(id).disabled = busy;
   document.getElementById('agentReqBtn').disabled = busy || agentPending;
+  document.getElementById('auditBtn').disabled = busy || !!runningJobs.audit;
+  document.getElementById('imageBtn').disabled = busy || !!runningJobs.image;
   for (const button of document.querySelectorAll('[data-card-action],[data-avenue-action]'))
     button.disabled = busy;
 }
@@ -2941,11 +3304,30 @@ async function run(action) {
   await tick();
   return success;
 }
-function doAdd(name, section) { run(() => postJSON('/api/deck/add', {name:name, section:section, qty:1})); }
+function doAdd(name, section) {
+  const limited = currentMode === 'limited';
+  const other = section === 'main' ? 'sideboard' : 'main';
+  const poolCard = lastSnap && lastSnap.pool.entries.find(c => c.name === name);
+  const used = lastSnap ? ['main','sideboard'].reduce((n,z) => n + (lastSnap.sections[z] || [])
+    .filter(c => c.name === name).reduce((s,c) => s + c.qty, 0), 0) : 0;
+  if (limited && poolCard && used >= poolCard.qty && lastSnap.sections[other].some(c => c.name === name)) {
+    doMove(name, other, section); return;
+  }
+  run(() => postJSON('/api/deck/add', {name:name, section:section, qty:1, limited:limited}));
+}
 function doRemove(name, section) { run(() => postJSON('/api/deck/remove', {name:name, section:section, qty:1})); }
-function doMove(name, from, to) { run(() => postJSON('/api/deck/move', {name:name, from:from, to:to, qty:1})); }
+function doMove(name, from, to) { run(() => postJSON('/api/deck/move', {name:name, from:from, to:to, qty:1, limited:currentMode === 'limited'})); }
+function updateAuditScope() {
+  const limited = document.getElementById('auditLimited').checked;
+  document.getElementById('auditFormatField').hidden = limited;
+  document.getElementById('auditFormat').disabled = limited;
+  document.getElementById('auditBasis').textContent = limited
+    ? '纯机器检查 40/41 张与导入牌池数量；不检查构筑赛合法性和 Standard 轮替。'
+    : '调用 CLI 检查张数、赛制合法性和平台；Standard 才加轮替检查。';
+}
 function setMode(mode) {
   if (mode !== 'limited' && mode !== 'constructed') mode = 'limited';
+  currentMode = mode;
   try { localStorage.setItem('workbench-mode', mode); } catch (e) {}
   const panels = document.querySelectorAll('.mode-panel');
   for (let i = 0; i < panels.length; i++)
@@ -2960,6 +3342,9 @@ function setMode(mode) {
     ? '限制赛 · 默认 41 张，可选 40 张' : '构筑 · 从核心牌与候选开始';
   const al = document.getElementById('auditLimited');
   if (al) al.checked = (mode === 'limited');   // 限制赛默认 40/41 口径，构筑默认关闭
+  if (mode === 'limited' && !document.querySelector('.inspect-view[data-view="explore"]').hidden)
+    setInspector('checks');
+  updateAuditScope();
 }
 function initMode() {
   let mode = 'limited';
@@ -2970,6 +3355,12 @@ document.getElementById('tabLimited').onclick = () => setMode('limited');
 document.getElementById('tabConstructed').onclick = () => setMode('constructed');
 document.getElementById('openImport').onclick = openImport;
 document.getElementById('dismissError').onclick = () => showErrors('');
+document.getElementById('auditLimited').onchange = updateAuditScope;
+document.getElementById('deckListBtn').onclick = () => setDeckView('list');
+document.getElementById('deckGridBtn').onclick = () => setDeckView('grid');
+document.getElementById('closeCardPreview').onclick = () => document.getElementById('cardPreview').close();
+document.getElementById('closeExportPreview').onclick = () => document.getElementById('exportPreview').close();
+document.getElementById('showExportPreview').onclick = () => document.getElementById('exportPreview').showModal();
 for (const button of document.querySelectorAll('.inspectbtn'))
   button.onclick = () => setInspector(button.dataset.view);
 document.addEventListener('click', event => {
@@ -2977,6 +3368,15 @@ document.addEventListener('click', event => {
   if (!button || button.disabled) return;
   if (button.hasAttribute('data-open-import')) openImport();
   const d = button.dataset;
+  if (d.cardPreview) {
+    document.getElementById('cardPreviewTitle').textContent = d.cardPreview;
+    document.getElementById('cardPreviewImage').src = '/api/card-image?name=' + encodeURIComponent(d.cardPreview);
+    document.getElementById('cardPreview').showModal();
+  }
+  if (d.receipt) {
+    setInspector('assistant');
+    pollAgentResult(d.receipt).catch(e => showErrors(e.message));
+  }
   if (d.cardAction === 'add') doAdd(d.name, d.section);
   if (d.cardAction === 'remove') doRemove(d.name, d.section);
   if (d.cardAction === 'move') doMove(d.name, d.section, d.to);
@@ -2991,7 +3391,20 @@ document.getElementById('importBtn').onclick = async () => {
   const ok = await run(() => postText('/api/builds/import', document.getElementById('decktext').value));
   if (ok) document.getElementById('deckImport').open = false;
 };
-document.getElementById('exportBtn').onclick = () => { window.open('/api/export'); };
+document.getElementById('exportBtn').onclick = () => run(async () => {
+  const r = await fetch('/api/export');
+  if (!r.ok) throw new Error('牌表导出失败');
+  const url = URL.createObjectURL(await r.blob());
+  const link = document.createElement('a'); link.href = url; link.download = 'deck.txt';
+  link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+document.getElementById('imageBtn').onclick = () => {
+  document.getElementById('exportPreviewImage').hidden = true;
+  document.getElementById('imageDownload').hidden = true;
+  document.getElementById('imageReady').hidden = true;
+  document.getElementById('exportPreview').showModal();
+  startJob('image', '/api/export-image', {title:currentMode === 'limited' ? '限制赛套牌' : '构筑套牌'});
+};
 document.getElementById('seedBtn').onclick = () => run(async () => {
   const raw = document.getElementById('seedColors').value;
   const body = {};
@@ -3018,10 +3431,10 @@ document.getElementById('combosBtn').onclick = () => run(() => fetchJSON(
   + '&platform=' + document.getElementById('cbPlatform').value
   + '&limit=' + encodeURIComponent(document.getElementById('cbLimit').value.trim() || '20')));
 document.getElementById('costBtn').onclick = () => run(() => fetchJSON('/api/cost'));
-document.getElementById('auditBtn').onclick = () => run(() => postJSON('/api/audit', {
+document.getElementById('auditBtn').onclick = () => startJob('audit', '/api/audit/start', {
   format: document.getElementById('auditFormat').value.trim() || 'pioneer',
   limited: document.getElementById('auditLimited').checked,
-  bo3: document.getElementById('auditBo3').checked}));
+  bo3: document.getElementById('auditBo3').checked});
 document.getElementById('agentReqBtn').onclick = () => run(async () => {
   let payload = {};
   const raw = document.getElementById('agentPayload').value.trim();
@@ -3039,7 +3452,7 @@ document.getElementById('agentReqBtn').onclick = () => run(async () => {
     '已入队 ' + d.request_id + '（' + t + '）';
   document.getElementById('agentResult').textContent = '等待回执…';
   agentPending = true;
-  pollAgentResult(d.request_id).catch(e => showErrors(String(e.message || e)))
+  pollAgentResult(d.request_id, body.timeout_sec).catch(e => showErrors(String(e.message || e)))
     .finally(() => { agentPending = false; updateDisabled(); });
 });
 document.getElementById('findBtn').onclick = () => run(async () => {
@@ -3081,6 +3494,12 @@ document.getElementById('poolFilter').onchange = () => { if (lastSnap) { renderP
 document.getElementById('poolSearch').oninput = () => { if (lastSnap) { renderPool(lastSnap); updateDisabled(); } };
 buildColorOptions();
 initMode();
+try { setDeckView(localStorage.getItem('workbench-card-view') || 'list'); } catch (e) {}
+for (const kind of ['audit','image']) {
+  let id = null;
+  try { id = localStorage.getItem('workbench-job-' + kind); } catch (e) {}
+  if (id) followJob(id, kind);
+}
 setInterval(tick, """ + str(POLL_INTERVAL_MS) + """); tick();
 </script>
 </body>

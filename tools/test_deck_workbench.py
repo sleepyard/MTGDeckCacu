@@ -1302,7 +1302,7 @@ class AuditTests(unittest.TestCase):
                                         cp(0, ROT_STDOUT_ALL_PASS)])
         with fx:
             status, payload = fx.post_obj(
-                "/api/audit", {"format": "pioneer", "limited": False})
+                "/api/audit", {"format": "standard", "limited": False})
             self.assertEqual(status, 200)
             self.assertTrue(payload["ok"])
             self.assertEqual(payload["validate"]["status"], "pass")
@@ -1321,7 +1321,7 @@ class AuditTests(unittest.TestCase):
         fx, _ = self._fixture([cp(0, VALIDATE_PASS), cp(0, ROT_STDOUT)])
         with fx:
             status, payload = fx.post_obj(
-                "/api/audit", {"format": "pioneer", "limited": False})
+                "/api/audit", {"format": "standard", "limited": False})
             self.assertEqual(status, 200)
             # validate 过、轮替有将退 → 整体 fail（不是 unknown）
             self.assertFalse(payload["ok"])
@@ -1338,7 +1338,7 @@ class AuditTests(unittest.TestCase):
         fx, _ = self._fixture([cp(4, VALIDATE_FAIL), cp(0, ROT_STDOUT)])
         with fx:
             status, payload = fx.post_obj(
-                "/api/audit", {"format": "pioneer", "limited": False})
+                "/api/audit", {"format": "standard", "limited": False})
             self.assertEqual(status, 200)
             self.assertFalse(payload["ok"])
             self.assertEqual(payload["validate"]["status"], "fail")
@@ -1351,7 +1351,7 @@ class AuditTests(unittest.TestCase):
                                cp(0, ROT_STDOUT_ALL_PASS)])
         with fx:
             status, payload = fx.post_obj(
-                "/api/audit", {"format": "pioneer", "limited": False})
+                "/api/audit", {"format": "standard", "limited": False})
             self.assertEqual(status, 200)
             self.assertIsNone(payload["ok"])
             self.assertEqual(payload["validate"]["status"], "unknown")
@@ -1361,7 +1361,7 @@ class AuditTests(unittest.TestCase):
         fx, _ = self._fixture([cp(0, VALIDATE_PASS), cp(9, "", "boom")])
         with fx:
             status, payload = fx.post_obj(
-                "/api/audit", {"format": "pioneer", "limited": False})
+                "/api/audit", {"format": "standard", "limited": False})
             self.assertEqual(status, 200)
             self.assertIsNone(payload["ok"])
             self.assertEqual(payload["rotation"]["status"], "unknown")
@@ -1373,26 +1373,27 @@ class AuditTests(unittest.TestCase):
                                cp(0, "", "  ! FAIL https://api.scryfall.com/sets boom")])
         with fx:
             status, payload = fx.post_obj(
-                "/api/audit", {"format": "pioneer", "limited": False})
+                "/api/audit", {"format": "standard", "limited": False})
             self.assertIsNone(payload["ok"])
             self.assertEqual(payload["rotation"]["status"], "unknown")
 
     def test_audit_limited_and_constructed_argv(self):
         fx, dispatcher = self._fixture(
-            [cp(0, VALIDATE_PASS), cp(0, ROT_STDOUT),
-             cp(0, VALIDATE_PASS), cp(0, ROT_STDOUT)])
+            [cp(0, VALIDATE_PASS), cp(0, ROT_STDOUT)])
         with fx:
-            status, _ = fx.post_obj(
+            status, limited = fx.post_obj(
                 "/api/audit", {"format": "pioneer", "limited": True})
             self.assertEqual(status, 200)
+            self.assertEqual(limited["scope"], "limited")
+            self.assertEqual(limited["rotation"]["status"], "not_applicable")
+            self.assertEqual(dispatcher.calls, [])
             status, _ = fx.post_obj(
-                "/api/audit", {"format": "pioneer", "limited": False})
+                "/api/audit", {"format": "standard", "limited": False})
             self.assertEqual(status, 200)
-            limited_argv, constructed_argv = dispatcher.calls[0], dispatcher.calls[2]
-            self.assertIn("--limited", limited_argv)
+            constructed_argv = dispatcher.calls[0]
             self.assertNotIn("--limited", constructed_argv)
-            self.assertIn("validate", limited_argv)
-            self.assertTrue(limited_argv[3].endswith("mtg_tool.py"))
+            self.assertIn("validate", constructed_argv)
+            self.assertTrue(constructed_argv[3].endswith("mtg_tool.py"))
             self.assertTrue(dispatcher.calls[1][3].endswith("rot_audit.py"))
 
     def test_clip_detail_truncates_with_marker(self):
@@ -1406,7 +1407,7 @@ class AuditTests(unittest.TestCase):
                                cp(9, "", long_text)])
         with fx:
             status, payload = fx.post_obj(
-                "/api/audit", {"format": "pioneer", "limited": False})
+                "/api/audit", {"format": "standard", "limited": False})
             self.assertEqual(status, 200)
             error = payload["rotation"]["error"]
             self.assertIn("…[截断]", error)

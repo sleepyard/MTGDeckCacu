@@ -394,15 +394,13 @@ def build_limited_deck(pool: Sequence[Mapping], table=None,
     lands = deck_core.mana_base(dict(pip_counts), lands_count - nonbasic_count,
                                 splash_colors=splash_colors)
     curve = dict(Counter(deck_core.cmc_slot(_cmc(card)) for card in main_copies))
-    risk = deck_core.land_check(lands_count)
+    risk = deck_core.land_check(lands_count, deck_size)
     sideboard = _sideboard(pool, main, nonbasic_main)
 
     cuts = []
     if _available:
-        replacement = min(decisions, key=lambda item: item[1])[0] if decisions else None
-        replacement_name = _name(replacement) if replacement else "已选牌"
         cut_counts = Counter(_name(card) for card in _available)
-        cuts = [f"{name} ×{count}：被 {replacement_name} 挤掉"
+        cuts = [f"{name} ×{count}：未入主牌（评分、曲线与角色综合选择）"
                 for name, count in sorted(cut_counts.items())]
     report = [
         f"颜色: {'+'.join(plan.colors)}" +

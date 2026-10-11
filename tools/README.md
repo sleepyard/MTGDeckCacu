@@ -438,6 +438,24 @@ curl -s http://127.0.0.1:8644/api/export
 核验、助手、候选各用一个标签；高级配置折叠。牌池可按名称与分区筛选；Agent 补充
 说明可直接输入普通文本。操作进行中会禁用重复提交，错误保留到关闭或下一次成功操作。
 
+限制赛模式为纯机器选牌：系列代码读取已有本地评分，不会触发 LLM 评级；界面显示
+评分覆盖率、来源、生成日期与预览/低置信条目。缺失等级使用默认分及曲线/角色取舍。
+外部候选标签只在构筑模式出现。限制赛加牌按池内总量限制，主备互换不套用四张上限。
+牌表支持列表/卡图网格与点击放大（复用 `deck_image` 简中优先缓存），TXT 下载与 PNG
+图片输出。图片输出使用已有 CLI，Pillow 缺失或渲染失败明确报错。
+
+本页体检按模式分开：限制赛在纯函数内核检查 40/41 张与导入牌池，未导入牌池则来源
+未知；不调用构筑合法性或 Standard 轮替门禁。构筑沿用 CLI `validate`，仅 Standard
+加 `rot_audit`。注意旧 CLI `validate --limited` 仍是数量口径开关，与网页的池内核验不同。
+`POST /api/audit/start` 和 `POST /api/export-image` 返回 202 + `job_id`，
+`GET /api/jobs/<id>` 提供实际阶段/已处理数/耗时/结果；图片从结果的 `download_url` 下载。
+这些后台线程执行确定性内核或脚本，不是 Agent。运行期间仍可切换标签和操作其他工具；
+任务使用开始时的牌表，期间修改会标注结果过期，不会把旧体检写回新牌表。
+
+助手请求仅入队，不自动唤醒 CLI、不启动子代理。当前会话需显式访问
+`/api/agent/next?agent=codex&wait=0` 领取，界面会显示请求号、领取者和回执状态。
+高级 JSON 参数原样作为 `payload` 上下文交给 Agent，不是模型设置或 CLI 选项，通常留空。
+
 Phase 1（限制赛组牌）已加入：牌池/种子/统计/手动微调端点。
 
 ```bash
@@ -446,8 +464,8 @@ curl -s -X POST http://127.0.0.1:8644/api/pool --data-binary @pool.txt
 # 种子（colors 缺省自动枚举；deck_size 41/40；set 提供时读评分表，缺失显式降级告警）
 curl -s -X POST http://127.0.0.1:8644/api/seed -d '{"colors":["B","R"],"deck_size":41,"set":"FRA"}'
 curl -s http://127.0.0.1:8644/api/stats
-# 手动微调（同名 ≤4，基本地/ANY_NUMBER 豁免；move 限 main↔sideboard）
-curl -s -X POST http://127.0.0.1:8644/api/deck/add -d '{"name":"Swamp","section":"main","qty":2}'
+# 限制赛微调（非基本地受实际牌池总量约束；move 限 main↔sideboard）
+curl -s -X POST http://127.0.0.1:8644/api/deck/add -d '{"name":"Swamp","section":"main","qty":2,"limited":true}'
 ```
 
 导出的限制赛牌表用 `python -X utf8 tools/mtg_tool.py validate <导出> --format <赛制> --limited`
@@ -462,8 +480,10 @@ curl -s -X POST http://127.0.0.1:8644/api/seed-constructed \
 curl -s http://127.0.0.1:8644/api/roles          # 角色分布 + 缺口（对照 M 配额，basis 明示）
 curl -s "http://127.0.0.1:8644/api/combos?format=pioneer&platform=arena"
 curl -s http://127.0.0.1:8644/api/cost           # 造价签名；tools/data 快照缺失显式报错
-# 门禁聚合（limited 显式传，不做张数推断；门禁未知绝不当作通过）
+# 构筑门禁（limited 显式传；仅 Standard 采用轮替门禁）
 curl -s -X POST http://127.0.0.1:8644/api/audit -d '{"format":"pioneer","limited":false}'
+# 限制赛张数与导入牌池核验；无需构筑赛制
+curl -s -X POST http://127.0.0.1:8644/api/audit -d '{"limited":true}'
 ```
 
 Phase 3（Agent 桥）已加入——网页与 Agent 会话是同一状态的两个操作界面：

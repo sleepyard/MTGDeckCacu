@@ -11,6 +11,14 @@ agent session on the other. The page's judgment requests reach you through the
 bridge; deterministic compute never does — do not re-do what the kernel already
 shows in the snapshot.
 
+Submitting a browser request only enqueues it. It does not wake this CLI or
+spawn a sub-agent. Announce the claim explicitly, poll with this session's own
+name (for example `agent=codex&wait=0`), then answer through the result endpoint.
+`recent_requests` in bridge status exposes the request id, state and named claimant.
+The optional JSON `payload` is user context for your reasoning, not model settings
+or executable CLI options. Limited proposals stay within the imported pool; generic
+constructed search candidates cannot be used as extra limited copies.
+
 ## Protocol
 
 ```powershell
