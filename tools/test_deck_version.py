@@ -71,6 +71,10 @@ class DeckVersionTest(unittest.TestCase):
         self.assertTrue(report.is_file())
         self.assertEqual(deck.read_text(encoding="utf-8"),
                          self.deck_src.read_text(encoding="utf-8"))
+        for path in (deck, report):
+            raw = path.read_bytes()
+            self.assertNotIn(b"\r", raw)
+            self.assertFalse(raw.startswith(b"\xef\xbb\xbf"))
         text = report.read_text(encoding="utf-8")
         self.assertIn(date.today().isoformat(), text)
         self.assertIn("首版", text)
