@@ -1,0 +1,32 @@
+# Frozen structure fixture; not a current metagame recommendation.
+Deck
+4 Bishop of Wings
+4 Giada, Font of Hope
+4 Youthful Valkyrie
+4 Inspiring Overseer
+4 Resplendent Angel
+4 Righteous Valkyrie
+1 Lyra Dawnbringer
+4 Collected Company
+1 Roaming Throne
+4 Archangel of Wrath
+2 Elspeth's Smite
+1 Three Tree City
+3 Plains
+4 Cavern of Souls
+4 Secluded Courtyard
+1 Branchloft Pathway // Boulderloft Pathway
+2 Brushland
+1 Fabled Passage
+2 Razorverge Thicket
+2 Overgrown Farmland
+4 Temple Garden
+
+Sideboard
+3 Portable Hole
+3 Rest in Peace
+2 Damping Sphere
+2 The Book of Exalted Deeds
+2 Surge of Salvation
+2 Destroy Evil
+1 Settle the Wreckage

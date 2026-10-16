@@ -82,6 +82,8 @@ Use UTF-8 Python source, four-space indentation, and standard-library patterns a
 
 Tests use `unittest`; test files are named `test_*.py` and methods `test_*`. Add deterministic fixture coverage under `tools/testdata/` and mock HTTP, filesystem, and subprocess boundaries rather than contacting MTGA or external APIs in tests. Run the full discovery command before submitting behavior changes.
 
+Deck example regressions must use tracked fixtures under `tools/testdata/decklists/`, not files from gitignored `DeckList/` or local research folders. Check a clean committed tree when publishing so local caches and artifacts cannot hide missing dependencies; existing optional-data skips must be reported separately from executed tests.
+
 ## Commit & Pull Request Guidelines
 
 Use short, descriptive, imperative subjects (recent history commonly starts with equivalents of `fix`, `add`, or `introduce`; no strict Conventional Commits rule is enforced). Keep commits focused. PRs should explain the user-visible or data-format impact, list validation commands and results, link relevant issues or workflow sections, and include screenshots only for GUI/dashboard changes. Do not commit ignored outputs, downloaded dependencies, `tools/llm_config.json`, or API keys; use `DEEPSEEK_API_KEY` for local LLM access.
