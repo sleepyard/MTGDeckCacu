@@ -12,6 +12,31 @@ MTG 套牌构筑工作流 CLI。数据源：Scryfall API + mtgch.com API。仅 P
 - 策略参数：`tools/deck_config.py` 集中管理（deck_core 评分/曲线/地数阈值、mtga_log_tool 风险标记、rot_audit 轮替窗口）；默认值内置，复制 `tools/data/config/strategy_params.example.json` → 同目录 `strategy_params.json`（gitignored）可按键覆盖，缺失/损坏自动回退默认并打一条 stderr warning，加载器绝不写回 JSON。
 - 牌表解析：`tools/deck_model.py` 是唯一解析层（`CardRef`/`SkippedLine`/`Deck` + `parse_deck`/`parse_text`），tools/ 与 tools/newbie/ 全部 `parse_deck`/`load_deck` 均为其薄委托；新增解析需求扩展 deck_model，不再另起解析器。
 
+Commander / Brawl 配套交付见[技能专项说明](../skills/mtg-deckbuilding/references/commander-brawl.md)，本次工具与案例脚本索引见[双版交付整理](../docs/CommanderBrawlWorkflowNotes_20261016.md)。当前一般 `validate` 仍需补充精确牌数、单卡、主将资格等专项门禁；其默认平台是 Arena。`newbie/deck_cost.py` 当前只统计 `main`，主将需要另补计。专项文档说明的是现状与补核方式，不表示这些扩展已经进入通用CLI。
+
+## 构筑与评测
+
+Alchemy不纳入后续开发范围。现阶段优先构筑与可复现评测，继续使用现有Scryfall候选、牌表模型和规则工具，不安装第二套规则引擎。
+
+`constructed_strategy.py`按实际张数加权正面费用的有色符号，结合已知非基本地来源补基础地；配额选牌理由展开模块分、节奏分及总分。这些是结构启发式，不是单卡强度或胜率预测。
+
+第二批增加固定主备分区/数量的保留与跨区同名额度预留（行侣计入15张备牌容量），以及`constructed_synergy.py`有上限的资源→回报协同加分；理由附相关牌名。完整规则特例与行侣条件仍须另行核验。网页可输入完整种子文本并展开入选依据；[第二批说明](../docs/ConstructedEvaluationBatch2_20261016.md)记录接口、评分范围与验证。
+
+新增`deck_evaluate.py`，读取`deck_model`牌表与离线Scryfall/search JSON数组（须包含非基本地及咒语；基本地可自动补全）。它输出实际牌库数量、曲线、角色计数、伦敦调度后的起手分布、逐回合土地数量潜力、指定咒语的土地支付潜力和抽到且可支付比例。主将不混入牌库；备牌仅留在证据中，需要单独提供换备后的牌表来评测。
+
+```powershell
+python tools/deck_evaluate.py evaluate deck.txt --cards candidates.json --format pioneer --target "Beast Whisperer" --runs 10000 --out AuditReport/evaluation.json --report AuditReport/evaluation.md
+python tools/deck_evaluate.py compare before.txt after.txt --cards candidates.json --format standard --target "Lightning Strike" --on-draw --out AuditReport/comparison.json
+```
+
+默认比较选中的最多5种主牌咒语及主将；`--target`可重复指定最多12种实际牌表条目。默认评测5回合、最多2次调度，BO1平滑不建模；`--on-draw`控制首回合是否抓牌，Brawl/Commander默认1次免费调度，可用`--free-mulligans`覆盖。纯函数调用者须显式传入与赛制匹配的抓牌/免费调度参数。
+
+这是一种**静态、只考虑土地的支付潜力模型**：不模拟横置时序、生命成本、非地加速、对手、战斗和咒语效果；特殊/限制色源、MDFC及X/雪/非瑞费用的未覆盖项明确列出。`complete`只表示该模型选定输入没有额外未覆盖项，不表示完整规则实现或牌表合法性。Wilson区间只描述抽样误差；同种子版本差异不自动成为配对显著性检验，更不能直接评出哪副更强。
+
+退出码：`0`模型范围内完成，`2`输入/证据错误，`3`存在未覆盖来源/目标。`--out`写完整JSON（含规范化牌表和快照哈希、种子、参数与模型版本），`--report`写可读Markdown。不会联网或启动Forge。
+
+现役8套金鱼共用`opening_hand.py`：每次调度先抓满起始手牌，保留后按明确的地数/高费牌策略置底。`goldfish.engine.run`返回`model_version=goldfish-london-bottom-v2`；修正前数字不可直接与新数字比较，历史交付不会被重写。案例和模型边界见[交付记录](../docs/ConstructedEvaluation_20261016.md)。
+
 ## 用法
 
 ```bash
@@ -29,6 +54,128 @@ python tools/mtg_tool.py baseline --format pioneer --date 2026-08-08
 ```
 
 - 未发售系列单列一段：Scryfall 对未发售系列所有牌统一标 `not_legal`，legalities 不可作"发售是否入赛制"的依据；`set_type=expansion` 且非 digital 的系列发售即入先驱/摩登等对应赛制，可提前纳入候选。
+
+---
+
+# tools/mtg_rules_tool.py
+
+综合规则（CR）与逐牌裁定查询，仅 Python 3.7+ 标准库；复用 `mtg_tool` 的 HTTP
+限流、User-Agent 和重试。CR 解析参考
+[mtg-skills 的 rules_lookup.py](https://github.com/dan-blanchard/mtg-skills/blob/eaae97c7b74f016c03a4da99497eb403990a9ee7/mtg-utils/src/mtg_utils/rules_lookup.py)
+（0BSD），已适配本项目缓存、JSON 输出和错误码。
+
+```powershell
+# 首次查询会自动下载 Wizards 官方规则页所链接的最新 CR TXT
+python tools/mtg_rules_tool.py fetch
+python tools/mtg_rules_tool.py rule 702.19 --section
+python tools/mtg_rules_tool.py term trample --json
+python tools/mtg_rules_tool.py grep "replacement effect" --limit 10
+python tools/mtg_rules_tool.py rulings "Slime Against Humanity" --json
+
+# 强制检查更新、纯离线查询、查询指定历史版本
+python tools/mtg_rules_tool.py fetch --refresh
+python tools/mtg_rules_tool.py term trample --offline
+python tools/mtg_rules_tool.py rule 702.19 --rules-file path/to/comprehensive-rules.txt
+
+# 所有子命令均可写完整 JSON；--cache-dir 可隔离缓存
+python tools/mtg_rules_tool.py term trample --json --out AuditReport/trample_rules.json
+```
+
+默认缓存位于 `tools/cache/rules/`：规则 TXT 按生效日期保存，`current.json` 记录
+来源、抓取/检查时间和内容 SHA-256；解析缓存用内容哈希与解析器版本标识。
+规则缓存 24 小时后自动检查更新，逐牌 rulings 缓存 30 天；刷新时会重新取得牌名
+身份与 rulings，避免命中共享 HTTP 层的永久旧缓存。写缓存采用同目录临时文件替换。
+
+成功结果包含 `status`、`source`、`source_url`、`effective_date`、`fetched_at`、
+`freshness`、`stale`、`warnings`。CR 另含 `checked_at`；本地指定文件的来源标为
+`local-cr-file`、新鲜度 `unknown`、`stale: true`，不声称已验证其官方来源或当前版本。
+Scryfall 逐牌裁定保留各条 `source` 和 `published_at`，无统一 CR 生效日期。
+规则查询返回全文、示例和交叉引用；术语查询同时返回其引用的规则。
+`--section` 展开规则的下级条文；`--limit` 控制结果数，超过时输出 `truncated` 与总命中数。
+
+刷新失败而已有有效缓存时返回旧数据，并保留 `stale: true`、警告原因及
+`refresh_failed_at`，直到成功刷新后清除；无可用缓存时
+返回错误。`--offline` 不访问网络；不能同时指定 `--refresh`，指定 `--rules-file`
+时同样不能 `--refresh`。查询未命中为 `status: not_found`；逐牌裁定成功但没有注释
+为 `status: ok`、`ruling_count: 0`；网络失败或响应/分页不完整不会作为零结果放行。
+`--out` 在业务失败时也写入本次错误结果，避免继续读取上次成功的文件。
+
+退出码：`0` 有可用结果（需检查 `stale`），`1` 网络/HTTP/分页失败，`2` 本地文件、
+规则/响应格式、正则或参数错误，`3` 规则/术语/牌名未命中。运行留痕写入现有
+`tools/data/run_log.jsonl`。本工具不合并社区数字机制补充；Arena 数字机制的官方说明
+需单独核验。Agent 入口为 `skills/mtg-rules/SKILL.md`。
+
+回归：`python -m unittest discover -s tools -p test_mtg_rules_tool.py`，HTTP 全 mock。
+
+---
+
+# tools/mtg_combo_tool.py
+
+组合技检索与发现（仅标准库），参考 mtg-skills 的 Spellbook 接入方式，使用
+[官方 API](https://spacecowmedia.github.io/commander-spellbook-backend/api.html)。
+读取牌表统一经 `deck_model`，按 Oracle ID 发送数量；行侣不作为已上场组件。
+
+```powershell
+python tools/mtg_combo_tool.py search deck.txt --format pioneer --platform arena --out AuditReport/combos.json
+python tools/mtg_combo_tool.py search deck.txt --postboard swapped.txt --format pioneer --platform arena
+python tools/mtg_combo_tool.py discover --card "All Will Be One" --format pioneer --platform arena --limit 10
+python tools/mtg_combo_tool.py discover --result "Infinite damage" --colors BR --format pioneer --platform arena
+```
+
+默认平台 `arena`；可选 `paper`、`mtgo`、`any`。`--format` 必填，支持 standard /
+pioneer / explorer / modern / legacy / vintage / commander / brawl / standardbrawl /
+historic / timeless / alchemy / pauper；队列特例、行侣条件和整副牌合法性仍走原工作流。
+`discover --card` 可重复，或使用 `--result`；`--colors` 约束外部搜索的颜色身份。
+
+输出 `main_available`（主牌/指挥官组件齐全）、`sideboard_candidates`（主备合计
+组件齐全，尚无实际换备方案）、`postboard_available`（显式换备后牌表组件齐全）、
+`missing_components`、`needs_verification` 与 `excluded`。`--postboard` 必须保留
+原牌表总库存、各分区张数、指挥官和行侣；仍须复核换备后行侣条件与赛制门禁。
+结果保留每个组件的数量、所在区域与状态、前置条件、启动费用、步骤、结果及来源 URL；
+`rules_verified: false` 表示仅检查组件可用性，尚未证明实战线路。
+
+通用组件模板只确认 AND 连接的类型、Oracle 文本、关键词条件。未知语法、缺少步骤、
+指挥官要求不符或证据陈旧的结果进入待核验；模板与具名组件消耗独立牌张数量。
+当前卡牌合法性由 `mtg_card_facts.py` 查询 Scryfall，平台可用性会查其他印刷，
+不以最新印刷恰好没有 Arena 为由误拒。Commander 类另校验组件颜色身份。
+
+Spellbook 缓存 `tools/cache/combos/`、Oracle 证据缓存 `tools/cache/card_facts/`，
+均为 24 小时有效期；`--offline` 禁止联网，`--refresh` 强制刷新，两者互斥。
+失败且有缓存时显式保留陈旧状态及原因，直到成功刷新；无缓存失败返回错误，不伪装成零结果。
+完整跟随分页，响应不完整或分页失败不写成功缓存；真实牌表接口可能不提供总数
+（`api_count: null`），此时以拉完分页的去重数量为 `variant_count`。
+
+`--limit` 默认只分析 20 个候选，优先 API 报告赛制可用且组件已齐的组，再按热度；
+通过逐牌证据复核后才归类。`truncated`、`analyzed_variant_count`、
+`unexamined_variant_count` 明确报告未分析部分，不能把限制后的空组当作完整结论。
+`--json` 输出完整结构，`--out` 在失败时也写当次错误；退出码 `0` 有可用查询结果、
+`1` 外部请求/分页失败、`2` 输入或响应错误。Agent 规范见 `skills/mtg-combo/SKILL.md`。
+
+---
+
+# tools/mtg_guide_audit.py
+
+打法指南的登记事实复算：牌数/类型数、循环资源费用与收益、重复数字的一致性、
+Oracle/CR 原文引用。仅标准库，牌表使用 `deck_model`，证据复用上面两层缓存。
+
+```powershell
+python tools/mtg_guide_audit.py deck.txt guide.md --claims guide.claims.json --out AuditReport/guide_audit.json
+python tools/mtg_guide_audit.py deck.txt guide.md --claims guide.claims.json --offline --json
+```
+
+claims 格式见 `skills/mtg-guide-review/references/claims.md`：数字用具名捕获组
+`(?P<value>...)` 定位正文与摘要的每次出现，牌数从牌表独立计算；循环按顺序支付、
+检查前提、产生收益，并多轮追踪有限资源。每步引用实际牌名与 Oracle 条款；规则引用
+核对实际 CR 编号与原文。错误包括缺资源、错误数字、重复冲突、引用不符或应有文本缺失。
+JSON 包含定位行、复算值、逐步资源状态与来源证据。
+
+机器 `pass` 限定为 `coverage: registered-claims-only`，始终保留
+`semantic_review_required: true`；有限轮算术不证明无限循环，也不能自动理解未登记
+自然语言、条件色源、合法目标、时序或译文。整篇核验由
+`skills/mtg-guide-review/SKILL.md` 逐项审阅、修正所有重复位置并列出残余限制。
+退出码 `0` 登记项通过、`1` 网络失败、`2` 输入错误/证据不完整、`4` 登记项失败。
+
+回归测试：`test_mtg_combo_tool.py` / `test_mtg_guide_audit.py`，HTTP 全 mock。
 
 ---
 
@@ -59,6 +206,8 @@ MCP server（stdio，零依赖）：把只读 CLI 能力以 MCP 工具形式暴�
 
 DeckPooper 的限制赛组牌入口（P1）。它要求本地预生成评分表，并只接受牌池文本或
 含 `DraftStatus=Complete/Completed` 的轮抓录样 JSONL；没有终态牌池时不会使用中间态数据。
+
+限制赛组牌纪律：通常按 **17 地 + 24 张其他牌 = 41 张**组牌，最终交付 **41/40 张**均可，注明实际组成和最后一张的取舍理由（详见 `draft_methodology.md` §4）。CLI 当前默认总张数为 40；生成 41 张候选可加 `--deck-size 41`，地数仍需按实际输出复核。
 
 ```bash
 python tools/deck_pooper.py limited --pool pool.txt --set HOB \
@@ -239,7 +388,7 @@ python tools/mtga_auto_tool.py draft --watch [--set HOB] [--port 8643]
 - `advise` 对局结束自动检测：增量载荷出现 finalMatchResult 即播报比分胜负并自动执行 scan+opponent+replay+risk 回收（启动追平的历史载荷不触发，避免重复回收）。
 - `advise --llm` 口径：局面快照由日志精确重建（双方战场/堆叠/坟墓场、我方手牌逐牌附费用+类型+oracle 文本、生命、回合阶段、我方未横置地数与本回合是否已下地、**服务器判定的当前合法动作列表**（actionsAvailableReq，含结构化费用，施放/下地/异能/历险施放——LLM 建议只允许从中选择，费用幻觉的事实锚点；Activate_Mana/FloatMana 噪音已过滤）），oracle 文本走 Scryfall 磁盘缓存、战场牌截断 800 字符（截太短会切掉关键异能——The Great Henge 抓牌触发器、Hunter's Talent 三级抓牌条款两次实测踩坑）；历险/MDFC 子物件（带 parentId 的影子物件）一律排除，不污染战场与手牌计数；grpId 未解析的物件按 superTypes/cardTypes/subtypes 降级渲染（如"未解析 Basic Land Forest #100131"），禁止 LLM 安牌名。**对手手牌只报张数并显式标注"身份未知，禁止假设具体牌"**——服务器未下发的信息模型无从得知，prompt 层强制防脑补。LLM 建议连同完整快照落盘 `tools/auto/llm_advice.jsonl`（含 prompt 字段，供赛后诊断 AI 到底"看到"了什么）。LLM 配置 `tools/llm_config.json`（OpenAI 兼容端点，默认 DeepSeek `deepseek-chat`，可改 `deepseek-reasoner` 换推理强度换延迟；`api_key` 可用环境变量 `DEEPSEEK_API_KEY` 覆盖；该文件已被 .gitignore 排除，**不得提交**）。
 - Windows 控制台中文输出需 `PYTHONIOENCODING=utf-8`（同既有工具坑位）。
-- 轮抓 `draft --watch` 面板口径：启动先回扫日志最后 200KB 恢复当前包状态，抓不到就等下一条；每条 BotDraftDraftStatus 响应更新包号/抓号/当前包/已抓池并在控制台打印 `[draft] P<包>Pick<抓> 包内 N 张 | 已抓 M 张`；排名主键字母等级（S→F，mtga_draft_tool 预生成评分表）、次键社区分，curve_fit（deck_core）作第三参考提示（补 N 费缺口/N 费已溢出）；未评级牌显示 `?` 排最后，grpId 解析失败显示 `<grpId N>`，均不丢牌；DraftStatus 非 PickNext（如 Complete/Completed）时面板只显示对应状态。17Lands 数据（`load_ratings`，Quick/Premier 按 EventName 推导）已进入推荐：signal 轴按真实 ALSA 判定颜色开放（无 ALSA 时降级为本包高等级牌计数快照），LLM 离线 raw_power 锚点按 0.6 等级 + 0.4 GIH 归一化（deck_core.gih_anchor，按系列非空 GIH WR 的 min/max 线性归一到 0..1）混合，LLM prompt 行附 `gih_wr_pct` 百分比，面板两套表在"社区分"后加 GIH 列（无数据显示 `-`）；17Lands 不可用（无网/无缓存/无系列码）时锚点退回纯等级、signal 轴退回等级锚点、GIH 列全 `-`，只告警不阻断轮抓。推荐为九轴 WASPAS（新增确定性 color_fit 主色契合轴：已抓有色 ≥5 张后，牌色 ⊆ 计数前二主色 1.0 / 有交集 0.5 / 完全脱色 0.15 / 无色 0.6 / 方向未明 0.5；权重见 draft_methodology.md §2），离线理由附「贴合主色/脱离主色」。pick 推荐 prompt 已瘦身（oracle_text 截 300 字符、已抓牌池改摘要 JSON：colors/curve/key_cards 封顶 10，并要求脱色牌 synergy ≤0.3），调用强制 `response_format=json_object`（`parse_llm_scores` 兼容裸数组与 {"picks": [...]} 两种顶层形态，防 2026-09 实测的空体解析失败）。LLM 推荐状态为 offline 时（单次失败即锁定，下一抓自动重试），可点面板"重试推荐"按钮（POST `/api/advice/retry`）立即重推当前包。
+- 轮抓 `draft --watch` 面板口径：启动先回扫日志最后 200KB 恢复当前包状态，抓不到就等下一条；每条 BotDraftDraftStatus 响应更新包号/抓号/当前包/已抓池并在控制台打印 `[draft] P<包>Pick<抓> 包内 N 张 | 已抓 M 张`；排名主键字母等级（S→F，mtga_draft_tool 预生成评分表）、次键社区分，curve_fit（deck_core）作第三参考提示（补 N 费缺口/N 费已溢出）；未评级牌显示 `?` 排最后，grpId 解析失败显示 `<grpId N>`，均不丢牌；DraftStatus 非 PickNext（如 Complete/Completed）时面板只显示对应状态。17Lands 数据（`load_ratings`，Quick/Premier 按 EventName 推导）已进入推荐：signal 轴按真实 ALSA 判定颜色开放（无 ALSA 时降级为本包高等级牌计数快照），LLM 离线 raw_power 锚点按 0.6 等级 + 0.4 GIH 归一化（deck_core.gih_anchor，按系列非空 GIH WR 的 min/max 线性归一到 0..1）混合，LLM prompt 行附 `gih_wr_pct` 百分比，面板两套表在"社区分"后加 GIH 列（无数据显示 `-`）；17Lands 不可用（无网/无缓存/无系列码）时锚点退回纯等级、signal 轴退回等级锚点、GIH 列全 `-`，只告警不阻断轮抓。推荐为九轴 WASPAS（新增确定性 color_fit 主色契合轴：已抓有色 ≥5 张后，牌色 ⊆ 计数前二主色 1.0 / 有交集 0.5 / 完全脱色 0.15 / 无色 0.6 / 方向未明 0.5；权重见 draft_methodology.md §2），离线理由附「贴合主色/脱离主色」。pick 推荐 prompt 已瘦身（oracle_text 截 300 字符、已抓牌池改摘要 JSON：colors/curve/key_cards 封顶 10，并要求脱色牌 synergy ≤0.3），调用强制 `response_format=json_object`（`parse_llm_scores` 兼容裸数组与 {"picks": [...]} 两种顶层形态，防 2026-09 实测的空体解析失败）。LLM 推荐状态为 offline 时（单次失败即锁定，下一抓自动重试），可点面板"重试推荐"按钮（POST `/api/advice/retry`）立即重推当前包。外部锚点（17Lands 之外三路，`mtga_draft_tool.load_external_anchors` 聚合：MTGA Assistant AI/Pro 双 0-5 评分缓存 1 天、draftsim pick order 评分缓存 3 天、17Lands public dataset 自算 ATA/ASA 缓存 7 天，单源失败只告警）在 GIH 缺失时按 0.6 等级 + 0.4 外部均值混入离线 raw_power 锚点，面板"外部"列以 `A·P·D·T` 紧凑标签展示（A=Assistant AI · P=Pro · D=draftsim · T=自算 ATA）；基本地不参与推荐（不进 prompt、综合分置空沉底，理由"基本地不参与轮抓推荐"）。
 - 回归测试：`python tools/test_mtga_auto.py`（63 例，覆盖增量读取/截断、分块 JSON 提取、状态跟踪（含 Bo3 局级隔离/deckMessage 牌表事实源/主阶段 step 清理）、调度口径、快照渲染、LLM 客户端与配置加载（含 response_format 透传）、watch/run/draft 录样与 pick 面板状态机（字符串化 Payload 解析/pack-pick 推进/排名渲染/17Lands GIH-ALSA 注入与失败降级/json_object 强制）；网络与子进程全部 mock，不触真实 MTGA/LLM）。
 
 ## 退出码
@@ -275,14 +424,130 @@ python tools/mtga_draft_tool.py ratings --set FDN [--format QuickDraft] [--refre
 
 # tools/mtga_db_tool.py
 
-MTGA 客户端卡库直查：读取客户端 SQLite 卡库（`Raw_CardDatabase_*.mtga`），自动嗅探表 / 列结构，按 grpId 反查英文牌名 / 系列 / 编号 / 稀有度，作 Scryfall 查不到 arena_id 时的兜底数据源。仅 Python 标准库。
+MTGA 客户端卡库直查：读取客户端 SQLite 卡库（`Raw_CardDatabase_*.mtga`），自动嗅探表 / 列结构，按 grpId 反查英文牌名 / 系列 / 编号 / 稀有度，作 Scryfall 查不到 arena_id 时的兜底数据源。卡库路径可自动定位（注册表 SteamPath + libraryfolders.vdf 扫描各 Steam 库，取最新一份；环境变量 `MTGA_CARD_DATABASE` 可指定文件覆盖），并已接入 `mtga_log_tool.resolve_grp_meta`：Scryfall 无 arena_id（新系列上线初期）时自动经客户端卡库反查牌名并升级 grp 缓存。仅 Python 标准库。
 
 ```bash
-# 1. 按 grpId 反查牌名 / 系列 / 编号 / 稀有度
+# 1. 按 grpId 反查牌名 / 系列 / 编号 / 稀有度（auto = 自动定位卡库）
+python tools/mtga_db_tool.py auto 12345 67890
 python tools/mtga_db_tool.py "C:\path\to\Raw_CardDatabase_xxx.mtga" 12345 67890
 
 # 2. 无 grpId 时列出库内表名（用于嗅探结构）
 python tools/mtga_db_tool.py "C:\path\to\Raw_CardDatabase_xxx.mtga"
+```
+
+# tools/deck_workbench.py
+
+网页工作台 hub（Phase 0–3，开发计划见 `MtgWorkbenchPlan.md`）：纯标准库
+`ThreadingHTTPServer` 于 127.0.0.1，默认端口 **8644**（避开 8642 监控台 /
+8643 轮抓面板）。单页内嵌 HTML + `/api/snapshot` / `/api/builds/import` /
+`/api/export`，持有一份权威 `deck_model.Deck` 状态；确定性引擎函数纯、
+HTTP 层不含牌规则。导出与导入往返守恒（再导入条目恒等）。
+
+```bash
+python tools/deck_workbench.py serve            # 默认 127.0.0.1:8644
+python tools/deck_workbench.py serve --port 9000
+```
+
+```bash
+# 程序化接口（错误信封与 mtg_rules_tool 同构：status/error.type/message）
+curl -s http://127.0.0.1:8644/api/snapshot
+curl -s -X POST http://127.0.0.1:8644/api/builds/import \
+  -H "X-Source-Name: mydeck.txt" --data-binary @mydeck.txt
+curl -s http://127.0.0.1:8644/api/export
+```
+
+导入的 skipped 行进 `warnings`（成功但带警告）；完全解析不出条目返回 400。
+
+页面在桌面分为准备与组牌、当前牌表、检查与探索三栏；笔记本两栏，手机优先展示
+牌表并纵向排列。顶部提供模式切换、导入/导出和主备牌/地数/平均费用概况。检查区的
+核验、助手、候选各用一个标签；高级配置折叠。牌池可按名称与分区筛选；Agent 补充
+说明可直接输入普通文本。操作进行中会禁用重复提交，错误保留到关闭或下一次成功操作。
+
+限制赛模式为纯机器选牌：系列代码读取已有本地评分，不会触发 LLM 评级；界面显示
+评分覆盖率、来源、生成日期与预览/低置信条目。缺失等级使用默认分及曲线/角色取舍。
+外部候选标签只在构筑模式出现。限制赛加牌按池内总量限制，主备互换不套用四张上限。
+牌表支持列表/卡图网格与点击放大（复用 `deck_image` 简中优先缓存），TXT 下载与 PNG
+图片输出。图片输出使用已有 CLI，Pillow 缺失或渲染失败明确报错。
+
+本页体检按模式分开：限制赛在纯函数内核检查 40/41 张与导入牌池，未导入牌池则来源
+未知；不调用构筑合法性或 Standard 轮替门禁。构筑沿用 CLI `validate`，仅 Standard
+加 `rot_audit`。注意旧 CLI `validate --limited` 仍是数量口径开关，与网页的池内核验不同。
+`POST /api/audit/start` 和 `POST /api/export-image` 返回 202 + `job_id`，
+`GET /api/jobs/<id>` 提供实际阶段/已处理数/耗时/结果；图片从结果的 `download_url` 下载。
+「展开与版本评测」通过`POST /api/evaluation/start`接入同一后台任务系统，使用冻结牌表/牌面运行`deck_evaluate`，支持旧牌表对照及JSON下载。可选`cards`离线快照缺牌时失败；不提供时复用候选/牌池并精确补查。网页最多5000次抽样、8回合、12种目标；运行中改牌标记过期。这里衡量静态土地支付潜力，不是合法性检查或胜率。
+这些后台线程执行确定性内核或脚本，不是 Agent。运行期间仍可切换标签和操作其他工具；
+任务使用开始时的牌表，期间修改会标注结果过期，不会把旧体检写回新牌表。
+
+助手可点击「连接 Agent」接入持续接收端（`workbench_agent.py` 核心 + 后端注册表）。
+按钮文字随当前后端显示（默认 Codex）；`serve --agent-backend` 指定默认后端，
+离线状态下 `POST /api/agent/connect` 可带 `{"backend": "名字"}` 切换，`/api/agent/connection`
+列出可用后端。Codex 适配器（`workbench_agent_codex.py`）要求本机安装并登录
+Codex CLI；Kimi 适配器（`workbench_agent_kimi.py`）要求 kimi 在 PATH 中且已登录，
+连接时会探测 `kimi --help`，版本过旧（无 `--input-format=stream-json`）会明确报错。
+接收端使用已有模型、提供商及登录配置，不走 `llm_config.json`。
+Codex 经 `codex app-server` JSONL 常驻进程执行 turn/start；Kimi 经 print 模式
+（stdin 单行 JSONL 任务、stream-json 输出、进程退出即任务边界），逐任务拉起进程、
+用 `--session` 恢复同一专用会话，会话号从 meta 行或 `session_index.jsonl` 差集捕获。
+两者都自动领取每次网页任务、维持租约并回写结果，不需再回到 CLI 发提示；待机不调用模型。
+页面显示连接/处理/审批状态、后端、模型、会话 ID、请求号与领取者；不启动子代理。
+断开会中断进行中的任务并显式回执；重连恢复 gitignored
+`tools/cache/workbench_agent_session.json` 中对应后端的会话，恢复失败不会偷偷另开会话。
+后端的原生操作审批（如 Codex 的命令/文件审批）在网页显示，可允许本次或拒绝，
+接收端不自动代批（Kimi print 模式自动审批，不会产生网页审批）。`/api/agent/connect|disconnect|approval`（POST）与
+`/api/agent/connection`（GET）提供相同的程序化控制。Codex 接口按本机 CLI 0.118.0 实测，
+外部 HTTP/模型在回归测试中 mock。新后端按 `workbench_agent.py`  docstring 的契约实现
+（open/begin_session/run_turn/alive/interrupt/close + TurnHooks）并注册即可接入。
+
+没有连接接收端时，请求只入队；手动交互式 Agent 仍可访问
+`/api/agent/next?agent=codex&wait=0` 领取。自动接收复用专用工作台会话，不将提示注入
+正在开发的聊天窗口。请求处理期间牌表发生变化时，回执标注过期并保留领取时依据。
+高级 JSON 参数原样作为 `payload` 上下文交给 Agent，不是模型设置或 CLI 选项，通常留空。
+
+Phase 1（限制赛组牌）已加入：牌池/种子/统计/手动微调端点。
+
+```bash
+# 牌池导入（按行水合，查不到的牌名聚合计数进 unresolved，不阻断导入）
+curl -s -X POST http://127.0.0.1:8644/api/pool --data-binary @pool.txt
+# 种子（colors 缺省自动枚举；deck_size 41/40；set 提供时读评分表，缺失显式降级告警）
+curl -s -X POST http://127.0.0.1:8644/api/seed -d '{"colors":["B","R"],"deck_size":41,"set":"FRA"}'
+curl -s http://127.0.0.1:8644/api/stats
+# 限制赛微调（非基本地受实际牌池总量约束；move 限 main↔sideboard）
+curl -s -X POST http://127.0.0.1:8644/api/deck/add -d '{"name":"Swamp","section":"main","qty":2,"limited":true}'
+```
+
+导出的限制赛牌表用 `python -X utf8 tools/mtg_tool.py validate <导出> --format <赛制> --limited`
+过门禁（主牌 40/41 张；备牌视为池内裁切，不受 15 张上限）。
+
+Phase 2（构筑模式）已加入：
+
+```bash
+# 构筑种子（候选 JSON 与 mtg_tool search --out 同构；种子不在候选内等输入错误 400）
+curl -s -X POST http://127.0.0.1:8644/api/seed-constructed \
+  -d '{"candidates": [...], "seeds": ["Card A"], "format": "pioneer", "bo3": true}'
+curl -s http://127.0.0.1:8644/api/roles          # 角色分布 + 缺口（对照 M 配额，basis 明示）
+curl -s "http://127.0.0.1:8644/api/combos?format=pioneer&platform=arena"
+curl -s http://127.0.0.1:8644/api/cost           # 造价签名；tools/data 快照缺失显式报错
+# 构筑门禁（limited 显式传；仅 Standard 采用轮替门禁）
+curl -s -X POST http://127.0.0.1:8644/api/audit -d '{"format":"pioneer","limited":false}'
+# 限制赛张数与导入牌池核验；无需构筑赛制
+curl -s -X POST http://127.0.0.1:8644/api/audit -d '{"limited":true}'
+```
+
+Phase 3（Agent 桥）已加入——网页与 Agent 会话是同一状态的两个操作界面：
+
+```bash
+# 网页侧发起判断请求；Agent 侧（技能 skills/mtg-workbench）长轮询领取并回证据
+curl -s -X POST http://127.0.0.1:8644/api/agent/request -d '{"kind":"next_move"}'
+curl -s "http://127.0.0.1:8644/api/agent/next?agent=kimi"   # 认领，60s 租约
+curl -s -X POST http://127.0.0.1:8644/api/agent/result -d '{"request_id":"req-1","status":"ok","result":{}}'
+curl -s http://127.0.0.1:8644/api/agent/result/req-1        # 网页轮询，TTL 300s
+
+# 铁律落地：LLM 提案的牌必须来自 find 或 mtg_tool search 的真实结果
+curl -s "http://127.0.0.1:8644/api/find?q=f:pioneer%20t:creature&limit=20"
+# 反向通路：Agent 写回候选/探索方向（unverified_card_names 明示铁律责任）
+curl -s -X POST http://127.0.0.1:8644/api/avenues -d '{"title":"低费曲线","candidates":[{"name":"X","reason":"..."}]}'
+# 嵌入式 LLM 点评（llm_config 直连；失败显式 offline + 机器兜底，不重试）
+curl -s -X POST http://127.0.0.1:8644/api/advice
 ```
 
 # tools/deck_version.py

@@ -678,5 +678,155 @@ class TestBuildBrief(unittest.TestCase):
             self.assertEqual(MDT.cmd_brief(args), 2)
 
 
+class TestExternalSources(unittest.TestCase):
+    """三路外部锚点源：HTML/TSV/CSV 解析与聚合（全合成数据，无网络）。"""
+
+    ASSISTANT_HTML = """
+    <div class="card-list-filter" data-color="g" data-rarity="rare" data-text="Hungering Puppetbeast Artifact Creature">
+      <div><h3>Hungering Puppetbeast</h3>
+        <b>AI Rating: 5</b><br />
+        <b>Pro Rating: 4.5</b><br />
+        <p>Bomb &amp; value.</p>
+      </div>
+    </div>
+    <div class="card-list-filter" data-color="u" data-rarity="common" data-text="Way of the Paradox Instant">
+      <div><h3>Way of the Paradox</h3>
+        <b>AI Rating: N/A</b><br />
+        <b>Pro Rating: 3</b>
+      </div>
+    </div>
+    """
+
+    DRAFTSIM_TSV = (
+        "Name\tName_2\tCasting_Cost_1\tCard_Type\tRarity\tRating\tList\tArchetype\tFixing\tSplashable\n"
+        "Hungering Puppetbeast\t\t{5}\tCreature\tR\t5.0\t\t[]\t\t\n"
+        "Way of the Paradox\t\t{2}{U}\tInstant\tU\t3.5\t\t[]\t\t\n"
+        "Broken Row\n")
+
+    PUBLIC_CSV = (
+        "expansion,event_type,draft_id,draft_time,rank,event_match_wins,"
+        "event_match_losses,pack_number,pick_number,pick,pick_2,"
+        "pick_maindeck_rate,pick_sideboard_in_rate,pack_card_A,pack_card_B\n"
+        "FRA,PremierDraft,d1,t,gold,2,0,0,0,A,,1.0,0.0,1,1\n"
+        "FRA,PremierDraft,d1,t,gold,2,0,0,2,B,,0.5,0.0,0,1\n"
+        "FRA,PremierDraft,d2,t,gold,3,1,1,4,A,,1.0,0.0,1,0\n")
+
+    def test_parse_assistant_html(self):
+        cards = MDT.parse_assistant_html(self.ASSISTANT_HTML)
+        self.assertEqual(len(cards), 2)
+        self.assertEqual(cards[0]["name"], "Hungering Puppetbeast")
+        self.assertEqual(cards[0]["ai"], 5.0)
+        self.assertEqual(cards[0]["pro"], 4.5)
+        self.assertEqual(cards[0]["comment"], "Bomb & value.")
+        self.assertEqual(cards[0]["rarity"], "rare")
+        # N/A → None，不影响 pro；缺 <p> 评论时不串到下一张牌
+        self.assertIsNone(cards[1]["ai"])
+        self.assertEqual(cards[1]["pro"], 3.0)
+        self.assertEqual(cards[1]["comment"], "")
+
+    def test_parse_draftsim_tsv(self):
+        cards = MDT.parse_draftsim_tsv(self.DRAFTSIM_TSV)
+        self.assertEqual(len(cards), 2)
+        self.assertEqual(cards[0]["rating"], 5.0)
+        self.assertEqual(cards[1]["name"], "Way of the Paradox")
+        with self.assertRaises(MDT.DraftToolError):
+            MDT.parse_draftsim_tsv("Col1\tCol2\n1\t2\n")
+
+    def test_compute_public_stats(self):
+        stats = MDT.compute_public_stats(self.PUBLIC_CSV.splitlines())
+        a, b = stats["A"], stats["B"]
+        self.assertEqual(a["picks"], 2)
+        self.assertAlmostEqual(a["ata"], (1 + 5) / 2, places=2)   # 位次 1 与 5
+        self.assertAlmostEqual(a["asa"], (1 + 5) / 2, places=2)   # 两次均可见
+        self.assertEqual(a["maindeck_rate"], 1.0)
+        self.assertEqual(b["picks"], 1)
+        self.assertAlmostEqual(b["ata"], 3.0, places=2)
+        self.assertAlmostEqual(b["asa"], (1 + 3) / 2, places=2)   # 第 1、3 位可见
+        with self.assertRaises(MDT.DraftToolError):
+            MDT.compute_public_stats(["pick_number,pick", "0,A"])
+
+    def test_load_external_anchors_aggregates(self):
+        with mock.patch.object(MDT, "load_assistant", return_value=(
+                [{"name": "A", "ai": 5.0, "pro": 3.0},
+                 {"name": "B", "ai": None, "pro": 4.0}], 0.0)), \
+                mock.patch.object(MDT, "load_draftsim", return_value=(
+                    [{"name": "A", "rating": 9.0},
+                     {"name": "C // Back", "rating": 4.5}], 0.0)), \
+                mock.patch.object(MDT, "load_public_stats", return_value=(
+                    {"A": {"ata": 2.0, "picks": 100, "asa": 3.0, "seen": 200,
+                           "maindeck_rate": 0.9}}, 0.0)):
+            anchors = MDT.load_external_anchors("TST")
+        a = anchors["A"]
+        self.assertEqual(a["assistant_ai"], 5.0)
+        self.assertAlmostEqual(a["assistant_norm"], (5.0 + 3.0) / 2 / 5)
+        # 观测最大 9.0 > 5.5 → 判 10 分制
+        self.assertAlmostEqual(a["draftsim_norm"], 0.9)
+        self.assertAlmostEqual(a["ata_norm"], 1 - (2.0 - 1) / 13)
+        # ai 缺失时用 pro；双面牌按主面对齐；5 分制判定
+        self.assertAlmostEqual(anchors["B"]["assistant_norm"], 4.0 / 5)
+        self.assertAlmostEqual(anchors["C"]["draftsim_norm"], 0.45)
+
+    def test_load_external_anchors_tolerates_source_failure(self):
+        with mock.patch.object(MDT, "load_assistant", return_value=(None, None)), \
+                mock.patch.object(MDT, "load_draftsim", return_value=(None, None)), \
+                mock.patch.object(MDT, "load_public_stats", return_value=(None, None)):
+            self.assertEqual(MDT.load_external_anchors("TST"), {})
+
+    def test_load_cached_json_stale_fallback_and_empty(self):
+        tmp = Path(tempfile.mkdtemp(prefix="mtga_draft_ext_test_"))
+        try:
+            path = tmp / "x.json"
+            # 无缓存 + 拉取失败 → (None, None)
+            with mock.patch.object(MDT, "fetch_assistant",
+                                   side_effect=MDT.DraftToolError("down")):
+                self.assertEqual(MDT._load_cached_json(
+                    path, 1, lambda: MDT.fetch_assistant("TST"), "t"), (None, None))
+            # 拉取成功回写
+            with mock.patch.object(MDT, "fetch_assistant",
+                                   return_value=[{"name": "A"}]):
+                cards, age = MDT._load_cached_json(
+                    path, 1, lambda: MDT.fetch_assistant("TST"), "t")
+            self.assertEqual(cards, [{"name": "A"}])
+            self.assertEqual(age, 0.0)
+            # 过期缓存 + 拉取失败 → 沿用旧缓存
+            blob = json.loads(path.read_text(encoding="utf-8"))
+            blob["fetched_ts"] = time.time() - 10 * 86400
+            path.write_text(json.dumps(blob), encoding="utf-8")
+            with mock.patch.object(MDT, "fetch_assistant",
+                                   side_effect=MDT.DraftToolError("down")):
+                cards, age = MDT._load_cached_json(
+                    path, 1, lambda: MDT.fetch_assistant("TST"), "t")
+            self.assertEqual(cards, [{"name": "A"}])
+            self.assertGreater(age, 9)
+        finally:
+            shutil.rmtree(str(tmp), ignore_errors=True)
+
+    def test_load_cached_json_negative_cache(self):
+        tmp = Path(tempfile.mkdtemp(prefix="mtga_draft_neg_test_"))
+        try:
+            path = tmp / "x.json"
+            calls = []
+
+            def fetch():
+                calls.append(1)
+                raise MDT.DraftToolError("down")
+
+            # 无缓存失败 → 写负缓存空列表；TTL 内不再调用 fetch
+            self.assertEqual(MDT._load_cached_json(
+                path, 1, fetch, "t", negative_ttl_days=0.25), (None, None))
+            cards, _age = MDT._load_cached_json(
+                path, 1, fetch, "t", negative_ttl_days=0.25)
+            self.assertEqual(cards, [])
+            self.assertEqual(len(calls), 1)
+            # 负缓存过期 → 重试 fetch
+            blob = json.loads(path.read_text(encoding="utf-8"))
+            blob["fetched_ts"] = time.time() - 86400
+            path.write_text(json.dumps(blob), encoding="utf-8")
+            MDT._load_cached_json(path, 1, fetch, "t", negative_ttl_days=0.25)
+            self.assertEqual(len(calls), 2)
+        finally:
+            shutil.rmtree(str(tmp), ignore_errors=True)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

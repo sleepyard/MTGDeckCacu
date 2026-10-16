@@ -55,6 +55,26 @@ class TestPowerAnchor(unittest.TestCase):
         self.assertAlmostEqual(
             DA.power_anchor(card("A", "B", gih_norm="bad")), DA.grade_anchor(c))
 
+    def test_external_anchors_fallback_when_no_gih(self):
+        # grade B → 锚点 0.6；外部均值 (0.95+0.92)/2=0.935 → 0.6*0.6+0.4*0.935
+        c = card("A", "B", assistant_norm=0.95, ata_norm=0.92)
+        self.assertAlmostEqual(DA.power_anchor(c), 0.734)
+        # 单源也可用（draftsim_norm）
+        c2 = card("A", "B", draftsim_norm=0.5)
+        self.assertAlmostEqual(DA.power_anchor(c2), 0.56)
+
+    def test_gih_norm_takes_precedence_over_external(self):
+        c = card("A", "B", gih_norm=0.5, assistant_norm=1.0)
+        self.assertAlmostEqual(DA.power_anchor(c), 0.56)  # 与无外部锚点时一致
+
+    def test_build_prompt_carries_assistant_ai(self):
+        pack = [card("A", assistant_ai=4.5), card("B")]
+        prompt = DA.build_prompt(pack, [])
+        rows = json.loads(prompt.split("当前包：", 1)[1])
+        by_name = {row["name"]: row for row in rows}
+        self.assertEqual(by_name["A"]["assistant_ai_0_5"], 4.5)
+        self.assertNotIn("assistant_ai_0_5", by_name["B"])
+
     def test_build_prompt_carries_gih_wr_pct(self):
         pack = [card("A", gih_wr=0.558), card("B", gih_wr=54.1), card("C")]
         prompt = DA.build_prompt(pack, [])

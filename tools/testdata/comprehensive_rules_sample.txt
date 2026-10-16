@@ -1,0 +1,57 @@
+Synthetic Comprehensive Rules fixture, not official rules text.
+
+These rules are effective as of February 2, 2024.
+
+Contents
+1. Game Concepts
+100. General
+6. Spells, Abilities, and Effects
+600. Spells
+7. Additional Rules
+702. Keywords
+Glossary
+Credits
+
+1. Game Concepts
+
+100. General
+
+100.1. First top-level rule. See rule 600.1.
+100.1a First subrule.
+Example: First example,
+continued on the following line.
+
+100.1b Second subrule. See rule 702.19.
+100.2. Deal 3 damage to each of 200 players.
+Example: One example.
+Example: Another example.
+
+6. Spells, Abilities, and Effects
+
+600. Spells
+
+600.1. Casting a spell is defined here.
+600.2 Missing-period rule text.
+600.3.No-space rule text.
+600.4a. Trailing-period subrule.
+
+7. Additional Rules
+
+702. Keywords
+
+702.19. Trample is a keyword ability.
+702.19a This is a synthetic trample subrule, not a real ruling.
+
+Glossary
+
+Ability
+1. Text on an object.
+2. An ability on the stack.
+See rule 600, "Spells."
+
+Trample
+A keyword ability. See rule 702.19.
+
+Credits
+
+Synthetic fixture contributors.

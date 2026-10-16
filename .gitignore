@@ -36,7 +36,13 @@ tools/testdata/*
 !tools/testdata/mtga_log_sample2.txt
 !tools/testdata/mtga_inventory_sample.txt
 !tools/testdata/mtga_inventory_summary_only.txt
+!tools/testdata/comprehensive_rules_sample.txt
+!tools/testdata/spellbook_combo_sample.json
+!tools/testdata/guide_claims_sample.json
 !tools/testdata/decklists/
+# Agent 接收端回归测试的 CLI 夹具（协议模拟脚本，保留跟踪）
+!tools/testdata/codex_app_server_fake.py
+!tools/testdata/kimi_print_fake.py
 
 # MTGA 客户端提取的野卡图标（WotC 素材，不随仓库分发；
 # 本机可用 tools/extract_mtga_icons.py 重新提取，缺失时 deck_image.py 回退手绘色块）

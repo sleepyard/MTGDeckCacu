@@ -9,8 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import constructed_strategy as CS  # noqa: E402
 
 
-ROOT = Path(__file__).resolve().parents[1]
-DECK_PATH = ROOT / "DeckList" / "Explorer_Angel_Tribal" / "angel_deck_v2.txt"
+DECK_PATH = Path(__file__).resolve().parent / "testdata" / "decklists" / "angels_structure.txt"
 
 
 class TestAngelDeck(unittest.TestCase):

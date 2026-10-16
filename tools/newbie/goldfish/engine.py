@@ -44,6 +44,9 @@ for _p in (TOOLS, NEWBIE):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
+from opening_hand import london_opening
+
+MODEL_VERSION = "goldfish-london-bottom-v2"
 HANDLERS = {}
 DATA_DIR = Path(__file__).resolve().parent / "data"
 
@@ -101,7 +104,7 @@ class GameBase:
     """同构骨架；牌组差异由子类 play_turn/init_state 与注册机制注入。
 
     类属性：POOL（data JSON 加载）、LAND（地哨兵）、KEEP_LO/KEEP_HI（留牌地数
-    区间）、MULLIGANS（免费调度次数）、LONDON（True=伦敦 7→6→5，现役牌组
+    区间）、MULLIGANS（最多调度次数）、LONDON（True=每次抓7后选择置底，现役牌组
     全部统一于此；False=老式重抓满 7，仅作兼容开关保留）。
     """
 
@@ -109,6 +112,7 @@ class GameBase:
     LAND = None
     KEEP_LO, KEEP_HI = 2, 5
     MULLIGANS = 2
+    FREE_MULLIGANS = 0
     LONDON = True
 
     def __init__(self, deck, rng, pen=1.0, **kw):
@@ -132,18 +136,24 @@ class GameBase:
         return sum(1 for c in self.hand if c == self.LAND)
 
     def opening(self):
-        """起手 7 张；伦敦调度每次手牌数 -1（7→6→5）。
-        LONDON=False 时每次重抓满 7（兼容开关，现役牌组已不用）。"""
+        """London: draw seven on every retry, keep a hand, then bottom cards.
+
+        Cost/land-count policy is explicit and does not model Arena BO1 smoothing.
+        """
+        if self.LONDON:
+            self.hand, self.mulligans, self.bottomed = london_opening(
+                self.lib, self.rng, lambda card: card == self.LAND,
+                lambda card: self.POOL.get(card, {}).get('c', 0),
+                self.KEEP_LO, self.KEEP_HI, self.MULLIGANS, self.FREE_MULLIGANS)
+            return
         self.draw(7)
-        size = 7
         for _ in range(self.MULLIGANS):
             if self.KEEP_LO <= self.lands_in_hand() <= self.KEEP_HI:
                 return
-            size -= 1
             self.lib += self.hand
             self.rng.shuffle(self.lib)
             self.hand = []
-            self.draw(size if self.LONDON else 7)
+            self.draw(7)
 
     # ---- 基础动作 ----
     def draw(self, n=1):
@@ -195,6 +205,7 @@ def run(game_cls, deck, n, max_turn=14, pen=1.0, seed=20260924,
     kills.sort()
     m = len(kills)
     return dict(mean=sum(kills) / m,
+                model_version=MODEL_VERSION,
                 t3=100.0 * sum(1 for x in kills if x <= 3) / m,
                 t4=100.0 * sum(1 for x in kills if x <= 4) / m,
                 t5=100.0 * sum(1 for x in kills if x <= 5) / m,

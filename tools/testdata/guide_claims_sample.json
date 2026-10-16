@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "counts": [{
+    "id": "main-count",
+    "sections": ["main"],
+    "text_patterns": ["Main deck: (?P<value>\\d+) cards"]
+  }],
+  "loops": [{
+    "id": "synthetic-loop",
+    "initial": {"mana": 2, "elves": 2},
+    "iterations": 3,
+    "steps": [{
+      "card": "Alpha Engine",
+      "oracle_quote": "Add mana equal to your Elves.",
+      "pay": {"mana": 2},
+      "gain": {"mana": "elves", "elves": 1}
+    }],
+    "resource": "mana",
+    "metric": "final",
+    "text_patterns": ["After three cycles: (?P<value>\\d+) mana"]
+  }]
+}

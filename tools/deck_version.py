@@ -163,14 +163,14 @@ def main(argv=None):
         ap.error("目录为空且未提供 --theme/--name，无法确定文件主名")
 
     deck_out = folder / f"{name}V{version}.txt"
-    deck_out.write_text(args.deck_file.read_text(encoding="utf-8-sig"),
-                        encoding="utf-8", newline="\n")
+    with deck_out.open("w", encoding="utf-8", newline="\n") as stream:
+        stream.write(args.deck_file.read_text(encoding="utf-8-sig"))
 
     report_out = folder / f"{name}V{version}.md"
     report_existed = report_out.exists()
     if not report_existed:
-        report_out.write_text(build_report(name, version, args, args.notes),
-                              encoding="utf-8", newline="\n")
+        with report_out.open("w", encoding="utf-8", newline="\n") as stream:
+            stream.write(build_report(name, version, args, args.notes))
 
     problems = validate(parse_deck(deck_out))
     print(f"[完成] {deck_out}")

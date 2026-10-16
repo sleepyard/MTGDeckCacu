@@ -6,10 +6,8 @@
   1. 引擎单测：伦敦调度手牌数序列、LONDON=False 历史口径、击杀判定（dmg>=20）、
      同种子可复现、data JSON schema 校验（未知 tag / 缺键 / bool 非 int）、
      expand 基本地映射、机制注册表与 nc_channel 共享通道语义。
-  2. 黄金数值（哦鲸鲸式精确断言）：8 套牌组、合成牌库（POOL 前 11 张 ×4 +
-     地补到 60）、seed=20260924、N=8000。其中 6 套与迁移前旧 sim 逐值全等；
-     sim_red（调度修复：老式重抓 7 → 伦敦 7→6→5）与 sim_mono_white（施放排序
-     补牌名 tiebreaker，修复跨进程不可复现）为修复后的新钉值。
+  2. 黄金数值：8 套合成牌库、seed=20260924、N=8000。2026-10-16修正为
+     每次抓7再置底后重新记录；旧模型均值不是本次模型的比较基线。
 """
 import json
 import os
@@ -180,83 +178,79 @@ class TestMechanicsRegistry(unittest.TestCase):
 class TestGoldenValues(unittest.TestCase):
     """合成牌库 + seed=20260924 + N=8000 的精确钉值。
 
-    除 red / mono_white 外均与迁移前旧 sim 逐值全等（迁移零失真证据）。
+    当前模型 goldfish-london-bottom-v2；调度机制另由守恒/置底行为测试覆盖。
     """
 
     def test_black(self):
         d = synth_deck(black)
         r, rc = black.run(d, N), black.run(d, N, pen=0.6)
-        self.assertEqual(r["mean"], 4.6735)
-        self.assertEqual((r["t4"], r["t5"], r["t6"]), (48.9, 91.65, 97.1625))
-        self.assertEqual(r["stuck"], 30.0125)      # T3 未达 3 地口径
-        self.assertEqual(rc["mean"], 5.271)
+        self.assertEqual(r["model_version"], "goldfish-london-bottom-v2")
+        self.assertEqual(r["mean"], 4.586875)
+        self.assertEqual((r["t4"], r["t5"], r["t6"]), (50.05, 94.3875, 98.8))
+        self.assertEqual(r["stuck"], 25.3875)
+        self.assertEqual(rc["mean"], 5.186375)
 
     def test_blue(self):
         d = synth_deck(blue)
         r, rc = blue.run(d, N), blue.run(d, N, pen=0.6)
-        self.assertEqual(r["mean"], 5.3665)
-        self.assertEqual((r["t5"], r["t6"], r["t8"]), (75.65, 93.45, 98.0))
-        self.assertEqual(r["stuck"], 8.8125)
-        self.assertEqual(rc["mean"], 5.82275)
-        self.assertEqual(r["agg"]["sd"], 1.602625)
-        self.assertEqual(r["agg"]["ss"], 0.68675)
+        self.assertEqual(r["mean"], 5.26775)
+        self.assertEqual((r["t5"], r["t6"], r["t8"]), (77.2125, 96.2625, 99.225))
+        self.assertEqual(r["stuck"], 7.3625)
+        self.assertEqual(rc["mean"], 5.74)
+        self.assertEqual(r["agg"]["sd"], 1.690875)
+        self.assertEqual(r["agg"]["ss"], 0.761375)
 
     def test_blue_spells(self):
         d = synth_deck(blue_spells)
         r, rc = blue_spells.run(d, N), blue_spells.run(d, N, pen=0.6)
-        self.assertEqual(r["mean"], 10.774375)
+        self.assertEqual(r["mean"], 10.801375)
         self.assertEqual((r["t5"], r["t6"]), (0.0, 0.0625))
-        self.assertEqual(r["stuck"], 0.3125)
-        self.assertEqual(r["spells"], 2.853625)
-        self.assertEqual(rc["mean"], 11.121625)
+        self.assertEqual(r["stuck"], 0.1)
+        self.assertEqual(r["spells"], 2.88675)
+        self.assertEqual(rc["mean"], 11.1075)
 
     def test_green(self):
         d = synth_deck(green)
         r, rc = green.run(d, N), green.run(d, N, pen=0.6)
-        self.assertEqual(r["mean"], 5.8225)
-        self.assertEqual((r["t5"], r["t6"], r["t7"]), (43.3875, 85.075, 95.1375))
-        self.assertEqual(r["stuck"], 12.925)
-        self.assertEqual(rc["mean"], 6.571125)
+        self.assertEqual(r["mean"], 5.679125)
+        self.assertEqual((r["t5"], r["t6"], r["t7"]), (47.8875, 88.8125, 97.2125))
+        self.assertEqual(r["stuck"], 10.8625)
+        self.assertEqual(rc["mean"], 6.416375)
 
     def test_red_blind(self):
         d = synth_deck(red_blind)
         r, rc = red_blind.run(d, N), red_blind.run(d, N, pen=0.6)
-        self.assertEqual(r["mean"], 5.96225)
-        self.assertEqual((r["t4"], r["t5"]), (4.55, 40.1875))
-        self.assertEqual(r["stuck"], 6.8875)
-        self.assertEqual(rc["mean"], 6.783625)
+        self.assertEqual(r["mean"], 5.8195)
+        self.assertEqual((r["t4"], r["t5"]), (5.2, 43.7))
+        self.assertEqual(r["stuck"], 5.8875)
+        self.assertEqual(rc["mean"], 6.67225)
 
     def test_white(self):
         d = synth_deck(white)
         r, rc = white.run(d, N), white.run(d, N, penetrate=0.6)
-        self.assertEqual(r["mean"], 5.15325)
+        self.assertEqual(r["mean"], 4.971375)
         self.assertEqual((r["t3"], r["t4"], r["t5"], r["t6"]),
-                         (0.0, 17.8625, 85.375, 93.9875))
-        self.assertEqual(r["stuck"], 10.65)
-        self.assertEqual(rc["mean"], 5.836625)
+                         (0.0, 20.5375, 89.9125, 97.3125))
+        self.assertEqual(r["stuck"], 9.05)
+        self.assertEqual(rc["mean"], 5.660125)
 
     def test_red_new_golden_after_mulligan_fix(self):
-        """★ 修复后新钉值：调度由老式重抓 7 统一为伦敦 7→6→5。
-        （旧 sim_red 钉值：mean 5.424375 / t4 9.2625 / t5 68.5 / stuck 6.825 /
-          cons 5.899，仅作历史对照，不再复现。）"""
+        """每轮抓7并选择置底后的新钉值。"""
         d = synth_deck(red)
         r, rc = red.run(d, N), red.run(d, N, penetrate=0.6)
-        self.assertEqual(r["mean"], 5.682125)
-        self.assertEqual((r["t3"], r["t4"], r["t5"]), (0.0, 7.8, 61.1625))
-        self.assertEqual(r["stuck"], 7.9375)
-        self.assertEqual(rc["mean"], 6.211375)
+        self.assertEqual(r["mean"], 5.5635)
+        self.assertEqual((r["t3"], r["t4"], r["t5"]), (0.0, 8.725, 62.8875))
+        self.assertEqual(r["stuck"], 6.4875)
+        self.assertEqual(rc["mean"], 6.09425)
 
     def test_mono_white_new_golden_after_sort_and_mulligan_fix(self):
-        """★ 修复后新钉值：施放排序补牌名 tiebreaker + 调度统一为伦敦 7→6→5。
-        旧值对照：老式调度下同种子跨进程 4.7453 / 5.0814（不可复现）
-        → tiebreaker 修复后 4.927375（仍老式调度）
-        → 伦敦化后本钉值。"""
+        """确定性施放排序与完整置底流程。"""
         d = synth_deck(mono_white)
         r = mono_white.run(d, N)
-        self.assertEqual(r["mean"], 5.093375)
+        self.assertEqual(r["mean"], 5.05425)
         self.assertEqual((r["t4"], r["t5"], r["t6"], r["t7"]),
-                         (20.7125, 84.1875, 93.3, 96.8))
-        self.assertEqual(r["stuck"], 11.7875)
+                         (20.3625, 84.475, 94.375, 97.6875))
+        self.assertEqual(r["stuck"], 9.4625)
 
 
 if __name__ == "__main__":

@@ -378,11 +378,50 @@ def save_grp_cache():
             json.dump(_grp_cache, fh, ensure_ascii=False, indent=2, sort_keys=True)
 
 
+_CLIENT_DB_PATH = None
+_CLIENT_DB_PROBED = False
+_CLIENT_DB_MEMO = {}
+
+
+def _client_db_lookup(grp_id):
+    """MTGA 客户端卡库兜底：grpId → {"name","type_line"}（各项可为 None）。
+
+    Scryfall 尚未收录 arena_id（新系列上线初期）时，从本地客户端卡库反查
+    英文牌名，再按名补抓 type_line。任何失败（无客户端/无卡库/查询异常）
+    静默返回 None，不影响主流程。"""
+    global _CLIENT_DB_PATH, _CLIENT_DB_PROBED
+    key = str(grp_id)
+    if key in _CLIENT_DB_MEMO:
+        return _CLIENT_DB_MEMO[key]
+    meta = None
+    try:
+        import mtga_db_tool as DBT  # 惰性导入，规避无客户端环境的启动成本
+        if not _CLIENT_DB_PROBED:
+            _CLIENT_DB_PATH = DBT.find_database()
+            _CLIENT_DB_PROBED = True
+        if _CLIENT_DB_PATH is not None:
+            card = DBT.lookup_names(_CLIENT_DB_PATH, [grp_id]).get(key)
+            if card:
+                type_line = None
+                try:
+                    type_line = scryfall_get(
+                        "/cards/named", {"exact": card["name"]}).get("type_line")
+                except MtgToolError:
+                    pass
+                meta = {"name": card["name"], "type_line": type_line}
+    except Exception:
+        meta = None
+    _CLIENT_DB_MEMO[key] = meta
+    return meta
+
+
 def resolve_grp_meta(grp_id):
     """grpId → {"name":..., "type_line":...}（各自可为 None）。
 
     缓存三种历史形态兼容：dict（新格式）/ str（旧格式纯牌名，补抓 type_line 升级，
-    HTTP 磁盘缓存命中时零网络成本）/ None（历史失败，不重试）。"""
+    HTTP 磁盘缓存命中时零网络成本）/ None（历史失败，不重试）。
+    Scryfall 查不到 arena_id 时走 MTGA 客户端卡库兜底（含已缓存的 name=None
+    记录——多为新系列上线初期，客户端卡库更新更快，命中后升级缓存）。"""
     if grp_id is None:
         return {"name": None, "type_line": None}
     cache = load_grp_cache()
@@ -390,7 +429,14 @@ def resolve_grp_meta(grp_id):
     if key in cache:
         entry = cache[key]
         if isinstance(entry, dict):
-            return {"name": entry.get("name"), "type_line": entry.get("type_line")}
+            meta = {"name": entry.get("name"), "type_line": entry.get("type_line")}
+            if not meta["name"]:
+                fallback = _client_db_lookup(grp_id)
+                if fallback and fallback.get("name"):
+                    meta = fallback
+                    cache[key] = meta
+                    save_grp_cache()
+            return meta
         if entry is None:
             return {"name": None, "type_line": None}
         meta = {"name": entry, "type_line": None}
@@ -407,7 +453,9 @@ def resolve_grp_meta(grp_id):
         card = scryfall_get(f"/cards/arena/{grp_id}")
         meta = {"name": card.get("name"), "type_line": card.get("type_line")}
     except (MtgToolError, KeyError):
-        pass
+        fallback = _client_db_lookup(grp_id)
+        if fallback and fallback.get("name"):
+            meta = fallback
     cache[key] = meta
     save_grp_cache()
     return meta

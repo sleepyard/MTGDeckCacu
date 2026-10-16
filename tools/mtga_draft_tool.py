@@ -8,11 +8,22 @@
   grpId）兜底；2026 中直连端点失效期间由代理维持数据（实测 2026-09-13
   HOB PremierDraft 188 张）。磁盘缓存 tools/cache/17lands/<SET>_<format>.json，
   >3 天提示刷新；拉取失败/缺数据时降级为纯 LLM 模式并显式标注"无胜率锚点"。
+- 外部锚点（17Lands 之外三路，新系列样本不足时补 GIH 空缺，load_external_anchors
+  聚合）：MTGA Assistant（AI 用户数据 + Pro 人工双 0-5 评分，缓存 1 天）、
+  draftsim pick order（售前专家评分，JS bundle 内嵌 TSV，缓存 3 天）、
+  17Lands public dataset（逐 pick 行级数据自算 ATA/ASA，缓存 7 天）。
+  归一化为 assistant_norm/draftsim_norm/ata_norm 供 draft_advisor.power_anchor
+  在 gih_norm 缺失时混合；单源失败只告警不阻断。
+  调研记录：AuditReport/ExternalRef_DraftDataSources_20261009.md。
 - 轮抓载荷 schema 以 tools/auto/draft_samples/ 真实录样为准（mtga_auto_tool draft --record）。
 
 仅 Python 标准库；复用 mtga_auto_tool 的日志管线/LLM 后端/监控台基建。
 """
 
+import csv
+import gzip
+import html
+import io
 import json
 import re
 import sys
@@ -261,6 +272,327 @@ def load_color_ratings(set_code, fmt="PremierDraft", refresh=False):
             print(f"[colors] {exc}；沿用过期缓存（{age_days:.1f} 天）",
                   file=sys.stderr)
     return rows, age_days
+
+
+# ---------------------------------------------------------------- 外部锚点源（17Lands 之外）
+# 背景：新系列上线初期 17Lands（尤其 QuickDraft）样本不足，胜率字段大面积置空
+# （实测 2026-10-09 FRA QuickDraft 14 张仅 2 张有 GIH）。三路补充源：
+# 1) MTGA Assistant：AI（用户数据驱动，偏 Quick Draft）+ Pro（Nizzahon 售前）
+#    双 0-5 评分，服务端渲染无反爬；
+# 2) draftsim pick order：售前即发的站内专家评分，TSV 内嵌 JS bundle；
+# 3) 17Lands public dataset：逐 pick 行级数据（CC-BY-4.0），自算 ATA/ASA。
+# 调研记录见 AuditReport/ExternalRef_DraftDataSources_20261009.md。
+ASSISTANT_DIR = Path(__file__).resolve().parent / "cache" / "mtga_assistant"
+DRAFTSIM_DIR = Path(__file__).resolve().parent / "cache" / "draftsim"
+ASSISTANT_URL = "https://mtgaassistant.net/Limited/Set/{set_code}"
+DRAFTSIM_PAGE_URL = "https://draftsim.com/{set_code}-pick-order/"
+DRAFTSIM_BUNDLE_RE = re.compile(
+    r'src="(/draft-app/dist/assets/index-[^"]+\.js)"')
+PUBLIC_DATASET_URL = ("https://17lands-public.s3.amazonaws.com/analysis_data"
+                      "/draft_data/draft_data_public.{set_code}.{fmt}.csv.gz")
+ASSISTANT_MAX_AGE_DAYS = 1
+DRAFTSIM_MAX_AGE_DAYS = 3
+PUBLIC_STATS_MAX_AGE_DAYS = 7
+
+
+def _fetch_text(url, source, timeout=30):
+    """GET 文本（UA 头）；网络/HTTP 失败抛 DraftToolError（带数据源名）。"""
+    req = urllib.request.Request(url, headers={
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return resp.read().decode("utf-8", errors="replace")
+    except urllib.error.HTTPError as exc:
+        raise DraftToolError(f"{source} HTTP {exc.code}: {url}")
+    except (urllib.error.URLError, OSError) as exc:
+        raise DraftToolError(f"{source} 请求失败: {exc}")
+
+
+def _load_cached_json(path, max_age_days, fetch, label, refresh=False,
+                      negative_ttl_days=None):
+    """磁盘缓存骨架：新鲜缓存直接返回；过期/缺失自动拉取回写；拉取失败沿用
+    旧缓存；完全无数据返回 (None, None)（调用方降级，不阻断）。
+
+    negative_ttl_days 提供负缓存：无旧缓存且拉取失败时写入空列表标记，
+    在该 TTL 内视为有效空结果，避免慢失败源（超时型）每次调用都卡顿。"""
+    cards = None
+    age_days = None
+    if path.is_file() and not refresh:
+        try:
+            blob = json.loads(path.read_text(encoding="utf-8"))
+            cards = blob.get("cards")
+            age_days = (time.time() - blob.get("fetched_ts", 0)) / 86400
+            if cards == [] and negative_ttl_days is not None \
+                    and age_days > negative_ttl_days:
+                cards = None  # 负缓存过期，重试
+        except (json.JSONDecodeError, OSError):
+            cards = None
+    if cards is None or (age_days is not None and age_days > max_age_days):
+        try:
+            fresh = fetch()
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps({"fetched_ts": time.time(), "cards": fresh},
+                                       ensure_ascii=False), encoding="utf-8")
+            cards = fresh
+            age_days = 0.0
+        except DraftToolError as exc:
+            if cards is None:
+                if negative_ttl_days is not None:
+                    try:
+                        path.parent.mkdir(parents=True, exist_ok=True)
+                        path.write_text(json.dumps(
+                            {"fetched_ts": time.time(), "cards": []},
+                            ensure_ascii=False), encoding="utf-8")
+                    except OSError:
+                        pass
+                print(f"[{label}] {exc}；无缓存可用", file=sys.stderr)
+                return None, None
+            print(f"[{label}] {exc}；沿用过期缓存（{age_days:.1f} 天）",
+                  file=sys.stderr)
+    return cards, age_days
+
+
+def _parse_rating(text):
+    try:
+        return float(str(text).strip())
+    except (TypeError, ValueError):
+        return None
+
+
+# ---- MTGA Assistant（AI + Pro 双评分）
+_ASSISTANT_CARD_RE = re.compile(
+    r'data-color="(?P<color>[^"]*)"\s+data-rarity="(?P<rarity>[^"]*)"\s+'
+    r'data-text="(?P<text>[^"]*)".*?<h3>(?P<name>[^<]+)</h3>.*?'
+    r'<b>AI Rating:\s*(?P<ai>[^<]*)</b>.*?'
+    r'<b>Pro Rating:\s*(?P<pro>[^<]*)</b>'
+    r'(?:\s*(?:<br\s*/>\s*)*<p>(?P<comment>.*?)</p>)?',
+    re.S)
+
+
+def parse_assistant_html(html_text):
+    """MTGA Assistant 单卡页 HTML → [{name, ai, pro, comment, rarity, color}]。"""
+    cards = []
+    for m in _ASSISTANT_CARD_RE.finditer(html_text):
+        name = html.unescape(m.group("name")).strip()
+        if not name:
+            continue
+        cards.append({
+            "name": name,
+            "ai": _parse_rating(m.group("ai")),
+            "pro": _parse_rating(m.group("pro")),
+            "comment": re.sub(r"<[^>]+>", "",
+                              html.unescape(m.group("comment") or "")).strip(),
+            "rarity": m.group("rarity") or "",
+            "color": m.group("color") or "",
+        })
+    return cards
+
+
+def fetch_assistant(set_code, timeout=60):
+    """拉取 MTGA Assistant 单卡页并解析（实测 2026-10-09 FRA 286 张直连 200）。"""
+    cards = parse_assistant_html(_fetch_text(
+        ASSISTANT_URL.format(set_code=set_code), "MTGA Assistant", timeout))
+    if not cards:
+        raise DraftToolError("MTGA Assistant 页面结构变化：未解析到任何单卡")
+    return cards
+
+
+def load_assistant(set_code, refresh=False):
+    """读 MTGA Assistant 缓存（TTL 1 天，失败负缓存 6 小时）；
+    完全无数据返回 (None, None)。"""
+    return _load_cached_json(ASSISTANT_DIR / f"{set_code}.json",
+                             ASSISTANT_MAX_AGE_DAYS,
+                             lambda: fetch_assistant(set_code),
+                             "assistant", refresh, negative_ttl_days=0.25)
+
+
+# ---- draftsim pick order（售前专家评分）
+def _cell(row, i):
+    return row[i].strip() if i is not None and i < len(row) else ""
+
+
+def parse_draftsim_tsv(text):
+    """draftsim 内嵌 TSV → [{name, rating, rarity, archetype, fixing, splashable}]。"""
+    rows = list(csv.reader(io.StringIO(text.strip()), delimiter="\t"))
+    if not rows:
+        raise DraftToolError("draftsim TSV 为空")
+    header = [h.strip() for h in rows[0]]
+
+    def idx(*names):
+        for n in names:
+            if n in header:
+                return header.index(n)
+        return None
+
+    ci = {"name": idx("Name"), "rating": idx("Rating"),
+          "rarity": idx("Rarity"), "archetype": idx("Archetype"),
+          "fixing": idx("Fixing"), "splashable": idx("Splashable")}
+    if ci["name"] is None or ci["rating"] is None:
+        raise DraftToolError(f"draftsim TSV 缺 Name/Rating 列: {header}")
+    cards = []
+    for row in rows[1:]:
+        name = _cell(row, ci["name"])
+        rating = _parse_rating(_cell(row, ci["rating"]))
+        if not name or rating is None:
+            continue
+        cards.append({"name": name, "rating": rating,
+                      "rarity": _cell(row, ci["rarity"]),
+                      "archetype": _cell(row, ci["archetype"]),
+                      "fixing": _cell(row, ci["fixing"]),
+                      "splashable": _cell(row, ci["splashable"])})
+    if not cards:
+        raise DraftToolError("draftsim TSV 未解析到任何单卡")
+    return cards
+
+
+def fetch_draftsim(set_code, timeout=120):
+    """draftsim pick-order 页 → 评分列表。评分 TSV 内嵌 JS bundle（bundle hash
+    随部署变化，先解析页面取 bundle 路径，再在 bundle 里定位 ../data/{SET}.txt
+    对应的模板字符串变量）。"""
+    page = _fetch_text(DRAFTSIM_PAGE_URL.format(set_code=set_code),
+                       "draftsim", timeout)
+    m = DRAFTSIM_BUNDLE_RE.search(page)
+    if not m:
+        raise DraftToolError("draftsim 页面结构变化：找不到 draft-app bundle")
+    js = _fetch_text("https://draftsim.com" + m.group(1),
+                     "draftsim bundle", timeout)
+    m2 = re.search(r'"\.\./data/%s\.txt":([A-Za-z_$][\w$]*)'
+                   % re.escape(set_code), js)
+    if not m2:
+        raise DraftToolError(f"draftsim bundle 中无 {set_code} 数据映射")
+    m3 = re.search(re.escape(m2.group(1)) + r"=`(.*?)`", js, re.S)
+    if not m3:
+        raise DraftToolError("draftsim bundle 结构变化：找不到 TSV 模板字符串")
+    return parse_draftsim_tsv(m3.group(1))
+
+
+def load_draftsim(set_code, refresh=False):
+    """读 draftsim 缓存（TTL 3 天，失败负缓存 6 小时）；
+    完全无数据返回 (None, None)。"""
+    return _load_cached_json(DRAFTSIM_DIR / f"{set_code}.json",
+                             DRAFTSIM_MAX_AGE_DAYS,
+                             lambda: fetch_draftsim(set_code),
+                             "draftsim", refresh, negative_ttl_days=0.25)
+
+
+# ---- 17Lands public dataset（自算 ATA/ASA）
+def compute_public_stats(lines):
+    """public draft dataset 文本行 → {name: {ata, picks, asa, seen, maindeck_rate}}。
+
+    pack_card_<牌名> 0/1 列给出每行（每次 pick）的包内容：ATA = 被抓时平均
+    pick 位次（1-14），ASA = 可见时平均位次（ALSA 的近似——单用户日志看不
+    到"最后被谁抓走"，只能算平均可见位次），maindeck_rate 取
+    pick_maindeck_rate 均值。"""
+    reader = csv.reader(lines)
+    header = next(reader, None)
+    if not header:
+        raise DraftToolError("public dataset 为空")
+    base = {name: i for i, name in enumerate(header)}
+    for col in ("pick_number", "pick", "pick_maindeck_rate"):
+        if col not in base:
+            raise DraftToolError(f"public dataset 缺列 {col}")
+    pack_cols = [(i, name[len("pack_card_"):]) for i, name in enumerate(header)
+                 if name.startswith("pack_card_")]
+    if not pack_cols:
+        raise DraftToolError("public dataset 无 pack_card 列")
+    i_pick, i_num, i_mdr = (base["pick"], base["pick_number"],
+                            base["pick_maindeck_rate"])
+    taken = {}  # name -> [位次和, 次数, maindeck 率和]
+    seen = {}   # name -> [位次和, 次数]
+    for row in reader:
+        try:
+            pos = int(row[i_num]) + 1
+        except (ValueError, IndexError):
+            continue
+        pick = row[i_pick] if i_pick < len(row) else ""
+        if pick:
+            entry = taken.setdefault(pick, [0, 0, 0.0])
+            entry[0] += pos
+            entry[1] += 1
+            try:
+                entry[2] += float(row[i_mdr])
+            except (ValueError, IndexError):
+                pass
+        for ci, cname in pack_cols:
+            if ci < len(row) and row[ci] == "1":
+                sentry = seen.setdefault(cname, [0, 0])
+                sentry[0] += pos
+                sentry[1] += 1
+    stats = {}
+    for name, (spos, sn) in seen.items():
+        stats[name] = {"ata": None, "picks": 0,
+                       "asa": round(spos / sn, 2) if sn else None, "seen": sn,
+                       "maindeck_rate": None}
+    for name, (pos_sum, n, mdr_sum) in taken.items():
+        entry = stats.setdefault(name, {"ata": None, "picks": 0, "asa": None,
+                                        "seen": 0, "maindeck_rate": None})
+        entry["ata"] = round(pos_sum / n, 2)
+        entry["picks"] = n
+        entry["maindeck_rate"] = round(mdr_sum / n, 3) if n else None
+    if not stats:
+        raise DraftToolError("public dataset 解析结果为空")
+    return stats
+
+
+def fetch_public_stats(set_code, fmt="PremierDraft", timeout=300):
+    """下载 17Lands public draft dataset（csv.gz，FRA PremierDraft 约 47MB，
+    实测 2026-10-07 已放出；未发布的系列/赛制 HTTP 403）并自算 ATA/ASA。"""
+    url = PUBLIC_DATASET_URL.format(set_code=set_code, fmt=fmt)
+    req = urllib.request.Request(url, headers={
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+    try:
+        resp = urllib.request.urlopen(req, timeout=timeout)
+    except urllib.error.HTTPError as exc:
+        raise DraftToolError(f"17Lands public dataset HTTP {exc.code}: {url}")
+    except (urllib.error.URLError, OSError) as exc:
+        raise DraftToolError(f"17Lands public dataset 请求失败: {exc}")
+    with resp, gzip.GzipFile(fileobj=resp) as gz:
+        text = io.TextIOWrapper(gz, encoding="utf-8", newline="")
+        return compute_public_stats(text)
+
+
+def load_public_stats(set_code, fmt="PremierDraft", refresh=False):
+    """读 public dataset 自算统计缓存（TTL 7 天，失败负缓存 12 小时）；
+    完全无数据返回 (None, None)。"""
+    return _load_cached_json(RATINGS_DIR / f"{set_code}_{fmt}_public_stats.json",
+                             PUBLIC_STATS_MAX_AGE_DAYS,
+                             lambda: fetch_public_stats(set_code, fmt),
+                             "public-stats", refresh, negative_ttl_days=0.5)
+
+
+# ---- 三路聚合
+def load_external_anchors(set_code, fmt="PremierDraft"):
+    """汇总 17Lands 之外的三路锚点 → {主面牌名: {assistant_ai, assistant_pro,
+    assistant_norm, draftsim_norm, ata, ata_norm}}（各项可缺，单源失败只告警）。
+
+    归一化（全部 0..1）：assistant_norm = mean(ai, pro)/5；draftsim_norm =
+    rating/满分（按观测最大值自动判 5/10 分制）；ata_norm = 1-(ata-1)/13
+    （1 抓≈1.0，14 抓≈0）。"""
+    anchors = {}
+    assistant, _age = load_assistant(set_code)
+    for card in assistant or []:
+        key = card["name"].split(" // ")[0]
+        entry = anchors.setdefault(key, {})
+        entry["assistant_ai"] = card.get("ai")
+        entry["assistant_pro"] = card.get("pro")
+        vals = [v for v in (card.get("ai"), card.get("pro")) if v is not None]
+        if vals:
+            entry["assistant_norm"] = sum(vals) / len(vals) / 5.0
+    draftsim, _age = load_draftsim(set_code)
+    if draftsim:
+        scale = 10.0 if max(c["rating"] for c in draftsim) > 5.5 else 5.0
+        for card in draftsim:
+            key = card["name"].split(" // ")[0]
+            anchors.setdefault(key, {})["draftsim_norm"] = card["rating"] / scale
+    stats, _age = load_public_stats(set_code, fmt)
+    for name, s in (stats or {}).items():
+        key = name.split(" // ")[0]
+        if s.get("ata") is None:
+            continue
+        entry = anchors.setdefault(key, {})
+        entry["ata"] = s["ata"]
+        entry["ata_norm"] = max(0.0, min(1.0, 1.0 - (s["ata"] - 1.0) / 13.0))
+    return anchors
 
 
 # ---------------------------------------------------------------- 本地预生成评分表（社区 + LLM）

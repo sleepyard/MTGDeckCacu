@@ -103,23 +103,10 @@ def _is_retryable(status):
     return status == 429 or status >= 500
 
 
-def http_get_json(url, service, params=None, use_cache=True, timeout=30,
-                  offline=False):
-    """GET JSON：缓存 -> 节流 -> UA 请求 -> 429/5xx 指数退避重试。
-
-    返回 (http_status, payload)。2xx/4xx 确定性响应（含 404）会被缓存；
-    429/5xx 最终失败不缓存（避免旧失败永久命中）。
-    offline=True 时只读磁盘缓存，未命中直接抛 HttpError（pilot 等实时
-    循环用——一张未缓存的牌不能阻塞 31s 重试）。"""
+def http_request_text(url, params=None, timeout=30, accept="text/plain",
+                      method="GET", data=None):
+    """Shared throttle/retry transport; POST callers must use read-only endpoints."""
     params = params or {}
-    cpath = _cache_path(service, "GET", url, params)
-    if use_cache and os.path.exists(cpath):
-        with open(cpath, "r", encoding="utf-8") as fh:
-            entry = json.load(fh)
-        return entry["http_status"], entry["payload"]
-    if offline:
-        raise HttpError(f"offline 模式缓存未命中: {url}")
-
     full_url = url + ("?" + urllib.parse.urlencode(params) if params else "")
     attempt = 0
     delay = 1.0
@@ -127,8 +114,11 @@ def http_get_json(url, service, params=None, use_cache=True, timeout=30,
         _throttle()
         req = urllib.request.Request(
             full_url,
-            headers={"User-Agent": USER_AGENT, "Accept": "application/json"},
+            headers={"User-Agent": USER_AGENT, "Accept": accept},
+            method=method, data=data,
         )
+        if data is not None:
+            req.add_header("Content-Type", "application/json")
         try:
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 _last_request_at[0] = time.monotonic()
@@ -163,6 +153,45 @@ def http_get_json(url, service, params=None, use_cache=True, timeout=30,
             raise NetworkError(f"网络请求失败（重试 {MAX_RETRIES} 次后放弃）: {full_url}: {exc}") from exc
         break
 
+    if _is_retryable(status):
+        raise HttpError(f"HTTP {status}（重试 {MAX_RETRIES} 次后仍失败）: {full_url}")
+    return status, body
+
+
+def http_get_text(url, params=None, timeout=30, accept="text/plain"):
+    """GET text through the shared throttle/retry transport; no disk cache."""
+    return http_request_text(url, params, timeout, accept)
+
+
+def http_post_json(url, payload, params=None, timeout=30):
+    """Read-only JSON POST without caching; service callers own cache freshness."""
+    encoded = json.dumps(payload, ensure_ascii=True).encode("utf-8")
+    status, body = http_request_text(url, params, timeout, "application/json", "POST", encoded)
+    try:
+        return status, json.loads(body)
+    except ValueError as exc:
+        raise HttpError("Non-JSON POST response: " + url) from exc
+
+
+def http_get_json(url, service, params=None, use_cache=True, timeout=30,
+                  offline=False):
+    """GET JSON：缓存 -> 节流 -> UA 请求 -> 429/5xx 指数退避重试。
+
+    返回 (http_status, payload)。2xx/4xx 确定性响应（含 404）会被缓存；
+    429/5xx 最终失败不缓存（避免旧失败永久命中）。
+    offline=True 时只读磁盘缓存，未命中直接抛 HttpError（pilot 等实时
+    循环用——一张未缓存的牌不能阻塞 31s 重试）。"""
+    params = params or {}
+    cpath = _cache_path(service, "GET", url, params)
+    if use_cache and os.path.exists(cpath):
+        with open(cpath, "r", encoding="utf-8") as fh:
+            entry = json.load(fh)
+        return entry["http_status"], entry["payload"]
+    if offline:
+        raise HttpError(f"offline 模式缓存未命中: {url}")
+
+    full_url = url + ("?" + urllib.parse.urlencode(params) if params else "")
+    status, body = http_get_text(url, params, timeout, accept="application/json")
     try:
         payload = json.loads(body)
     except json.JSONDecodeError:
@@ -179,8 +208,6 @@ def http_get_json(url, service, params=None, use_cache=True, timeout=30,
         with open(cpath, "w", encoding="utf-8") as fh:
             json.dump(entry, fh, ensure_ascii=False, indent=1)
 
-    if _is_retryable(status):
-        raise HttpError(f"HTTP {status}（重试 {MAX_RETRIES} 次后仍失败）: {full_url}")
     return status, payload
 
 
@@ -279,6 +306,7 @@ def normalize_card(c):
         "games": c.get("games") or [],
         "keywords": c.get("keywords") or [],
         "color_identity": c.get("color_identity") or [],
+        "produced_mana": c.get("produced_mana") or [],
         "card_faces": face_records,
     }
 
@@ -597,11 +625,15 @@ def cmd_validate(args):
           + f"（赛制 {args.format}" + ("，BO3" if args.bo3 else "") + "）", file=sys.stderr)
 
     # ---- 数量门禁
-    if main_count < 60:
+    if args.limited:
+        if main_count not in (40, 41):
+            vio(f"主牌 {main_count} 张，限制赛交付应为 40 或 41"
+                f"（通常 17 地 + 24 其他 = 41，调整须说明依据）")
+    elif main_count < 60:
         vio(f"主牌 {main_count} 张 < 60")
     if args.no_sideboard and sb_count > 0:
         vio(f"--no-sideboard 生效但备牌 {sb_count} 张")
-    if sb_count > 15:
+    if not args.limited and sb_count > 15:
         vio(f"备牌 {sb_count} 张 > 15")
 
     # ---- 逐牌核对（同名合并，复用 check 逻辑与缓存）
@@ -773,6 +805,8 @@ def build_parser():
                     help="平台可用性核对（默认 arena；实体牌可不传？默认 arena 因工作流默认 MTGA）")
     sp.add_argument("--bo3", action="store_true", help="BO3 对局（记录用）")
     sp.add_argument("--no-sideboard", action="store_true", help="不允许备牌")
+    sp.add_argument("--limited", action="store_true",
+                    help="限制赛口径：主牌 40/41 张，备牌（池内裁切）不受 15 张上限")
     sp.add_argument("--colors", help="颜色身份约束，如 ug（各牌 color_identity 须为其子集）")
     add_common(sp)
     sp.set_defaults(func=cmd_validate)
