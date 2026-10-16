@@ -124,6 +124,8 @@ import roles as role_tags
 import runlog
 import workbench_jobs
 import workbench_agent
+import deck_evaluate
+import workbench_evaluation
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8644
@@ -561,11 +563,17 @@ def parse_constructed_body(body):
             "candidates 必须是非空 JSON 数组（mtg_tool search --out 的同构产物）")
     if any(not isinstance(item, Mapping) for item in candidates):
         raise ValueError("candidates 包含非对象记录")
+    seed_text = body.get("seed_text")
+    if seed_text is not None:
+        if not isinstance(seed_text, str) or not seed_text.strip():
+            raise ValueError("seed_text 必须是非空牌表文本")
+        seed_names = CS.parse_seed_lines(seed_text.splitlines())
+    else:
+        seed_names = []
     seeds = body.get("seeds")
-    if not isinstance(seeds, list) or not seeds:
+    if seed_text is None and (not isinstance(seeds, list) or not seeds):
         raise ValueError("seeds 必须是非空牌名数组，如 [\"牌名A\", \"牌名B\"]")
-    seed_names = []
-    for item in seeds:
+    for item in (seeds if seed_text is None else []):
         name = item.strip() if isinstance(item, str) else ""
         if not name:
             raise ValueError("seeds 只接受非空牌名字符串，收到: {!r}".format(item))
@@ -1240,7 +1248,7 @@ class WorkbenchState:
         # Phase 2 核验缓存槽位：roles/combos/cost/audit/constructed，
         # 每项 {"status": "ok"/"error", "checked_at": iso, "result"/"error": ...}
         self._slots = {name: None for name in
-                       ("roles", "combos", "cost", "audit", "constructed")}
+                       ("roles", "combos", "cost", "audit", "constructed", "evaluation")}
         # Phase 3：Agent 桥（请求/结果队列）+ avenues 持久列表（反向通路）
         self.bridge = AgentBridge()
         self.receiver = workbench_agent.create_receiver(self, backend=agent_backend)
@@ -1336,6 +1344,7 @@ class WorkbenchState:
                 "牌表文本未解析出任何条目；期望 '数量 英文名' 行或分区段头")
         with self._lock:
             self._deck = deck
+            self._slots = {name: None for name in self._slots}
             self._imported_at = _now_iso()
             self._source_name = source_name or None
             self._import_seq += 1
@@ -1447,13 +1456,18 @@ class WorkbenchState:
         等）原样向上抛，由 HTTP 层映射 400——与 deck_pooper constructed
         的报错口径一致。返回带 constructed 摘要的快照。
         """
-        seed = CS.SeedSet(main=tuple((1, name) for name in seed_names))
+        seed = seed_names if isinstance(seed_names, CS.SeedSet) else CS.SeedSet(main=tuple((1, name) for name in seed_names))
         built = CS.build_constructed_deck(candidates, seed, fmt, bo3=bo3,
                                           strategy=strategy, platform=platform)
         snapshot = self.import_text(
             deck_pooper.render_constructed_deck(built),
             source_name="seed-constructed")
         summary = summarize_constructed(built)
+        summary["selections"] = [{"name": item.card["name"], "qty": item.count,
+                                  "module": item.module, "reason": item.reason} for item in built.main]
+        with self._lock:
+            for card in candidates:
+                self._card_db[card["name"]] = dict(card)
         snapshot["constructed"] = summary
         self._record_slot("constructed", {"status": "ok" if built.valid else "error",
                                           "checked_at": _now_iso(),
@@ -1568,6 +1582,52 @@ class WorkbenchState:
             return result
 
         return self.jobs.start("audit", source, worker)
+
+    def start_evaluation(self, body, fetch_card=None):
+        fmt, options, supplied, baseline = workbench_evaluation.parse_request(body)
+        with self._lock:
+            deck = self._deck
+            cached = json.loads(json.dumps(list(self._card_db.values())))
+            context = [serialize_deck(deck), cached]
+        if not deck.main:
+            raise ValueError("请先导入或生成牌表")
+        if deck.skipped:
+            raise ValueError("当前牌表含跳过的行，请修正后评测")
+        decks = [deck] + ([baseline] if baseline is not None else [])
+        for item in decks:
+            if not 7 <= sum(c.qty for c in item.main) <= 250:
+                raise ValueError("评测牌库需为7至250张")
+            if any(type(qty) is not int or qty < 1 for qty, _, _ in item.entries()):
+                raise ValueError("牌张数量必须为正整数")
+        context_hash = deck_evaluate.digest(context)
+        source = deck_evaluate.digest([context_hash, fmt, options, supplied,
+                                       serialize_deck(baseline) if baseline is not None else None])
+        if len({name for item in decks for _, name, _ in item.entries()}) > workbench_evaluation.MAX_NAMES:
+            raise ValueError("单次评测最多150个不同牌名")
+
+        def worker(progress, _key):
+            with self._lock:
+                self._slots["evaluation"] = None
+            cards = workbench_evaluation.prepare_cards(
+                decks, supplied if supplied is not None else cached,
+                None if supplied is not None else (fetch_card or default_fetch_card), progress)
+            if baseline is not None:
+                progress("正在评测对照牌表", 0, 2)
+                before = deck_evaluate.evaluate(baseline, cards, **options)
+            progress("正在评测当前牌表", 1 if baseline is not None else 0, 2 if baseline is not None else 1)
+            result = deck_evaluate.evaluate(deck, cards, **options)
+            if baseline is not None:
+                result = deck_evaluate.comparison(before, result)
+            result.update(format_context=fmt, checked_at=_now_iso())
+            with self._lock:
+                now = [serialize_deck(self._deck), list(self._card_db.values())]
+                result["stale"] = deck_evaluate.digest(now) != context_hash
+                if not result["stale"]:
+                    self._slots["evaluation"] = {"status": "ok", "checked_at": result["checked_at"], "result": result}
+            progress("评测完成（" + ("有未覆盖项" if result["status"] == "partial" else "模型范围内完成") + "）", 1, 1)
+            return result
+
+        return self.jobs.start("evaluation", source, worker)
 
     def start_image(self, title="当前套牌"):
         deck = self._deck_copy()
@@ -1895,6 +1955,8 @@ def make_handler(state):
                     self._handle_audit()
                 elif path == "/api/audit/start":
                     self._handle_audit(async_start=True)
+                elif path == "/api/evaluation/start":
+                    self._handle_evaluation_start()
                 elif path == "/api/export-image":
                     self._handle_image_start()
                 elif path in ("/api/deck/add", "/api/deck/remove", "/api/deck/move"):
@@ -2071,6 +2133,13 @@ def make_handler(state):
                     raise ValueError("标题需为 120 字以内文本")
                 self._send_json(202, state.start_image(title))
             except ValueError as exc:
+                self._bad_request(exc)
+
+        def _handle_evaluation_start(self):
+            try:
+                body = self._read_json_body()
+                self._send_json(202, state.start_evaluation(body))
+            except (ValueError, TypeError) as exc:
                 self._bad_request(exc)
 
         def _handle_audit(self, async_start=False):
@@ -2435,6 +2504,9 @@ PAGE_HTML = """<!DOCTYPE html>
   .verdict { font-weight:600; background:var(--inset); border-left:3px solid var(--accent); padding:10px 12px; margin:10px 0; }
   table.kv { width:100%; border-collapse:collapse; table-layout:fixed; font-size:12px; margin:6px 0; }
   table.kv td { border:1px solid var(--line); padding:4px 8px; vertical-align:top; overflow-wrap:anywhere; }
+  .table-wrap { max-width:100%; overflow-x:auto; }
+  .table-wrap table { width:100%; border-collapse:collapse; font-size:12px; }
+  .table-wrap th,.table-wrap td { text-align:left; border-bottom:1px solid var(--line); padding:6px; }
   td.kvkey { color:var(--muted); width:32%; }
   ul.kvlist { margin:4px 0; padding-left:18px; }
   .feedback { margin-bottom:16px; padding:10px 14px; border:1px solid #7b514c; border-radius:8px;
@@ -2558,7 +2630,8 @@ PAGE_HTML = """<!DOCTYPE html>
       </section>
       <section class="panel mode-panel" data-mode="constructed" hidden>
         <div class="panel-head"><h2>构筑组牌</h2><span class="tag">候选 → 套牌</span></div>
-        <label class="field" for="seednames">核心牌（至少一张，逗号分隔）<input id="seednames" type="text" placeholder="输入希望保留的核心牌名"></label>
+        <label class="field" for="seednames">核心牌（逗号分隔，也可在下方指定数量）<input id="seednames" type="text" placeholder="输入希望保留的核心牌名"></label>
+        <details class="fold"><summary>指定牌张数量与主备分区</summary><label class="field" for="seedConstraints">固定牌张（填写后优先使用此处）<textarea id="seedConstraints" placeholder="Deck&#10;4 Core Card&#10;&#10;Sideboard&#10;2 Side Card"></textarea></label><div class="note">主牌、备牌和行侣均按指定数量保留；其余卡位从候选补齐。</div></details>
         <div class="form-grid">
           <label class="field" for="ccFormat">赛制<input id="ccFormat" type="text" value="pioneer"></label>
           <label class="field" for="ccStrategy">策略<select id="ccStrategy"><option value="mid">中速</option><option value="aggro">快攻</option><option value="control">控制</option></select></label>
@@ -2598,6 +2671,18 @@ PAGE_HTML = """<!DOCTYPE html>
               <label class="check"><input id="auditBo3" type="checkbox">BO3</label>
               <label class="check full"><input id="auditLimited" type="checkbox">限制赛口径（40 / 41 张）</label></div>
             <button id="auditBtn">运行体检</button><div id="auditProgress" class="job-status" aria-live="polite"></div><div id="auditBox" class="statline"></div>
+          </div>
+          <div class="tool-section"><h3>展开与版本评测</h3>
+            <div class="note">评估起手和土地支付潜力，辅助比较构型。暂不模拟横置时序、加速、对手或胜率；未覆盖项会列出。</div>
+            <div class="form-grid"><label class="field" for="evalFormat">评测赛制<select id="evalFormat"><option value="pioneer">Pioneer / Explorer</option><option value="standard">Standard</option><option value="historic">Historic</option><option value="timeless">Timeless</option><option value="limited">限制赛</option><option value="brawl">Brawl</option><option value="standard_brawl">Standard Brawl</option><option value="competitive_brawl">Competitive Brawl</option><option value="commander">Commander</option></select></label>
+              <label class="field" for="evalRuns">抽样次数<input id="evalRuns" type="number" value="2000" min="1" max="5000"></label>
+              <label class="field" for="evalTurns">观测回合<input id="evalTurns" type="number" value="5" min="1" max="8"></label>
+              <label class="check"><input id="evalDraw" type="checkbox">第一回合抓牌</label>
+              <label class="field full" for="evalTargets">关键咒语（每行一个英文名，留空自动选取）<textarea id="evalTargets" placeholder="Card Name"></textarea></label></div>
+            <details class="fold"><summary>对比另一份牌表</summary><button id="evalBaselineBtn">保存当前牌表作对照</button><label class="field" for="evalBaseline">对照牌表（留空仅评测当前版本）<textarea id="evalBaseline" placeholder="可粘贴以前的完整牌表；不会替换当前牌表"></textarea></label></details>
+            <details class="fold"><summary>离线牌面数据（可选）</summary><label class="field" for="evalCards">牌面快照<textarea id="evalCards" placeholder="Scryfall / mtg_tool search 的 JSON 数组"></textarea></label><div class="note">默认复用候选和牌池牌面，缺失时补查。提供快照后只用该数据；缺牌会明确报错。</div></details>
+            <div class="actions"><button id="evalBtn">运行评测 / 对照</button><button id="evalDownloadBtn" disabled>下载评测结果</button></div>
+            <div id="evalProgress" class="job-status" aria-live="polite"></div><div id="evalBox" class="statline"></div>
           </div>
           <div class="mode-panel" data-mode="constructed" hidden>
             <div class="tool-section"><h3>角色分布与缺口</h3><button id="rolesBtn">刷新角色</button><div id="rolesBox" class="statline"></div></div>
@@ -2665,6 +2750,7 @@ let agentPending = false;
 let lastRender = '';
 let currentMode = 'limited';
 const runningJobs = {};
+let evaluationResult = null;
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
                                   .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
                                   .replace(/'/g,'&#39;'); }
@@ -2711,12 +2797,12 @@ function setDeckView(view) {
 }
 function renderJobStatus() {
   document.getElementById('taskStatus').textContent = Object.values(runningJobs)
-    .filter(Boolean).map(job => (job.kind === 'audit' ? '体检' : '图片输出') + '：' + job.message
+    .filter(Boolean).map(job => ({audit:'体检', image:'图片输出', evaluation:'展开评测'}[job.kind] || job.kind) + '：' + job.message
       + ' · ' + job.elapsed_sec + ' 秒').join('；');
 }
 async function followJob(id, kind) {
-  const button = document.getElementById(kind === 'audit' ? 'auditBtn' : 'imageBtn');
-  const box = document.getElementById(kind === 'audit' ? 'auditProgress' : 'imageProgress');
+  const button = document.getElementById({audit:'auditBtn', image:'imageBtn', evaluation:'evalBtn'}[kind]);
+  const box = document.getElementById({audit:'auditProgress', image:'imageProgress', evaluation:'evalProgress'}[kind]);
   try {
     for (;;) {
       const job = await fetchJSON('/api/jobs/' + encodeURIComponent(id));
@@ -2730,6 +2816,10 @@ async function followJob(id, kind) {
         runningJobs[kind] = null;
         await tick();
         if (kind === 'audit') renderAudit({checks:{audit:{status:'ok', result:job.result}}});
+        else if (kind === 'evaluation') {
+          renderEvaluation({checks:{evaluation:{status:'ok', result:job.result}}});
+          box.textContent = job.result.stale ? '任务期间牌表或牌面已变更，此结果仅供历史对照。' : '评测完成';
+        }
         else {
           const img = document.getElementById('exportPreviewImage');
           const link = document.getElementById('imageDownload');
@@ -2954,6 +3044,10 @@ function renderConstructed(snap) {
     + '；颜色 ' + esc((r.colors || []).join('') || '无色')
     + '；主牌 ' + r.main + ' 张，备牌 ' + r.sideboard + ' 张'
     + '<br>' + (r.report || []).map(esc).join('<br>');
+  if ((r.selections || []).length)
+    box.innerHTML += '<details class="fold"><summary>逐牌入选依据（启发式）</summary>'
+      + r.selections.map(s => '<div><strong>' + s.qty + ' × ' + esc(s.name) + '</strong> · '
+        + esc(s.reason) + '</div>').join('') + '</details>';
 }
 function renderRoles(snap) {
   const slot = snap.checks && snap.checks.roles;
@@ -3218,6 +3312,50 @@ function renderAudit(snap) {
   if (r.stale) html += '<div class="warn">检查期间牌表已变更，请重新体检。</div>';
   box.innerHTML = html;
 }
+function renderEvaluation(snap) {
+  const slot = snap.checks && snap.checks.evaluation;
+  const box = document.getElementById('evalBox');
+  evaluationResult = slot && slot.result;
+  document.getElementById('evalDownloadBtn').disabled = !evaluationResult;
+  if (!evaluationResult) { box.textContent = '尚未评测'; return; }
+  const result = evaluationResult;
+  const current = result.after || result;
+  const pct = v => v == null ? '未知' : (v * 100).toFixed(1) + '%';
+  let html = '<div class="card"><strong>' + (result.before ? '版本对照' : '当前牌表评测') + '</strong> · '
+    + (result.status === 'partial' ? '<span class="warn">有未覆盖项</span>' : '选定模型范围内完成');
+  if (result.stale) html += '<div class="warn">结果已过期，请按当前牌表重新评测。</div>';
+  html += '<div>牌库 ' + current.counts.main + ' 张 · 地 ' + current.counts.lands + ' 张 · 策略结束后可留起手 '
+    + pct(current.opening.keepable.probability) + '</div><div class="note">'
+    + current.settings.runs + ' 次抽样；' + (current.settings.on_draw ? '首回合抓牌' : '首回合不抓牌')
+    + '；免费调度 ' + current.settings.free_mulligans + ' 次。区间只描述抽样误差。</div>';
+  html += '<div class="table-wrap"><table><thead><tr><th>关键咒语</th><th>回合</th><th>土地支付潜力</th><th>抽到且可支付</th></tr></thead><tbody>';
+  for (const goal of current.goals) {
+    if (goal.unsupported) html += '<tr><td>' + esc(goal.name) + '</td><td colspan="3">未覆盖：' + esc(goal.unsupported) + '</td></tr>';
+    for (const row of goal.by_turn) {
+      const interval = row.mana_potential.ci95 || [];
+      html += '<tr><td>' + esc(goal.name) + '</td><td>' + row.turn + '</td><td>' + pct(row.mana_potential.probability)
+        + '<div class="note">95%区间 ' + interval.map(pct).join('–') + '</div></td><td>' + pct(row.seen_and_mana.probability) + '</td></tr>';
+    }
+  }
+  html += '</tbody></table></div>';
+  if (result.before) {
+    html += '<h4>当前减去对照（最后观测回合）</h4>';
+    for (const row of result.deltas.filter(d => d.turn === current.settings.turns))
+      html += '<div>' + esc(row.name) + '：土地支付潜力 ' + (row.mana_potential_delta >= 0 ? '+' : '')
+        + (row.mana_potential_delta * 100).toFixed(1) + ' 个百分点</div>';
+    html += '<div class="note">描述性差值，不自动判断显著性或哪个版本更强。</div>';
+    const only = (result.targets_only_before || []).concat(result.targets_only_after || []);
+    if (only.length) html += '<div class="warn">仅一版评测的目标：' + only.map(esc).join('、') + '</div>';
+  }
+  for (const [label, report] of result.before ? [['对照', result.before], ['当前', current]] : [['当前', current]]) {
+    for (const item of report.excluded_sources)
+      html += '<div class="warn">' + label + '未覆盖色源：' + esc(item.name) + ' · ' + esc(item.reason) + '</div>';
+    if (report.unmodeled_modal_lands.length)
+      html += '<div class="warn">' + label + '未覆盖双面地选择：' + report.unmodeled_modal_lands.map(esc).join('、') + '</div>';
+  }
+  html += '<div class="note">忽略横置时序、下地顺序、生命支付和非地加速。不是准时施放率或胜率，也不复刻BO1起手平滑。</div>';
+  box.innerHTML = html + '</div>';
+}
 function renderBridge(snap) {
   const b = snap.bridges || {};
   const receiver = b.receiver || {status:'offline',message:'接收端未连接'};
@@ -3358,6 +3496,7 @@ async function tick() {
       renderCombos(d);
       renderCost(d);
       renderAudit(d);
+      renderEvaluation(d);
       renderAvenues(d);
       zones.scrollTop = zoneScroll;
       pool.scrollTop = poolScroll;
@@ -3384,6 +3523,8 @@ function updateDisabled() {
   document.getElementById('agentReqBtn').disabled = busy || agentPending;
   document.getElementById('auditBtn').disabled = busy || !!runningJobs.audit;
   document.getElementById('imageBtn').disabled = busy || !!runningJobs.image;
+  document.getElementById('evalBtn').disabled = busy || !!runningJobs.evaluation;
+  document.getElementById('evalBaselineBtn').disabled = busy;
   for (const button of document.querySelectorAll('[data-card-action],[data-avenue-action]'))
     button.disabled = busy;
 }
@@ -3424,6 +3565,10 @@ function updateAuditScope() {
 function setMode(mode) {
   if (mode !== 'limited' && mode !== 'constructed') mode = 'limited';
   currentMode = mode;
+  const evalFormat = document.getElementById('evalFormat');
+  if (mode === 'limited') evalFormat.value = 'limited';
+  else if (evalFormat.value === 'limited') evalFormat.value = 'pioneer';
+  document.getElementById('evalDraw').checked = evalFormat.value === 'commander';
   try { localStorage.setItem('workbench-mode', mode); } catch (e) {}
   const panels = document.querySelectorAll('.mode-panel');
   for (let i = 0; i < panels.length; i++)
@@ -3524,8 +3669,36 @@ document.getElementById('ccBtn').onclick = () => run(async () => {
     strategy: document.getElementById('ccStrategy').value,
     platform: document.getElementById('ccPlatform').value,
     bo3: document.getElementById('ccBo3').checked};
+  const fixed = document.getElementById('seedConstraints').value.trim();
+  if (fixed) body.seed_text = fixed;
   await postJSON('/api/seed-constructed', body);
 });
+document.getElementById('evalFormat').onchange = () => {
+  document.getElementById('evalDraw').checked = document.getElementById('evalFormat').value === 'commander';
+};
+document.getElementById('evalBaselineBtn').onclick = () => run(async () => {
+  const response = await fetch('/api/export');
+  if (!response.ok) throw new Error('无法保存对照牌表');
+  document.getElementById('evalBaseline').value = await response.text();
+});
+document.getElementById('evalBtn').onclick = () => {
+  try {
+    const body = {format:document.getElementById('evalFormat').value,
+      runs:Number(document.getElementById('evalRuns').value), turns:Number(document.getElementById('evalTurns').value),
+      on_draw:document.getElementById('evalDraw').checked,
+      targets:document.getElementById('evalTargets').value.split(/\\r?\\n/).map(s => s.trim()).filter(Boolean),
+      baseline_text:document.getElementById('evalBaseline').value};
+    const raw = document.getElementById('evalCards').value.trim();
+    if (raw) body.cards = JSON.parse(raw);
+    startJob('evaluation', '/api/evaluation/start', body);
+  } catch (e) { showErrors(e.message); }
+};
+document.getElementById('evalDownloadBtn').onclick = () => {
+  if (!evaluationResult) return;
+  const url = URL.createObjectURL(new Blob([JSON.stringify(evaluationResult, null, 2)], {type:'application/json'}));
+  const link = document.createElement('a'); link.href = url; link.download = 'evaluation.json'; link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
 document.getElementById('rolesBtn').onclick = () => run(() => fetchJSON('/api/roles'));
 document.getElementById('combosBtn').onclick = () => run(() => fetchJSON(
   '/api/combos?format=' + encodeURIComponent(document.getElementById('cbFormat').value.trim() || 'pioneer')
@@ -3596,7 +3769,7 @@ document.getElementById('poolSearch').oninput = () => { if (lastSnap) { renderPo
 buildColorOptions();
 initMode();
 try { setDeckView(localStorage.getItem('workbench-card-view') || 'list'); } catch (e) {}
-for (const kind of ['audit','image']) {
+for (const kind of ['audit','image','evaluation']) {
   let id = null;
   try { id = localStorage.getItem('workbench-job-' + kind); } catch (e) {}
   if (id) followJob(id, kind);

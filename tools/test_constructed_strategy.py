@@ -53,6 +53,61 @@ class TestSeedParsing(unittest.TestCase):
 
 
 class TestConstructedBuild(unittest.TestCase):
+    def test_sideboard_seed_is_preserved_and_reserved_across_sections(self):
+        pool = normal_pool() + [candidate("Reserved", module="M1")]
+        seed = CS.SeedSet(main=((4, "Seed Payoff"),), sideboard=((2, "Reserved"),))
+        for bo3 in (False, True):
+            deck = CS.build_constructed_deck(pool, seed, "pioneer", bo3=bo3)
+            self.assertTrue(deck.valid, deck.violations)
+            self.assertEqual(sum(e.count for e in deck.sideboard if e.card["name"] == "Reserved"), 2)
+            self.assertLessEqual(sum(e.count for e in deck.main + deck.sideboard if e.card["name"] == "Reserved"), 4)
+            if not bo3:
+                self.assertEqual(sum(e.count for e in deck.sideboard), 2)
+
+    def test_invalid_sideboard_seed_never_silently_disappears(self):
+        pool = normal_pool()
+        illegal = candidate("Illegal Side", module="M6")
+        illegal["legalities"]["pioneer"] = "banned"
+        pool.append(illegal)
+        with self.assertRaises(ValueError):
+            CS.build_constructed_deck(pool, CS.SeedSet(main=((4, "Seed Payoff"),),
+                                      sideboard=((1, "Illegal Side"),)), "pioneer", bo3=True)
+        with self.assertRaises(ValueError):
+            CS.build_constructed_deck(pool, CS.SeedSet(main=((4, "Seed Payoff"),),
+                                      sideboard=((1, "Seed Payoff"),)), "pioneer", bo3=True)
+
+    def test_duplicate_seed_rows_are_checked_as_total(self):
+        deck = CS.build_constructed_deck(normal_pool(), CS.SeedSet(main=((4, "Seed Payoff"),)), "pioneer")
+        seed = CS.SeedSet(main=((3, "Seed Payoff"), (2, "Seed Payoff")))
+        self.assertTrue(any("需要 5" in v for v in CS.validate_constructed(deck, seed)))
+
+    def test_companion_consumes_sideboard_capacity(self):
+        pool = normal_pool() + [candidate("Companion", companion=True)]
+        seed = CS.SeedSet(main=((4, "Seed Payoff"),), companion=((1, "Companion"),))
+        deck = CS.build_constructed_deck(pool, seed, "pioneer", bo3=True)
+        self.assertTrue(deck.valid, deck.violations)
+        self.assertLessEqual(sum(e.count for e in deck.sideboard + deck.companion), 15)
+
+    def test_sideboard_missing_from_output_is_a_gate_failure(self):
+        deck = CS.build_constructed_deck(normal_pool(), CS.SeedSet(main=((4, "Seed Payoff"),)), "pioneer")
+        seed = CS.SeedSet(main=((4, "Seed Payoff"),), sideboard=((1, "Side Hate"),))
+        self.assertTrue(any("sideboard 种子牌" in v for v in CS.validate_constructed(deck, seed)))
+
+    def test_synergy_breaks_same_cost_tie_and_names_supporting_seed(self):
+        anchor = candidate("Anchor", module="M1")
+        anchor["type_line"] = "Creature — Elf"
+        payoff = candidate("A Payoff", module="M1")
+        payoff["oracle_text"] = "Other Elves you control get +1/+1."
+        filler = candidate("Z Unrelated", module="M1")
+        selected, _, _ = CS._select_nonlands([payoff, filler],
+            [CS.ConstructedEntry(anchor, 4, "M1", "seed")], 8, False, {"G"}, "mid")
+        self.assertEqual(selected[-1].card["name"], "A Payoff")
+        self.assertIn("Anchor", selected[-1].reason)
+
+    def test_alchemy_is_rejected(self):
+        with self.assertRaises(ValueError):
+            CS.build_constructed_deck(normal_pool(), CS.SeedSet(main=((1, "Seed Payoff"),)), "alchemy")
+
     def test_normal_build_preserves_seed_and_shape(self):
         pool = normal_pool()
         seed = CS.SeedSet(main=((4, "Seed Payoff"),))
@@ -152,6 +207,32 @@ class TestConstructedBuild(unittest.TestCase):
         pack_leader = candidate("Pack Leader")
         pack_leader["oracle_text"] = "Other Dogs you control get +1/+1. Whenever this attacks, prevent all combat damage."
         self.assertEqual(CS._module(pack_leader), "M8")
+
+    def test_basic_color_mix_weights_spell_quantities(self):
+        white = CS.ConstructedEntry({"name": "White Spell", "mana_cost": "{W}"}, 4, "M1", "test")
+        blue = CS.ConstructedEntry({"name": "Blue Spell", "mana_cost": "{U}"}, 1, "M1", "test")
+        lands = CS._land_entries([], [], [white, blue], 10, False, {"W", "U"})
+        counts = {item.card["name"]: item.count for item in lands}
+        # mana_base reserves one source per required color before weighting.
+        self.assertEqual(counts, {"Plains": 7, "Island": 3})
+
+    def test_actual_produced_mana_counts_colorless_identity_dual(self):
+        dual = candidate("Known Dual", colors=(), land=True)
+        dual["type_line"] = "Land"
+        dual["produced_mana"] = ["W", "U"]
+        dual["oracle_text"] = "{T}: Add {W} or {U}."
+        spells = [CS.ConstructedEntry({"name": "White", "mana_cost": "{W}"}, 4, "M1", "test"),
+                  CS.ConstructedEntry({"name": "Blue", "mana_cost": "{U}"}, 4, "M1", "test")]
+        lands = CS._land_entries([dual], [], spells, 10, False, {"W", "U"})
+        self.assertEqual(sum(item.count for item in lands), 10)
+        self.assertEqual({item.card["name"]: item.count for item in lands},
+                         {"Known Dual": 4, "Island": 3, "Plains": 3})
+
+    def test_tiny_remaining_land_budget_does_not_overfill(self):
+        spells = [CS.ConstructedEntry({"name": color, "mana_cost": "{" + color + "}"},
+                                     1, "M1", "test") for color in ("W", "U")]
+        lands = CS._land_entries([], [], spells, 1, False, {"W", "U"})
+        self.assertEqual(sum(item.count for item in lands), 1)
 
     def test_transform_back_land_is_not_main_deck_land(self):
         transform = candidate("Journey", land=True)

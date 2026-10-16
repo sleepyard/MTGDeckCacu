@@ -24,6 +24,28 @@
 **交叉能力**：LLM 集成（DeepSeek，轮抓/对局建议）；MTGA 客户端资源提取与图像化交付；
 外部参考研究（`Ref/`）。
 
+当前优先强化构筑与可复现评测，覆盖 Standard、Pioneer/Explorer、Historic、Timeless、
+Brawl 家族和 Draft/Sealed；Alchemy 不纳入开发范围。Commander 专项交付另有工作流，
+不将 Brawl 测试结果直接视为多人 EDH 强度证明。
+
+## 网页工作台与评测
+
+运行 `python tools/deck_workbench.py serve`，打开 [本地工作台](http://127.0.0.1:8644/)。
+同一页面支持限制赛与构筑模式，导入牌池/候选、编辑主备牌、查看曲线与色源，
+并执行门禁、角色、组合技及造价检查，导出 TXT/PNG。会话保存在内存中，完成后需导出。
+
+- **构筑**：固定种子牌的数量与分区，预留备牌同名额度；模块、节奏和有上限的协同分
+  提供逐牌入选依据。协同提示仍需核对规则，不证明某条配合可用。
+- **评测**：「核验 → 展开与版本评测」提供后台抽样、旧版对照、95%抽样区间和 JSON 下载。
+  任务冻结牌表与牌面，运行期间改牌会标记旧结果过期；也支持纯离线牌面快照。
+- **Agent**：可按需连接 Codex 或 Kimi Code CLI 接收端，处理建议与解释请求；
+  确定性评测不需要连接模型。
+
+评测目前衡量伦敦调度后的起手和静态土地支付潜力，未模拟横置时序、加速、对手或
+MTGA BO1 平滑。`partial` 列出未覆盖项；`complete` 仅表示模型范围内完成，不表示
+牌表合法或胜率提升。CLI 用法见[工具手册](tools/README.md)，实现与验证见
+[第一批说明](docs/ConstructedEvaluation_20261016.md)和[第二批说明](docs/ConstructedEvaluationBatch2_20261016.md)。
+
 ## 交付物示例：牌表图
 
 `deck_image.py` 把 MTGA 导入格式牌表渲染成 Untapped.gg 风格网格图：叠卡切片、类别分组、
@@ -46,12 +68,19 @@
 # 克隆后初始化（目录骨架 + LLM 配置模板；--with-data 联网重建造价快照）
 python tools/init_workspace.py
 
-# 回归测试（282 例）
+# 回归测试（2026-10-16：894 项通过）
 python -m unittest discover -s tools -p "test_*.py"
+
+# 网页工作台（本地端口 8644；无需 LLM 即可组牌、评测）
+python tools/deck_workbench.py serve
 
 # 牌表门禁 / 单卡合法性核查
 python tools/mtg_tool.py validate deck.txt --format pioneer --bo3
 python tools/mtg_tool.py check "Card Name" --format pioneer --platform arena
+
+# 离线一致性评测 / 版本对照（cards.json 为完整候选牌面数组）
+python tools/deck_evaluate.py evaluate deck.txt --cards cards.json --format pioneer --out evaluation.json
+python tools/deck_evaluate.py compare before.txt after.txt --cards cards.json --format pioneer --out comparison.json
 
 # 造价签名（签名 + 物质点 + PP 包数）
 python tools/newbie/deck_cost.py sig deck.txt
@@ -80,9 +109,14 @@ python tools/deck_pooper.py draft --watch --set HOB --llm --port 8643
 | `AGENTS.md` | 仓库规范：结构、命令、风格、测试与提交约定 |
 | `CONTRIBUTING.md` | 贡献指南：反馈通道、PR 要求、升级方式 |
 | `CHANGELOG.md` | 版本变更记录 |
-| `skills/` | Agent 技能权威源（构筑、系列评测、限制赛、规则查询、组合技检索与指南核验） |
+| `skills/` | Agent 技能权威源（构筑、系列评测、限制赛、规则查询、组合技、指南核验与工作台桥） |
 | `tools/README.md` | 工具手册：每个脚本的口径与用法 |
 | `MtgDeckCacuWorkFlow.md` | 构筑工作流（阶段 0–5 全流程规范） |
+| [Commander/Brawl 双版交付整理](docs/CommanderBrawlWorkflowNotes_20261016.md) | 本次流程、技能、现有工具及6个案例脚本的索引与复用边界 |
+| [GitHub MTGA跨赛制调研](docs/GitHubMtgaReferences_20261016.md) | 构筑、限制赛、实战分析与模拟测试；已有迁移和能力缺口 |
+| [构筑与评测第一批](docs/ConstructedEvaluation_20261016.md) | 加权色源、伦敦调度修正、离线一致性评测和版本比较 |
+| [构筑与评测第二批](docs/ConstructedEvaluationBatch2_20261016.md) | 固定主备牌约束、可追溯协同评分、网页后台评测与版本对照 |
+| [GitHub 指挥官专题](docs/GitHubCommanderReferences_20261016.md) | Commander配套交付的仓库、许可证与借鉴位置 |
 | `MtgSetReviewWorkFlow.md` / `MtgSetReviewTemplate.md` | 新系列评测工作流与模板 |
 | `MtgDeckCostMetric.md` | 造价指标定义的唯一权威来源（签名/物质点/PP、MRUC 视觉方案） |
 | `DeckPooperDesign.md` | deck_pooper 设计文档 |

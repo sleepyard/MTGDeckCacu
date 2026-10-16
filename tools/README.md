@@ -12,6 +12,31 @@ MTG 套牌构筑工作流 CLI。数据源：Scryfall API + mtgch.com API。仅 P
 - 策略参数：`tools/deck_config.py` 集中管理（deck_core 评分/曲线/地数阈值、mtga_log_tool 风险标记、rot_audit 轮替窗口）；默认值内置，复制 `tools/data/config/strategy_params.example.json` → 同目录 `strategy_params.json`（gitignored）可按键覆盖，缺失/损坏自动回退默认并打一条 stderr warning，加载器绝不写回 JSON。
 - 牌表解析：`tools/deck_model.py` 是唯一解析层（`CardRef`/`SkippedLine`/`Deck` + `parse_deck`/`parse_text`），tools/ 与 tools/newbie/ 全部 `parse_deck`/`load_deck` 均为其薄委托；新增解析需求扩展 deck_model，不再另起解析器。
 
+Commander / Brawl 配套交付见[技能专项说明](../skills/mtg-deckbuilding/references/commander-brawl.md)，本次工具与案例脚本索引见[双版交付整理](../docs/CommanderBrawlWorkflowNotes_20261016.md)。当前一般 `validate` 仍需补充精确牌数、单卡、主将资格等专项门禁；其默认平台是 Arena。`newbie/deck_cost.py` 当前只统计 `main`，主将需要另补计。专项文档说明的是现状与补核方式，不表示这些扩展已经进入通用CLI。
+
+## 构筑与评测
+
+Alchemy不纳入后续开发范围。现阶段优先构筑与可复现评测，继续使用现有Scryfall候选、牌表模型和规则工具，不安装第二套规则引擎。
+
+`constructed_strategy.py`按实际张数加权正面费用的有色符号，结合已知非基本地来源补基础地；配额选牌理由展开模块分、节奏分及总分。这些是结构启发式，不是单卡强度或胜率预测。
+
+第二批增加固定主备分区/数量的保留与跨区同名额度预留（行侣计入15张备牌容量），以及`constructed_synergy.py`有上限的资源→回报协同加分；理由附相关牌名。完整规则特例与行侣条件仍须另行核验。网页可输入完整种子文本并展开入选依据；[第二批说明](../docs/ConstructedEvaluationBatch2_20261016.md)记录接口、评分范围与验证。
+
+新增`deck_evaluate.py`，读取`deck_model`牌表与离线Scryfall/search JSON数组（须包含非基本地及咒语；基本地可自动补全）。它输出实际牌库数量、曲线、角色计数、伦敦调度后的起手分布、逐回合土地数量潜力、指定咒语的土地支付潜力和抽到且可支付比例。主将不混入牌库；备牌仅留在证据中，需要单独提供换备后的牌表来评测。
+
+```powershell
+python tools/deck_evaluate.py evaluate deck.txt --cards candidates.json --format pioneer --target "Beast Whisperer" --runs 10000 --out AuditReport/evaluation.json --report AuditReport/evaluation.md
+python tools/deck_evaluate.py compare before.txt after.txt --cards candidates.json --format standard --target "Lightning Strike" --on-draw --out AuditReport/comparison.json
+```
+
+默认比较选中的最多5种主牌咒语及主将；`--target`可重复指定最多12种实际牌表条目。默认评测5回合、最多2次调度，BO1平滑不建模；`--on-draw`控制首回合是否抓牌，Brawl/Commander默认1次免费调度，可用`--free-mulligans`覆盖。纯函数调用者须显式传入与赛制匹配的抓牌/免费调度参数。
+
+这是一种**静态、只考虑土地的支付潜力模型**：不模拟横置时序、生命成本、非地加速、对手、战斗和咒语效果；特殊/限制色源、MDFC及X/雪/非瑞费用的未覆盖项明确列出。`complete`只表示该模型选定输入没有额外未覆盖项，不表示完整规则实现或牌表合法性。Wilson区间只描述抽样误差；同种子版本差异不自动成为配对显著性检验，更不能直接评出哪副更强。
+
+退出码：`0`模型范围内完成，`2`输入/证据错误，`3`存在未覆盖来源/目标。`--out`写完整JSON（含规范化牌表和快照哈希、种子、参数与模型版本），`--report`写可读Markdown。不会联网或启动Forge。
+
+现役8套金鱼共用`opening_hand.py`：每次调度先抓满起始手牌，保留后按明确的地数/高费牌策略置底。`goldfish.engine.run`返回`model_version=goldfish-london-bottom-v2`；修正前数字不可直接与新数字比较，历史交付不会被重写。案例和模型边界见[交付记录](../docs/ConstructedEvaluation_20261016.md)。
+
 ## 用法
 
 ```bash
@@ -449,6 +474,7 @@ curl -s http://127.0.0.1:8644/api/export
 加 `rot_audit`。注意旧 CLI `validate --limited` 仍是数量口径开关，与网页的池内核验不同。
 `POST /api/audit/start` 和 `POST /api/export-image` 返回 202 + `job_id`，
 `GET /api/jobs/<id>` 提供实际阶段/已处理数/耗时/结果；图片从结果的 `download_url` 下载。
+「展开与版本评测」通过`POST /api/evaluation/start`接入同一后台任务系统，使用冻结牌表/牌面运行`deck_evaluate`，支持旧牌表对照及JSON下载。可选`cards`离线快照缺牌时失败；不提供时复用候选/牌池并精确补查。网页最多5000次抽样、8回合、12种目标；运行中改牌标记过期。这里衡量静态土地支付潜力，不是合法性检查或胜率。
 这些后台线程执行确定性内核或脚本，不是 Agent。运行期间仍可切换标签和操作其他工具；
 任务使用开始时的牌表，期间修改会标注结果过期，不会把旧体检写回新牌表。
 

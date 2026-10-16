@@ -201,6 +201,8 @@ claim_token 租约、网页审批往返、回执、stale 标注、按后端的�
 
 ### Phase 4（可选，另立需求）：上游未覆盖方向
 
+2026-10-16增量：已接入静态土地支付潜力评测（`/api/evaluation/start`）、冻结输入的旧版比较、抽样区间、partial/stale显示与JSON下载，见[第二批交付](docs/ConstructedEvaluationBatch2_20261016.md)。同时补齐构筑种子主备分区/数量输入及逐牌协同依据。该评测不包含下述完整金鱼/Forge对战接入。
+
 - goldfish 接入（`tools/newbie/goldfish/` 引擎跑当前牌表）、Forge 实测入口
   （`forge_tool.py sim`）、代理牌 PDF（上游 proxy-printer 的用途，评估为低优先级）。
 - Cube / 双头巨人 / MTGJSON 离线库：维持评估结论，有明确需求再试点。

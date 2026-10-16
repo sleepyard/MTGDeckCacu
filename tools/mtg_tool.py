@@ -306,6 +306,7 @@ def normalize_card(c):
         "games": c.get("games") or [],
         "keywords": c.get("keywords") or [],
         "color_identity": c.get("color_identity") or [],
+        "produced_mana": c.get("produced_mana") or [],
         "card_faces": face_records,
     }
 
